@@ -66,13 +66,12 @@ export default async function AdminLayout({
             <span className="mr-3">👨‍⚕️</span> Doctors
           </Link>
 
-          {/* Appointments Placeholder - Disabled */}
-          <div className="flex items-center px-3 py-2.5 rounded-lg text-slate-500 cursor-not-allowed select-none opacity-60">
+          <Link
+            href="/admin/appointments"
+            className="flex items-center px-3 py-2.5 rounded-lg hover:bg-slate-800 hover:text-white transition duration-150"
+          >
             <span className="mr-3">📅</span> Appointments
-            <span className="ml-auto text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded">
-              Coming Later
-            </span>
-          </div>
+          </Link>
         </nav>
 
         {/* Footer Logout */}

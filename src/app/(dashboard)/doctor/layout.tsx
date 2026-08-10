@@ -54,6 +54,12 @@ export default async function DoctorLayout({
             <span className="mr-3">📊</span> Dashboard
           </Link>
           <Link
+            href="/doctor/appointments"
+            className="flex items-center px-3 py-2.5 rounded-lg hover:bg-slate-800 hover:text-white transition duration-150"
+          >
+            <span className="mr-3">📋</span> Appointment Queue
+          </Link>
+          <Link
             href="/doctor/availability"
             className="flex items-center px-3 py-2.5 rounded-lg hover:bg-slate-800 hover:text-white transition duration-150"
           >
