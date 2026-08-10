@@ -40,9 +40,12 @@ export default async function PatientLayout({ children }: { children: ReactNode 
             >
               Find a Doctor
             </Link>
-            <span className="text-slate-400 cursor-not-allowed text-xs px-2 py-1 bg-white/5 rounded border border-white/10" title="Coming in Phase 5C">
-              My Appointments (Soon)
-            </span>
+            <Link
+              href="/patient/appointments"
+              className="text-slate-200 hover:text-white transition py-1 border-b-2 border-transparent hover:border-blue-400"
+            >
+              My Appointments
+            </Link>
           </nav>
 
           {/* User Badge & Logout */}
@@ -68,9 +71,9 @@ export default async function PatientLayout({ children }: { children: ReactNode 
         <Link href="/patient/doctors" className="hover:text-white py-1 font-bold text-blue-300">
           🔍 Find Doctor
         </Link>
-        <span className="text-slate-400 py-1">
-          Appointments
-        </span>
+        <Link href="/patient/appointments" className="hover:text-white py-1">
+          My Appointments
+        </Link>
       </div>
 
       {/* Main Content Body */}
