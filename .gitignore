@@ -1,0 +1,23 @@
+# Dependencies
+/node_modules
+/.pnpm
+/.yarn
+
+# Next.js build output
+/.next/
+/out/
+
+# Environment files (local secrets)
+.env
+.env.backup
+.env*.local
+
+# Testing & Coverage
+/coverage
+/playwright-report
+/test-results
+
+# Debug & OS logs
+*.log
+.DS_Store
+Thumbs.db

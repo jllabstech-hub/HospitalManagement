@@ -1,0 +1,135 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  PATIENT
+  DOCTOR
+  ADMIN
+}
+
+enum AppointmentStatus {
+  BOOKED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+model User {
+  id             String          @id @default(uuid()) @db.Uuid
+  email          String          @unique
+  passwordHash   String
+  role           Role
+  isActive       Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  patientProfile PatientProfile?
+  doctorProfile  DoctorProfile?
+}
+
+model PatientProfile {
+  id               String        @id @default(uuid()) @db.Uuid
+  userId           String        @unique @db.Uuid
+  user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName         String
+  phoneNumber      String
+  dateOfBirth      DateTime      @db.Date
+  gender           String
+  emergencyContact String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  appointments     Appointment[]
+
+  @@index([userId])
+}
+
+model Department {
+  id          String          @id @default(uuid()) @db.Uuid
+  name        String          @unique
+  description String?
+  isActive    Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  doctors     DoctorProfile[]
+}
+
+model DoctorProfile {
+  id                   String               @id @default(uuid()) @db.Uuid
+  userId               String               @unique @db.Uuid
+  user                 User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  departmentId         String               @db.Uuid
+  department           Department           @relation(fields: [departmentId], references: [id])
+  fullName             String
+  phoneNumber          String
+  qualification        String
+  experienceYears      Int                  @default(0)
+  bio                  String?
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+
+  weeklyAvailabilities WeeklyAvailability[]
+  blockedDates         BlockedDate[]
+  appointments         Appointment[]
+
+  @@index([userId])
+  @@index([departmentId])
+}
+
+model WeeklyAvailability {
+  id                  String        @id @default(uuid()) @db.Uuid
+  doctorId            String        @db.Uuid
+  doctor              DoctorProfile @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  dayOfWeek           Int           // 0 = Sunday, 6 = Saturday
+  startTime           String        // Format: "HH:mm:ss"
+  endTime             String        // Format: "HH:mm:ss"
+  slotDurationMinutes Int           @default(30)
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  @@index([doctorId, dayOfWeek])
+}
+
+model BlockedDate {
+  id        String        @id @default(uuid()) @db.Uuid
+  doctorId  String        @db.Uuid
+  doctor    DoctorProfile @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  startDate DateTime      @db.Date
+  endDate   DateTime      @db.Date
+  startTime String?       // Format: "HH:mm:ss" (null = full day block)
+  endTime   String?       // Format: "HH:mm:ss" (null = full day block)
+  reason    String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([doctorId, startDate, endDate])
+}
+
+model Appointment {
+  id                 String            @id @default(uuid()) @db.Uuid
+  patientId          String            @db.Uuid
+  patient            PatientProfile    @relation(fields: [patientId], references: [id])
+  doctorId           String            @db.Uuid
+  doctor             DoctorProfile     @relation(fields: [doctorId], references: [id])
+  appointmentDate    DateTime          @db.Date
+  startTime          String            // Format: "HH:mm:ss"
+  endTime            String            // Format: "HH:mm:ss"
+  status             AppointmentStatus @default(BOOKED)
+  reason             String?
+  cancellationReason String?
+  cancelledBy        Role?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  @@index([patientId, appointmentDate])
+  @@index([doctorId, appointmentDate])
+  @@index([doctorId, appointmentDate, status])
+}
