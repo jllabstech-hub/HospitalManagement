@@ -1,10 +1,13 @@
 import { requireAdmin } from '@/server/security/auth-helpers';
 import { prisma } from '@/server/db/client';
 import DepartmentManagement from '@/features/departments/components/DepartmentManagement';
+import { Prisma } from '@prisma/client';
 
 interface PageProps {
   searchParams: Promise<{
     page?: string;
+    search?: string;
+    limit?: string;
   }>;
 }
 
@@ -12,11 +15,21 @@ export default async function AdminDepartmentsPage({ searchParams }: PageProps) 
   await requireAdmin();
   const resolvedParams = await searchParams;
   const page = Math.max(1, parseInt(resolvedParams.page || '1', 10));
-  const limit = 5;
+  const search = resolvedParams.search?.trim() || '';
+  const limit = Math.max(1, parseInt(resolvedParams.limit || '10', 10));
   const skip = (page - 1) * limit;
+
+  const whereCondition: Prisma.DepartmentWhereInput = {};
+  if (search) {
+    whereCondition.OR = [
+      { name: { contains: search, mode: 'insensitive' } },
+      { description: { contains: search, mode: 'insensitive' } },
+    ];
+  }
 
   const [departments, totalDepartments] = await Promise.all([
     prisma.department.findMany({
+      where: whereCondition,
       orderBy: { name: 'asc' },
       skip,
       take: limit,
@@ -31,7 +44,7 @@ export default async function AdminDepartmentsPage({ searchParams }: PageProps) 
         },
       },
     }),
-    prisma.department.count(),
+    prisma.department.count({ where: whereCondition }),
   ]);
 
   const totalPages = Math.ceil(totalDepartments / limit) || 1;
@@ -42,6 +55,8 @@ export default async function AdminDepartmentsPage({ searchParams }: PageProps) 
       currentPage={page}
       totalPages={totalPages}
       totalDepartments={totalDepartments}
+      currentSearch={search}
+      currentLimit={limit}
     />
   );
 }

@@ -33,6 +33,8 @@ interface Props {
   currentPage?: number;
   totalPages?: number;
   totalDepartments?: number;
+  currentSearch?: string;
+  currentLimit?: number;
 }
 
 export default function DepartmentManagement({
@@ -40,13 +42,20 @@ export default function DepartmentManagement({
   currentPage = 1,
   totalPages = 1,
   totalDepartments = departments.length,
+  currentSearch = '',
+  currentLimit = 10,
 }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const handlePageChange = (newPage: number) => {
+  const [search, setSearch] = useState(currentSearch);
+  const [limitFilter, setLimitFilter] = useState(currentLimit);
+
+  const applyFilters = (newSearch = search, page = 1, newLimit = limitFilter) => {
     const params = new URLSearchParams(searchParams.toString());
-    params.set('page', newPage.toString());
+    if (newSearch) params.set('search', newSearch); else params.delete('search');
+    params.set('page', page.toString());
+    params.set('limit', newLimit.toString());
     router.push(`/admin/departments?${params.toString()}`);
   };
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -157,6 +166,60 @@ export default function DepartmentManagement({
         </div>
       )}
 
+      {/* Search & Filter Toolbar */}
+      <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+        <div className="sm:col-span-8">
+          <label className="block text-xs font-semibold text-slate-600 mb-1">Search Departments</label>
+          <div className="flex space-x-2">
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && applyFilters(search, 1, limitFilter)}
+              placeholder="Department name or description..."
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <button
+              onClick={() => applyFilters(search, 1, limitFilter)}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-lg transition"
+            >
+              Search
+            </button>
+            {search && (
+              <button
+                onClick={() => {
+                  setSearch('');
+                  applyFilters('', 1, limitFilter);
+                }}
+                className="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold text-xs rounded-lg transition"
+                title="Clear Search"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="sm:col-span-4">
+          <label className="block text-xs font-semibold text-slate-600 mb-1">Entries per page</label>
+          <select
+            value={limitFilter}
+            onChange={(e) => {
+              const newLimit = parseInt(e.target.value, 10);
+              setLimitFilter(newLimit);
+              applyFilters(search, 1, newLimit);
+            }}
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white font-medium"
+          >
+            <option value="5">5 entries</option>
+            <option value="10">10 entries</option>
+            <option value="15">15 entries</option>
+            <option value="20">20 entries</option>
+            <option value="50">50 entries</option>
+          </select>
+        </div>
+      </div>
+
       {/* Departments Table */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         {departments.length === 0 ? (
@@ -240,14 +303,14 @@ export default function DepartmentManagement({
             <div className="flex space-x-2">
               <button
                 disabled={currentPage <= 1}
-                onClick={() => handlePageChange(currentPage - 1)}
+                onClick={() => applyFilters(search, currentPage - 1, limitFilter)}
                 className="px-3 py-1.5 bg-white border border-slate-300 rounded-md disabled:opacity-40 hover:bg-slate-50 font-medium text-slate-700 transition"
               >
                 Previous
               </button>
               <button
                 disabled={currentPage >= totalPages}
-                onClick={() => handlePageChange(currentPage + 1)}
+                onClick={() => applyFilters(search, currentPage + 1, limitFilter)}
                 className="px-3 py-1.5 bg-white border border-slate-300 rounded-md disabled:opacity-40 hover:bg-slate-50 font-medium text-slate-700 transition"
               >
                 Next

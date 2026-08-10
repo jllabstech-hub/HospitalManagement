@@ -8,6 +8,7 @@ import { formatTimeTo12Hour } from '@/lib/date-utils';
 interface PageProps {
   searchParams: Promise<{
     page?: string;
+    limit?: string;
     search?: string;
     department?: string;
     doctor?: string;
@@ -21,6 +22,7 @@ export default async function AdminAppointmentsMasterPage({ searchParams }: Page
   const resolvedParams = await searchParams;
 
   const page = parseInt(resolvedParams.page || '1', 10);
+  const limit = Math.max(1, parseInt(resolvedParams.limit || '10', 10));
   const search = resolvedParams.search || '';
   const departmentId = resolvedParams.department || '';
   const doctorId = resolvedParams.doctor || '';
@@ -30,18 +32,18 @@ export default async function AdminAppointmentsMasterPage({ searchParams }: Page
   const [departments, doctors, result] = await Promise.all([
     prisma.department.findMany({ select: { id: true, name: true }, orderBy: { name: 'asc' } }),
     prisma.doctorProfile.findMany({ select: { id: true, fullName: true }, orderBy: { fullName: 'asc' } }),
-      getAdminAppointments({
-        page,
-        limit: 5,
-        search,
-        departmentId,
-        doctorId,
-        status: statusFilter,
-        dateStr,
-      }),
-    ]);
+    getAdminAppointments({
+      page,
+      limit,
+      search,
+      departmentId,
+      doctorId,
+      status: statusFilter,
+      dateStr,
+    }),
+  ]);
 
-    const { appointments, totalCount, currentPage, totalPages } = result;
+  const { appointments, totalCount, currentPage, totalPages } = result;
 
   return (
     <div className="space-y-8">
@@ -59,7 +61,7 @@ export default async function AdminAppointmentsMasterPage({ searchParams }: Page
           {/* Search Input */}
           <div className="md:col-span-4">
             <label htmlFor="adminSearchInput" className="block text-xs font-semibold text-slate-700 mb-1">
-              Patient or Doctor Name
+              Search Patient or Doctor Name
             </label>
             <input
               id="adminSearchInput"
@@ -112,7 +114,7 @@ export default async function AdminAppointmentsMasterPage({ searchParams }: Page
           </div>
 
           {/* Status Filter */}
-          <div className="md:col-span-3">
+          <div className="md:col-span-2">
             <label htmlFor="adminStatusFilter" className="block text-xs font-semibold text-slate-700 mb-1">
               Status
             </label>
@@ -131,13 +133,32 @@ export default async function AdminAppointmentsMasterPage({ searchParams }: Page
             </select>
           </div>
 
+          {/* Entries per page */}
+          <div className="md:col-span-2">
+            <label htmlFor="adminLimitFilter" className="block text-xs font-semibold text-slate-700 mb-1">
+              Entries per page
+            </label>
+            <select
+              id="adminLimitFilter"
+              name="limit"
+              defaultValue={limit}
+              className="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none bg-white font-medium"
+            >
+              <option value="5">5 entries</option>
+              <option value="10">10 entries</option>
+              <option value="15">15 entries</option>
+              <option value="20">20 entries</option>
+              <option value="50">50 entries</option>
+            </select>
+          </div>
+
           {/* Submit */}
           <div className="md:col-span-2 flex items-end">
             <button
               type="submit"
               className="w-full py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow-xs transition"
             >
-              Filter
+              Filter / Search
             </button>
           </div>
         </div>
@@ -213,7 +234,7 @@ export default async function AdminAppointmentsMasterPage({ searchParams }: Page
               <div className="flex space-x-2">
                 {currentPage > 1 && (
                   <Link
-                    href={`/admin/appointments?search=${encodeURIComponent(search)}&department=${encodeURIComponent(departmentId)}&status=${encodeURIComponent(statusFilter)}&page=${currentPage - 1}`}
+                    href={`/admin/appointments?search=${encodeURIComponent(search)}&department=${encodeURIComponent(departmentId)}&doctor=${encodeURIComponent(doctorId)}&status=${encodeURIComponent(statusFilter)}&limit=${limit}&page=${currentPage - 1}`}
                     className="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 rounded-lg"
                   >
                     ← Previous
@@ -221,7 +242,7 @@ export default async function AdminAppointmentsMasterPage({ searchParams }: Page
                 )}
                 {currentPage < totalPages && (
                   <Link
-                    href={`/admin/appointments?search=${encodeURIComponent(search)}&department=${encodeURIComponent(departmentId)}&status=${encodeURIComponent(statusFilter)}&page=${currentPage + 1}`}
+                    href={`/admin/appointments?search=${encodeURIComponent(search)}&department=${encodeURIComponent(departmentId)}&doctor=${encodeURIComponent(doctorId)}&status=${encodeURIComponent(statusFilter)}&limit=${limit}&page=${currentPage + 1}`}
                     className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg"
                   >
                     Next →

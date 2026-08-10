@@ -9,10 +9,9 @@ interface PageProps {
     departmentId?: string;
     status?: string;
     page?: string;
+    limit?: string;
   }>;
 }
-
-const PAGE_SIZE = 5;
 
 export default async function AdminDoctorsPage({ searchParams }: PageProps) {
   await requireAdmin();
@@ -22,6 +21,7 @@ export default async function AdminDoctorsPage({ searchParams }: PageProps) {
   const departmentId = params.departmentId || '';
   const status = params.status || '';
   const page = Math.max(1, parseInt(params.page || '1', 10));
+  const limit = Math.max(1, parseInt(params.limit || '10', 10));
 
   // Build Prisma filter conditions
   const whereCondition: Prisma.DoctorProfileWhereInput = {};
@@ -31,6 +31,7 @@ export default async function AdminDoctorsPage({ searchParams }: PageProps) {
       { fullName: { contains: search, mode: 'insensitive' } },
       { qualification: { contains: search, mode: 'insensitive' } },
       { user: { is: { email: { contains: search, mode: 'insensitive' } } } },
+      { phoneNumber: { contains: search, mode: 'insensitive' } },
     ];
   }
 
@@ -49,8 +50,8 @@ export default async function AdminDoctorsPage({ searchParams }: PageProps) {
     prisma.doctorProfile.count({ where: whereCondition }),
     prisma.doctorProfile.findMany({
       where: whereCondition,
-      skip: (page - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
+      skip: (page - 1) * limit,
+      take: limit,
       orderBy: { fullName: 'asc' },
       select: {
         id: true,
@@ -74,7 +75,7 @@ export default async function AdminDoctorsPage({ searchParams }: PageProps) {
     }),
   ]);
 
-  const totalPages = Math.ceil(totalDoctors / PAGE_SIZE) || 1;
+  const totalPages = Math.ceil(totalDoctors / limit) || 1;
 
   return (
     <DoctorManagement
@@ -83,6 +84,7 @@ export default async function AdminDoctorsPage({ searchParams }: PageProps) {
       totalDoctors={totalDoctors}
       currentPage={page}
       totalPages={totalPages}
+      currentLimit={limit}
       currentSearch={search}
       currentDepartmentId={departmentId}
       currentStatus={status}

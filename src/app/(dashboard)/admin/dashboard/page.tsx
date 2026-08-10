@@ -5,8 +5,16 @@ import { getAdminAppointments } from '@/features/appointments/services/manage-ap
 import StatusBadge from '@/components/shared/StatusBadge';
 import { formatTimeTo12Hour } from '@/lib/date-utils';
 
-export default async function AdminDashboardPage() {
+interface PageProps {
+  searchParams: Promise<{
+    search?: string;
+  }>;
+}
+
+export default async function AdminDashboardPage({ searchParams }: PageProps) {
   await requireAdmin();
+  const resolvedParams = await searchParams;
+  const search = resolvedParams.search?.trim() || '';
 
   // Concurrent system statistics queries
   const [
@@ -28,7 +36,7 @@ export default async function AdminDashboardPage() {
     prisma.appointment.count({ where: { status: 'CONFIRMED' } }),
     prisma.appointment.count({ where: { status: 'COMPLETED' } }),
     prisma.appointment.count({ where: { status: 'CANCELLED' } }),
-    getAdminAppointments({ page: 1, limit: 6 }),
+    getAdminAppointments({ page: 1, limit: 6, search }),
   ]);
 
   return (
@@ -94,17 +102,42 @@ export default async function AdminDashboardPage() {
 
       {/* Recent Appointments Table */}
       <div className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-6">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-100 pb-4 gap-4">
           <div>
             <h2 className="text-lg font-bold text-slate-800">📊 System-Wide Appointments Overview</h2>
             <p className="text-xs text-slate-500">Total System Appointments: {totalAppts} (Booked: {bookedAppts}, Confirmed: {confirmedAppts}, Cancelled: {cancelledAppts})</p>
           </div>
-          <Link
-            href="/admin/appointments"
-            className="text-xs font-semibold text-purple-600 hover:underline"
-          >
-            View Master List →
-          </Link>
+          <div className="flex items-center space-x-3">
+            <form method="GET" action="/admin/dashboard" className="flex space-x-2">
+              <input
+                type="text"
+                name="search"
+                defaultValue={search}
+                placeholder="Search patient/doctor..."
+                className="px-3 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-purple-500 focus:outline-none"
+              />
+              <button
+                type="submit"
+                className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs rounded-lg transition"
+              >
+                Search
+              </button>
+              {search && (
+                <Link
+                  href="/admin/dashboard"
+                  className="px-2 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold text-xs rounded-lg transition"
+                >
+                  Clear
+                </Link>
+              )}
+            </form>
+            <Link
+              href="/admin/appointments"
+              className="text-xs font-semibold text-purple-600 hover:underline whitespace-nowrap"
+            >
+              View Master List →
+            </Link>
+          </div>
         </div>
 
         {recentApptsResult.appointments.length === 0 ? (

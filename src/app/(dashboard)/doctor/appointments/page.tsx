@@ -10,6 +10,7 @@ interface PageProps {
     date?: string;
     status?: string;
     page?: string;
+    limit?: string;
   }>;
 }
 
@@ -21,12 +22,13 @@ export default async function DoctorAppointmentsPage({ searchParams }: PageProps
   const dateStr = resolvedParams.date || todayStr;
   const statusFilter = resolvedParams.status || '';
   const page = Math.max(1, parseInt(resolvedParams.page || '1', 10));
+  const limit = Math.max(1, parseInt(resolvedParams.limit || '10', 10));
 
   const { appointments, counts, currentPage, totalPages, totalCount } = await getDoctorAppointments(user.doctorProfileId, {
     dateStr,
     status: statusFilter,
     page,
-    limit: 10,
+    limit,
   });
 
   return (
@@ -43,7 +45,7 @@ export default async function DoctorAppointmentsPage({ searchParams }: PageProps
       <form method="GET" action="/doctor/appointments" className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
           {/* Date Selector */}
-          <div className="md:col-span-5">
+          <div className="md:col-span-4">
             <label htmlFor="docDateInput" className="block text-xs font-semibold text-slate-700 mb-1">
               Select Date:
             </label>
@@ -57,7 +59,7 @@ export default async function DoctorAppointmentsPage({ searchParams }: PageProps
           </div>
 
           {/* Status Filter */}
-          <div className="md:col-span-5">
+          <div className="md:col-span-4">
             <label htmlFor="docStatusFilter" className="block text-xs font-semibold text-slate-700 mb-1">
               Status Filter:
             </label>
@@ -73,6 +75,25 @@ export default async function DoctorAppointmentsPage({ searchParams }: PageProps
               <option value="COMPLETED">COMPLETED</option>
               <option value="CANCELLED">CANCELLED</option>
               <option value="NO_SHOW">NO_SHOW</option>
+            </select>
+          </div>
+
+          {/* Entries per page */}
+          <div className="md:col-span-2">
+            <label htmlFor="docLimitFilter" className="block text-xs font-semibold text-slate-700 mb-1">
+              Entries per page
+            </label>
+            <select
+              id="docLimitFilter"
+              name="limit"
+              defaultValue={limit}
+              className="w-full px-4 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white font-medium text-slate-800"
+            >
+              <option value="5">5 entries</option>
+              <option value="10">10 entries</option>
+              <option value="15">15 entries</option>
+              <option value="20">20 entries</option>
+              <option value="50">50 entries</option>
             </select>
           </div>
 
@@ -165,7 +186,7 @@ export default async function DoctorAppointmentsPage({ searchParams }: PageProps
               </span>
               <div className="flex space-x-2">
                 <Link
-                  href={`/doctor/appointments?date=${dateStr}${statusFilter ? `&status=${statusFilter}` : ''}&page=${currentPage - 1}`}
+                  href={`/doctor/appointments?date=${dateStr}${statusFilter ? `&status=${statusFilter}` : ''}&limit=${limit}&page=${currentPage - 1}`}
                   className={`px-3 py-1.5 bg-white border border-slate-300 rounded-lg font-medium text-slate-700 transition ${
                     currentPage <= 1 ? 'pointer-events-none opacity-40' : 'hover:bg-slate-50'
                   }`}
@@ -173,7 +194,7 @@ export default async function DoctorAppointmentsPage({ searchParams }: PageProps
                   Previous
                 </Link>
                 <Link
-                  href={`/doctor/appointments?date=${dateStr}${statusFilter ? `&status=${statusFilter}` : ''}&page=${currentPage + 1}`}
+                  href={`/doctor/appointments?date=${dateStr}${statusFilter ? `&status=${statusFilter}` : ''}&limit=${limit}&page=${currentPage + 1}`}
                   className={`px-3 py-1.5 bg-white border border-slate-300 rounded-lg font-medium text-slate-700 transition ${
                     currentPage >= totalPages ? 'pointer-events-none opacity-40' : 'hover:bg-slate-50'
                   }`}
