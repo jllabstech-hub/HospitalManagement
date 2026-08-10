@@ -69,29 +69,38 @@ npx prisma db seed
 
 ### Step 5: Start Development Server
 
-Run the Next.js development server:
+Run the Next.js development server on Port 5000:
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [http://localhost:5000](http://localhost:5000) in your browser.
 
 ---
 
-## 🔑 Local Development Seeded Accounts
+## 🔑 Local Development Seeded Accounts & URLs
 
 For testing role-based authentication in development, use the following seeded accounts (Default password for all local test accounts: `test123`):
 
-| Role | Email | Password | Primary Route |
-| :--- | :--- | :--- | :--- |
-| **ADMIN** | `admin@hospital.com` | `test123` | `/admin/dashboard` |
-| **DOCTOR** | `dr.smith@hospital.com` | `test123` | `/doctor/dashboard` |
-| **DOCTOR** | `dr.johnson@hospital.com` | `test123` | `/doctor/dashboard` |
-| **PATIENT** | `patient.alice@example.com` | `test123` | `/patient/dashboard` |
-| **PATIENT** | `patient.bob@example.com` | `test123` | `/patient/dashboard` |
+| Role | Email | Password | Primary Route | Full Local URL (Port 5000) |
+| :--- | :--- | :--- | :--- | :--- |
+| **ADMIN** | `admin@hospital.com` | `test123` | `/admin/dashboard` | [http://localhost:5000/admin/dashboard](http://localhost:5000/admin/dashboard) |
+| **DOCTOR** | `dr.smith@hospital.com` | `test123` | `/doctor/dashboard` | [http://localhost:5000/doctor/dashboard](http://localhost:5000/doctor/dashboard) |
+| **DOCTOR** | `dr.johnson@hospital.com` | `test123` | `/doctor/dashboard` | [http://localhost:5000/doctor/dashboard](http://localhost:5000/doctor/dashboard) |
+| **PATIENT** | `patient.alice@example.com` | `test123` | `/patient/dashboard` | [http://localhost:5000/patient/dashboard](http://localhost:5000/patient/dashboard) |
+| **PATIENT** | `patient.bob@example.com` | `test123` | `/patient/dashboard` | [http://localhost:5000/patient/dashboard](http://localhost:5000/patient/dashboard) |
 
-> **Note:** Patients can also self-register at `/register`.
+### 🌐 Quick Route Navigation (Local Port 5000 & Vercel)
+
+- **Login Page:** [http://localhost:5000/login](http://localhost:5000/login) (Production: [https://hospital-management-jllabs.vercel.app/login](https://hospital-management-jllabs.vercel.app/login))
+- **Patient Registration:** [http://localhost:5000/register](http://localhost:5000/register) (Production: [https://hospital-management-jllabs.vercel.app/register](https://hospital-management-jllabs.vercel.app/register))
+- **Patient Doctor Search & Booking:** [http://localhost:5000/patient/doctors](http://localhost:5000/patient/doctors) (Production: [https://hospital-management-jllabs.vercel.app/patient/doctors](https://hospital-management-jllabs.vercel.app/patient/doctors))
+- **Doctor Schedule Manager:** [http://localhost:5000/doctor/availability](http://localhost:5000/doctor/availability) (Production: [https://hospital-management-jllabs.vercel.app/doctor/availability](https://hospital-management-jllabs.vercel.app/doctor/availability))
+- **Admin Doctor Management:** [http://localhost:5000/admin/doctors](http://localhost:5000/admin/doctors) (Production: [https://hospital-management-jllabs.vercel.app/admin/doctors](https://hospital-management-jllabs.vercel.app/admin/doctors))
+- **Admin Department Management:** [http://localhost:5000/admin/departments](http://localhost:5000/admin/departments) (Production: [https://hospital-management-jllabs.vercel.app/admin/departments](https://hospital-management-jllabs.vercel.app/admin/departments))
+
+> **Note:** Patients can self-register at `/register`.
 
 ---
 
