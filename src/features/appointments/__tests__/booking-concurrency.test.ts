@@ -16,17 +16,33 @@ describe('Real Concurrency & Race-Condition Suite (Requirement 21 & PostgreSQL P
         OR: [
           { doctor: { user: { email: { contains: 'concurrency.test' } } } },
           { patient: { user: { email: { contains: 'concurrency.test' } } } },
+          { doctor: { department: { name: { contains: 'Concurrency Dept' } } } },
         ],
       },
     });
     await prisma.weeklyAvailability.deleteMany({
-      where: { doctor: { user: { email: { contains: 'concurrency.test' } } } },
+      where: {
+        OR: [
+          { doctor: { user: { email: { contains: 'concurrency.test' } } } },
+          { doctor: { department: { name: { contains: 'Concurrency Dept' } } } },
+        ],
+      },
     });
     await prisma.blockedDate.deleteMany({
-      where: { doctor: { user: { email: { contains: 'concurrency.test' } } } },
+      where: {
+        OR: [
+          { doctor: { user: { email: { contains: 'concurrency.test' } } } },
+          { doctor: { department: { name: { contains: 'Concurrency Dept' } } } },
+        ],
+      },
     });
     await prisma.doctorProfile.deleteMany({
-      where: { user: { email: { contains: 'concurrency.test' } } },
+      where: {
+        OR: [
+          { user: { email: { contains: 'concurrency.test' } } },
+          { department: { name: { contains: 'Concurrency Dept' } } },
+        ],
+      },
     });
     await prisma.patientProfile.deleteMany({
       where: { user: { email: { contains: 'concurrency.test' } } },

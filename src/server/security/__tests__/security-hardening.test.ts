@@ -29,14 +29,25 @@ describe('Phase 7A Comprehensive Security Hardening & Vulnerability Test Suite',
         OR: [
           { doctor: { user: { email: { contains: 'securetest' } } } },
           { patient: { user: { email: { contains: 'securetest' } } } },
+          { doctor: { department: { name: { contains: 'Security Audit Dept' } } } },
         ],
       },
     });
     await prisma.weeklyAvailability.deleteMany({
-      where: { doctor: { user: { email: { contains: 'securetest' } } } },
+      where: {
+        OR: [
+          { doctor: { user: { email: { contains: 'securetest' } } } },
+          { doctor: { department: { name: { contains: 'Security Audit Dept' } } } },
+        ],
+      },
     });
     await prisma.doctorProfile.deleteMany({
-      where: { user: { email: { contains: 'securetest' } } },
+      where: {
+        OR: [
+          { user: { email: { contains: 'securetest' } } },
+          { department: { name: { contains: 'Security Audit Dept' } } },
+        ],
+      },
     });
     await prisma.patientProfile.deleteMany({
       where: { user: { email: { contains: 'securetest' } } },
