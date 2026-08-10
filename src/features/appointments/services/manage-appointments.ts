@@ -2,6 +2,7 @@ import { AppointmentStatus, Role, Prisma } from '@prisma/client';
 import { prisma } from '@/server/db/client';
 import { getHospitalTodayDateString } from '@/lib/date-utils';
 import { getHospitalCurrentTimeHHMM } from '../domain/time-utils';
+import { buildFuzzyAppointmentWhere } from '@/lib/fuzzy-search';
 
 
 export interface TransitionStatusInput {
@@ -394,11 +395,10 @@ export async function getAdminAppointments(params: {
   }
 
   if (params.search && params.search.trim().length > 0) {
-    const s = params.search.trim();
-    whereClause.OR = [
-      { patient: { fullName: { contains: s, mode: 'insensitive' } } },
-      { doctor: { fullName: { contains: s, mode: 'insensitive' } } },
-    ];
+    const fuzzyCond = buildFuzzyAppointmentWhere(params.search);
+    if (fuzzyCond.AND) {
+      whereClause.AND = fuzzyCond.AND;
+    }
   }
 
   const [appointments, totalCount] = await Promise.all([

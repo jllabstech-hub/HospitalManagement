@@ -15,6 +15,7 @@ import {
   toggleDoctorStatusAction,
 } from '../actions';
 import { useRouter, useSearchParams } from 'next/navigation';
+import InteractiveSearchInput from '@/components/shared/InteractiveSearchInput';
 
 interface ActiveDepartment {
   id: string;
@@ -73,7 +74,6 @@ export default function DoctorManagement({
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Search and filter local state
-  const [search, setSearch] = useState(currentSearch);
   const [deptFilter, setDeptFilter] = useState(currentDepartmentId);
   const [statusFilter, setStatusFilter] = useState(currentStatus);
   const [limitFilter, setLimitFilter] = useState(currentLimit);
@@ -99,7 +99,7 @@ export default function DoctorManagement({
   });
 
   const applyFilters = (
-    newSearch = search,
+    newSearch = currentSearch,
     newDept = deptFilter,
     newStatus = statusFilter,
     page = 1,
@@ -211,36 +211,12 @@ export default function DoctorManagement({
 
       {/* Search & Filter Toolbar */}
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-3 items-end">
-        <div className="md:col-span-4">
-          <label className="block text-xs font-semibold text-slate-600 mb-1">Search Doctors</label>
-          <div className="flex space-x-2">
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && applyFilters(search, deptFilter, statusFilter, 1, limitFilter)}
-              placeholder="Name, email, qualification, phone..."
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-            />
-            <button
-              onClick={() => applyFilters(search, deptFilter, statusFilter, 1, limitFilter)}
-              className="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs rounded-lg transition"
-            >
-              Search
-            </button>
-            {search && (
-              <button
-                onClick={() => {
-                  setSearch('');
-                  applyFilters('', deptFilter, statusFilter, 1, limitFilter);
-                }}
-                className="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold text-xs rounded-lg transition"
-                title="Clear Search"
-              >
-                ✕
-              </button>
-            )}
-          </div>
+        <div className="md:col-span-5">
+          <label className="block text-xs font-semibold text-slate-600 mb-1">Interactive Search Doctors</label>
+          <InteractiveSearchInput
+            placeholder="Type name, email, qualification, phone..."
+            defaultValue={currentSearch}
+          />
         </div>
 
         <div className="md:col-span-3">
@@ -249,7 +225,7 @@ export default function DoctorManagement({
             value={deptFilter}
             onChange={(e) => {
               setDeptFilter(e.target.value);
-              applyFilters(search, e.target.value, statusFilter, 1, limitFilter);
+              applyFilters(currentSearch, e.target.value, statusFilter, 1, limitFilter);
             }}
             className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white"
           >
@@ -268,7 +244,7 @@ export default function DoctorManagement({
             value={statusFilter}
             onChange={(e) => {
               setStatusFilter(e.target.value);
-              applyFilters(search, deptFilter, e.target.value, 1, limitFilter);
+              applyFilters(currentSearch, deptFilter, e.target.value, 1, limitFilter);
             }}
             className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white"
           >
@@ -285,7 +261,7 @@ export default function DoctorManagement({
             onChange={(e) => {
               const newLimit = parseInt(e.target.value, 10);
               setLimitFilter(newLimit);
-              applyFilters(search, deptFilter, statusFilter, 1, newLimit);
+              applyFilters(currentSearch, deptFilter, statusFilter, 1, newLimit);
             }}
             className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white font-medium"
           >
@@ -383,14 +359,14 @@ export default function DoctorManagement({
             <div className="flex space-x-2">
               <button
                 disabled={currentPage <= 1}
-                onClick={() => applyFilters(search, deptFilter, statusFilter, currentPage - 1, limitFilter)}
+                onClick={() => applyFilters(currentSearch, deptFilter, statusFilter, currentPage - 1, limitFilter)}
                 className="px-3 py-1.5 bg-white border border-slate-300 rounded-md disabled:opacity-40 hover:bg-slate-50 font-medium text-slate-700 transition"
               >
                 Previous
               </button>
               <button
                 disabled={currentPage >= totalPages}
-                onClick={() => applyFilters(search, deptFilter, statusFilter, currentPage + 1, limitFilter)}
+                onClick={() => applyFilters(currentSearch, deptFilter, statusFilter, currentPage + 1, limitFilter)}
                 className="px-3 py-1.5 bg-white border border-slate-300 rounded-md disabled:opacity-40 hover:bg-slate-50 font-medium text-slate-700 transition"
               >
                 Next

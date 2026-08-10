@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { requirePatient } from '@/server/security/auth-helpers';
 import { getPublicDepartments, searchDoctors } from '@/features/doctors/queries';
+import InteractiveSearchInput from '@/components/shared/InteractiveSearchInput';
 
 interface PageProps {
   searchParams: Promise<{
@@ -43,18 +44,14 @@ export default async function FindDoctorPage({ searchParams }: PageProps) {
       {/* Search & Filter Form */}
       <form method="GET" action="/patient/doctors" className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-          {/* Search Input */}
+          {/* Interactive Search Input */}
           <div className="md:col-span-6">
-            <label htmlFor="searchInput" className="block text-xs font-semibold text-slate-700 mb-1">
-              Doctor Name or Specialization
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              Interactive Search (Doctor / Specialization / Keyword)
             </label>
-            <input
-              id="searchInput"
-              type="text"
-              name="search"
+            <InteractiveSearchInput
+              placeholder="Type doctor name, specialty, qualification..."
               defaultValue={search}
-              placeholder="e.g. Smith, Cardiology, MBBS"
-              className="w-full px-4 py-2.5 text-xs sm:text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
             />
           </div>
 

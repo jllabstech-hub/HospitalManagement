@@ -16,6 +16,7 @@ import {
 } from '../actions';
 
 import { useRouter, useSearchParams } from 'next/navigation';
+import InteractiveSearchInput from '@/components/shared/InteractiveSearchInput';
 
 interface DepartmentItem {
   id: string;
@@ -48,10 +49,9 @@ export default function DepartmentManagement({
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [search, setSearch] = useState(currentSearch);
   const [limitFilter, setLimitFilter] = useState(currentLimit);
 
-  const applyFilters = (newSearch = search, page = 1, newLimit = limitFilter) => {
+  const applyFilters = (newSearch = currentSearch, page = 1, newLimit = limitFilter) => {
     const params = new URLSearchParams(searchParams.toString());
     if (newSearch) params.set('search', newSearch); else params.delete('search');
     params.set('page', page.toString());
@@ -169,35 +169,11 @@ export default function DepartmentManagement({
       {/* Search & Filter Toolbar */}
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
         <div className="sm:col-span-8">
-          <label className="block text-xs font-semibold text-slate-600 mb-1">Search Departments</label>
-          <div className="flex space-x-2">
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && applyFilters(search, 1, limitFilter)}
-              placeholder="Department name or description..."
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <button
-              onClick={() => applyFilters(search, 1, limitFilter)}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-lg transition"
-            >
-              Search
-            </button>
-            {search && (
-              <button
-                onClick={() => {
-                  setSearch('');
-                  applyFilters('', 1, limitFilter);
-                }}
-                className="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold text-xs rounded-lg transition"
-                title="Clear Search"
-              >
-                ✕
-              </button>
-            )}
-          </div>
+          <label className="block text-xs font-semibold text-slate-600 mb-1">Interactive Search Departments</label>
+          <InteractiveSearchInput
+            placeholder="Type department name or description..."
+            defaultValue={currentSearch}
+          />
         </div>
 
         <div className="sm:col-span-4">
@@ -207,7 +183,7 @@ export default function DepartmentManagement({
             onChange={(e) => {
               const newLimit = parseInt(e.target.value, 10);
               setLimitFilter(newLimit);
-              applyFilters(search, 1, newLimit);
+              applyFilters(currentSearch, 1, newLimit);
             }}
             className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white font-medium"
           >
@@ -303,14 +279,14 @@ export default function DepartmentManagement({
             <div className="flex space-x-2">
               <button
                 disabled={currentPage <= 1}
-                onClick={() => applyFilters(search, currentPage - 1, limitFilter)}
+                onClick={() => applyFilters(currentSearch, currentPage - 1, limitFilter)}
                 className="px-3 py-1.5 bg-white border border-slate-300 rounded-md disabled:opacity-40 hover:bg-slate-50 font-medium text-slate-700 transition"
               >
                 Previous
               </button>
               <button
                 disabled={currentPage >= totalPages}
-                onClick={() => applyFilters(search, currentPage + 1, limitFilter)}
+                onClick={() => applyFilters(currentSearch, currentPage + 1, limitFilter)}
                 className="px-3 py-1.5 bg-white border border-slate-300 rounded-md disabled:opacity-40 hover:bg-slate-50 font-medium text-slate-700 transition"
               >
                 Next

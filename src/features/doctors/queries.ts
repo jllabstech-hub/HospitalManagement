@@ -1,5 +1,6 @@
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/server/db/client';
+import { buildFuzzyDoctorWhere } from '@/lib/fuzzy-search';
 
 export interface DoctorPublicProfile {
   id: string;
@@ -58,24 +59,18 @@ export async function searchDoctors(params: SearchDoctorsParams): Promise<Search
   const limit = Math.max(1, Math.min(50, params.limit || 20));
   const skip = (page - 1) * limit;
 
-  const searchTrimmed = params.search?.trim();
+  const searchTrimmed = params.search?.trim() || '';
+  const fuzzyClause = buildFuzzyDoctorWhere(searchTrimmed);
 
   // Build Prisma filter clauses
   const whereClause: Prisma.DoctorProfileWhereInput = {
+    ...fuzzyClause,
     user: { isActive: true },
     department: { isActive: true },
   };
 
   if (params.departmentId && params.departmentId.trim() !== '') {
     whereClause.departmentId = params.departmentId.trim();
-  }
-
-  if (searchTrimmed && searchTrimmed.length > 0) {
-    whereClause.OR = [
-      { fullName: { contains: searchTrimmed, mode: 'insensitive' } },
-      { qualification: { contains: searchTrimmed, mode: 'insensitive' } },
-      { bio: { contains: searchTrimmed, mode: 'insensitive' } },
-    ];
   }
 
   const selectFields = {

@@ -3,6 +3,8 @@ import { prisma } from '@/server/db/client';
 import DepartmentManagement from '@/features/departments/components/DepartmentManagement';
 import { Prisma } from '@prisma/client';
 
+import { buildFuzzyDepartmentWhere } from '@/lib/fuzzy-search';
+
 interface PageProps {
   searchParams: Promise<{
     page?: string;
@@ -19,13 +21,7 @@ export default async function AdminDepartmentsPage({ searchParams }: PageProps) 
   const limit = Math.max(1, parseInt(resolvedParams.limit || '10', 10));
   const skip = (page - 1) * limit;
 
-  const whereCondition: Prisma.DepartmentWhereInput = {};
-  if (search) {
-    whereCondition.OR = [
-      { name: { contains: search, mode: 'insensitive' } },
-      { description: { contains: search, mode: 'insensitive' } },
-    ];
-  }
+  const whereCondition: Prisma.DepartmentWhereInput = buildFuzzyDepartmentWhere(search);
 
   const [departments, totalDepartments] = await Promise.all([
     prisma.department.findMany({

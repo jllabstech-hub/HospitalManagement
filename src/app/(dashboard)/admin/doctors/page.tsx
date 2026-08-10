@@ -3,6 +3,8 @@ import { prisma } from '@/server/db/client';
 import DoctorManagement from '@/features/doctors/components/DoctorManagement';
 import { Prisma } from '@prisma/client';
 
+import { buildFuzzyDoctorWhere } from '@/lib/fuzzy-search';
+
 interface PageProps {
   searchParams: Promise<{
     search?: string;
@@ -24,16 +26,7 @@ export default async function AdminDoctorsPage({ searchParams }: PageProps) {
   const limit = Math.max(1, parseInt(params.limit || '10', 10));
 
   // Build Prisma filter conditions
-  const whereCondition: Prisma.DoctorProfileWhereInput = {};
-
-  if (search) {
-    whereCondition.OR = [
-      { fullName: { contains: search, mode: 'insensitive' } },
-      { qualification: { contains: search, mode: 'insensitive' } },
-      { user: { is: { email: { contains: search, mode: 'insensitive' } } } },
-      { phoneNumber: { contains: search, mode: 'insensitive' } },
-    ];
-  }
+  const whereCondition: Prisma.DoctorProfileWhereInput = buildFuzzyDoctorWhere(search);
 
   if (departmentId) {
     whereCondition.departmentId = departmentId;

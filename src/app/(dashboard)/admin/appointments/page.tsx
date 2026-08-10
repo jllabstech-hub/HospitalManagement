@@ -4,6 +4,7 @@ import { prisma } from '@/server/db/client';
 import { getAdminAppointments } from '@/features/appointments/services/manage-appointments';
 import StatusBadge from '@/components/shared/StatusBadge';
 import { formatTimeTo12Hour } from '@/lib/date-utils';
+import InteractiveSearchInput from '@/components/shared/InteractiveSearchInput';
 
 interface PageProps {
   searchParams: Promise<{
@@ -58,18 +59,14 @@ export default async function AdminAppointmentsMasterPage({ searchParams }: Page
       {/* Filter Form */}
       <form method="GET" action="/admin/appointments" className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-          {/* Search Input */}
+          {/* Interactive Search Input */}
           <div className="md:col-span-4">
-            <label htmlFor="adminSearchInput" className="block text-xs font-semibold text-slate-700 mb-1">
-              Search Patient or Doctor Name
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              Interactive Search (Patient / Doctor / Reason)
             </label>
-            <input
-              id="adminSearchInput"
-              type="text"
-              name="search"
+            <InteractiveSearchInput
+              placeholder="Type patient, doctor name or reason..."
               defaultValue={search}
-              placeholder="e.g. Alice, Smith"
-              className="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none"
             />
           </div>
 
