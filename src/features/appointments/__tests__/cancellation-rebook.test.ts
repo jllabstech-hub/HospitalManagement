@@ -48,11 +48,11 @@ describe('Cancellation Slot Release & Re-booking Integration Test', () => {
     });
 
     const dept = await prisma.department.create({
-      data: { name: 'Cancel Rebook Dept', isActive: true },
+      data: { name: 'Cancel Rebook Dept', slug: 'cancel-rebook-dept', isActive: true },
     });
 
     const uDoc = await prisma.user.create({ data: { email: 'cancelrebook.test.doc@h.com', passwordHash: 'h', role: Role.DOCTOR, isActive: true } });
-    const doc = await prisma.doctorProfile.create({ data: { userId: uDoc.id, departmentId: dept.id, fullName: 'Dr. CancelRebook', phoneNumber: '1', qualification: 'MBBS' } });
+    const doc = await prisma.doctorProfile.create({ data: { userId: uDoc.id, departmentId: dept.id, fullName: 'Dr. CancelRebook', slug: 'cancel-rebook-doc', phoneNumber: '1', qualification: 'MBBS' } });
     docId = doc.id;
 
     for (let day = 0; day <= 6; day++) {

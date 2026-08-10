@@ -39,7 +39,7 @@ describe('Doctor Management Server Actions & Security', () => {
     let activeDept = await prisma.department.findFirst({ where: { isActive: true } });
     if (!activeDept) {
       activeDept = await prisma.department.create({
-        data: { name: 'Active Test Dept', isActive: true },
+        data: { name: 'Active Test Dept', slug: 'active-test-dept', isActive: true },
       });
     }
     activeDeptId = activeDept.id;
@@ -47,7 +47,7 @@ describe('Doctor Management Server Actions & Security', () => {
     let inactiveDept = await prisma.department.findFirst({ where: { isActive: false } });
     if (!inactiveDept) {
       inactiveDept = await prisma.department.create({
-        data: { name: 'Inactive Test Dept', isActive: false },
+        data: { name: 'Inactive Test Dept', slug: 'inactive-test-dept', isActive: false },
       });
     }
     inactiveDeptId = inactiveDept.id;

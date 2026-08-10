@@ -40,16 +40,16 @@ describe('Appointment Server-Side Authorization & Ownership Isolation', () => {
     });
 
     const dept = await prisma.department.create({
-      data: { name: 'Auth Scope Dept', isActive: true },
+      data: { name: 'Auth Scope Dept', slug: 'auth-scope-dept', isActive: true },
     });
 
     // Doctor A & B
     const uDocA = await prisma.user.create({ data: { email: 'authscope.test.doca@h.com', passwordHash: 'h', role: Role.DOCTOR, isActive: true } });
-    const docA = await prisma.doctorProfile.create({ data: { userId: uDocA.id, departmentId: dept.id, fullName: 'Dr. Auth Scope A', phoneNumber: '1', qualification: 'MBBS' } });
+    const docA = await prisma.doctorProfile.create({ data: { userId: uDocA.id, departmentId: dept.id, fullName: 'Dr. Auth Scope A', slug: 'auth-scope-doc-a', phoneNumber: '1', qualification: 'MBBS' } });
     docAProfileId = docA.id;
 
     const uDocB = await prisma.user.create({ data: { email: 'authscope.test.docb@h.com', passwordHash: 'h', role: Role.DOCTOR, isActive: true } });
-    const docB = await prisma.doctorProfile.create({ data: { userId: uDocB.id, departmentId: dept.id, fullName: 'Dr. Auth Scope B', phoneNumber: '2', qualification: 'MBBS' } });
+    const docB = await prisma.doctorProfile.create({ data: { userId: uDocB.id, departmentId: dept.id, fullName: 'Dr. Auth Scope B', slug: 'auth-scope-doc-b', phoneNumber: '2', qualification: 'MBBS' } });
     docBProfileId = docB.id;
 
     // Patient A & B

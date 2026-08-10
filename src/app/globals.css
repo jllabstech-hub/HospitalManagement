@@ -3,12 +3,118 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #0f172a;
+  --background: #f8f7f4;
+  --foreground: #14212b;
+  --brand: #0f4a56;
+  --brand-soft: #2a7a8c;
+  --accent: #2d8a5e;
+  --surface: #ffffff;
+  --border: #dde5e9;
+  --ring: #2a7a8c;
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    color: var(--foreground);
+    background: var(--background);
+    font-family: var(--font-sans), system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background: #d9ebee;
+    color: #082e36;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .container-page {
+    @apply mx-auto w-full max-w-wide px-4 sm:px-6 lg:px-8;
+  }
+
+  .section-pad {
+    @apply py-14 sm:py-20 lg:py-24;
+  }
+
+  .section-pad-sm {
+    @apply py-10 sm:py-14;
+  }
+
+  .card-surface {
+    @apply rounded-card border border-[#dde5e9]/80 bg-white shadow-soft;
+  }
+
+  .input-field {
+    @apply w-full rounded-button border border-[#dde5e9] bg-white px-3.5 py-2.5 text-sm text-ink placeholder:text-ink-soft transition duration-brand focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-200;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-button bg-brand-700 px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition duration-brand hover:bg-brand-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-button border border-[#dde5e9] bg-white px-5 py-2.5 text-sm font-semibold text-ink transition duration-brand hover:border-brand-300 hover:bg-brand-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-button px-4 py-2 text-sm font-semibold text-brand-700 transition duration-brand hover:bg-brand-50;
+  }
+
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 rounded-button bg-rose-600 px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition duration-brand hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .link-nav {
+    @apply text-sm font-medium text-ink-muted transition duration-brand hover:text-brand-700;
+  }
+
+  .eyebrow {
+    @apply text-xs font-semibold uppercase tracking-[0.14em] text-brand-600;
+  }
+
+  .prose-hospital p {
+    @apply text-base leading-relaxed text-ink-muted;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .hero-mesh {
+    background:
+      radial-gradient(ellipse 80% 60% at 70% 40%, rgba(42, 122, 140, 0.18), transparent 55%),
+      radial-gradient(ellipse 50% 40% at 20% 80%, rgba(45, 138, 94, 0.1), transparent 50%),
+      linear-gradient(160deg, #041c22 0%, #0f4a56 48%, #1b5f6e 100%);
+  }
+
+  .pattern-dots {
+    background-image: radial-gradient(rgba(20, 33, 43, 0.06) 1px, transparent 1px);
+    background-size: 18px 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

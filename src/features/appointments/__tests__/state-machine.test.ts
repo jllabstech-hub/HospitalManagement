@@ -39,7 +39,7 @@ describe('State Machine & Status Transition Specification Tests', () => {
     });
 
     const dept = await prisma.department.create({
-      data: { name: 'State Machine Dept', isActive: true },
+      data: { name: 'State Machine Dept', slug: 'state-machine-dept', isActive: true },
     });
 
     // Doctor A
@@ -47,7 +47,7 @@ describe('State Machine & Status Transition Specification Tests', () => {
       data: { email: 'statemach.test.doca@hospital.com', passwordHash: 'h', role: Role.DOCTOR, isActive: true },
     });
     const docA = await prisma.doctorProfile.create({
-      data: { userId: userDocA.id, departmentId: dept.id, fullName: 'Dr. State Machine A', phoneNumber: '1', qualification: 'MBBS' },
+      data: { userId: userDocA.id, departmentId: dept.id, fullName: 'Dr. State Machine A', slug: 'state-mach-doc-a', phoneNumber: '1', qualification: 'MBBS' },
     });
     doctorUser = { id: userDocA.id, doctorProfileId: docA.id };
 
@@ -56,7 +56,7 @@ describe('State Machine & Status Transition Specification Tests', () => {
       data: { email: 'statemach.test.docb@hospital.com', passwordHash: 'h', role: Role.DOCTOR, isActive: true },
     });
     const docB = await prisma.doctorProfile.create({
-      data: { userId: userDocB.id, departmentId: dept.id, fullName: 'Dr. State Machine B', phoneNumber: '2', qualification: 'MBBS' },
+      data: { userId: userDocB.id, departmentId: dept.id, fullName: 'Dr. State Machine B', slug: 'state-mach-doc-b', phoneNumber: '2', qualification: 'MBBS' },
     });
     doctorBUser = { id: userDocB.id, doctorProfileId: docB.id };
 

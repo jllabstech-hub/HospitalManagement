@@ -7,8 +7,9 @@ export default defineConfig({
   retries: 0,
   workers: 1,
   reporter: 'list',
+  timeout: 60_000,
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL: 'http://localhost:5001',
     trace: 'on-first-retry',
   },
   projects: [
@@ -18,9 +19,9 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npm run start',
-    url: 'http://localhost:3000',
+    command: 'npx prisma db seed && npx next start -p 5001',
+    url: 'http://localhost:5001',
     reuseExistingServer: false,
-    timeout: 120 * 1000,
+    timeout: 180 * 1000,
   },
 });

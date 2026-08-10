@@ -16,7 +16,6 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
   const resolvedParams = await searchParams;
   const search = resolvedParams.search?.trim() || '';
 
-  // Concurrent system statistics queries
   const [
     deptCount,
     doctorCount,
@@ -41,99 +40,91 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
 
   return (
     <div className="space-y-8">
-      {/* Welcome Banner */}
-      <div className="bg-gradient-to-r from-slate-900 via-purple-950 to-slate-900 rounded-2xl p-6 text-white shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-          <span className="text-xs uppercase tracking-widest text-purple-300 font-bold bg-white/10 px-3 py-1 rounded-full border border-white/20">
-            System Administration
-          </span>
-          <h1 className="text-2xl sm:text-3xl font-extrabold mt-3">
-            Admin Dashboard Overview
-          </h1>
-          <p className="text-sm text-slate-300 mt-1 max-w-xl">
-            System-wide hospital management, department master data, doctor provisioning, and appointment supervision.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Link
-            href="/admin/departments"
-            className="px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl shadow-xs transition"
-          >
-            Departments
-          </Link>
-          <Link
-            href="/admin/doctors"
-            className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs transition"
-          >
-            Doctors
-          </Link>
-          <Link
-            href="/admin/appointments"
-            className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition"
-          >
-            Appointments
-          </Link>
-        </div>
-      </div>
-
-      {/* Metrics Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm text-center">
-          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Total Departments</span>
-          <span className="text-2xl font-black text-slate-800 mt-1 block">{deptCount}</span>
-        </div>
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm text-center">
-          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Total Doctors</span>
-          <span className="text-2xl font-black text-slate-800 mt-1 block">{doctorCount}</span>
-        </div>
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm text-center">
-          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Patients</span>
-          <span className="text-2xl font-black text-slate-800 mt-1 block">{patientCount}</span>
-        </div>
-        <div className="bg-blue-50 p-5 rounded-2xl border border-blue-200 shadow-sm text-center">
-          <span className="text-xs font-bold text-blue-700 uppercase tracking-wider block">Booked</span>
-          <span className="text-2xl font-black text-blue-900 mt-1 block">{bookedAppts}</span>
-        </div>
-        <div className="bg-emerald-50 p-5 rounded-2xl border border-emerald-200 shadow-sm text-center col-span-2 sm:col-span-1">
-          <span className="text-xs font-bold text-emerald-800 uppercase tracking-wider block">Completed</span>
-          <span className="text-2xl font-black text-emerald-950 mt-1 block">{completedAppts}</span>
-        </div>
-      </div>
-
-      {/* Recent Appointments Table */}
-      <div className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-100 pb-4 gap-4">
+      <section className="relative overflow-hidden rounded-card bg-brand-950 px-6 py-8 text-white shadow-card sm:px-8">
+        <div className="absolute inset-0 pattern-dots opacity-10" aria-hidden />
+        <div className="relative flex flex-col justify-between gap-6 md:flex-row md:items-center">
           <div>
-            <h2 className="text-lg font-bold text-slate-800">📊 System-Wide Appointments Overview</h2>
-            <p className="text-xs text-slate-500">Total System Appointments: {totalAppts} (Booked: {bookedAppts}, Confirmed: {confirmedAppts}, Cancelled: {cancelledAppts})</p>
+            <span className="rounded-pill border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-brand-100">
+              System Administration
+            </span>
+            <h1 className="mt-3 font-display text-3xl font-semibold tracking-tight">
+              Admin Dashboard
+            </h1>
+            <p className="mt-2 max-w-xl text-sm text-brand-100">
+              System-wide hospital management, department master data, doctor provisioning, and
+              appointment supervision.
+            </p>
           </div>
-          <div className="flex items-center space-x-3">
-            <form method="GET" action="/admin/dashboard" className="flex space-x-2">
+          <div className="flex flex-wrap gap-2">
+            <Link href="/admin/departments" className="btn-primary !bg-brand-600">
+              Departments
+            </Link>
+            <Link href="/admin/doctors" className="btn-secondary !border-white/20 !bg-white/10 !text-white hover:!bg-white/15">
+              Doctors
+            </Link>
+            <Link href="/admin/appointments" className="btn-secondary !border-white/20 !bg-white/10 !text-white hover:!bg-white/15">
+              Appointments
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-5">
+        {[
+          { label: 'Total Departments', value: deptCount },
+          { label: 'Total Doctors', value: doctorCount },
+          { label: 'Patients', value: patientCount },
+          { label: 'Booked', value: bookedAppts, tone: 'brand' },
+          { label: 'Completed', value: completedAppts, tone: 'accent' },
+        ].map((stat) => (
+          <div
+            key={stat.label}
+            className={`rounded-card border p-5 text-center shadow-soft ${
+              stat.tone === 'brand'
+                ? 'border-brand-200 bg-brand-50'
+                : stat.tone === 'accent'
+                  ? 'border-accent-200 bg-accent-50'
+                  : 'border-[#dde5e9] bg-white'
+            }`}
+          >
+            <span className="block text-xs font-bold uppercase tracking-wider text-ink-muted">
+              {stat.label}
+            </span>
+            <span className="mt-1 block text-2xl font-bold text-ink">{stat.value}</span>
+          </div>
+        ))}
+      </div>
+
+      <section className="card-surface space-y-6 p-6 sm:p-8">
+        <div className="flex flex-col justify-between gap-4 border-b border-[#dde5e9] pb-4 md:flex-row md:items-center">
+          <div>
+            <h2 className="text-lg font-semibold text-ink">System-Wide Appointments Overview</h2>
+            <p className="text-xs text-ink-muted">
+              Total System Appointments: {totalAppts} (Booked: {bookedAppts}, Confirmed:{' '}
+              {confirmedAppts}, Cancelled: {cancelledAppts})
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <form method="GET" action="/admin/dashboard" className="flex gap-2">
               <input
                 type="text"
                 name="search"
                 defaultValue={search}
                 placeholder="Search patient/doctor..."
-                className="px-3 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                className="input-field !py-1.5 !text-xs"
               />
-              <button
-                type="submit"
-                className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs rounded-lg transition"
-              >
+              <button type="submit" className="btn-primary !py-1.5 !text-xs">
                 Search
               </button>
               {search && (
-                <Link
-                  href="/admin/dashboard"
-                  className="px-2 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold text-xs rounded-lg transition"
-                >
+                <Link href="/admin/dashboard" className="btn-secondary !py-1.5 !text-xs">
                   Clear
                 </Link>
               )}
             </form>
             <Link
               href="/admin/appointments"
-              className="text-xs font-semibold text-purple-600 hover:underline whitespace-nowrap"
+              className="whitespace-nowrap text-xs font-semibold text-brand-700 hover:underline"
             >
               View Master List →
             </Link>
@@ -141,38 +132,43 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
         </div>
 
         {recentApptsResult.appointments.length === 0 ? (
-          <div className="p-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-300">
-            <p className="text-xs text-slate-500">No appointments logged in system.</p>
+          <div className="rounded-card border border-dashed border-[#c9d5db] bg-surface-muted p-8 text-center">
+            <p className="text-xs text-ink-muted">No appointments logged in system.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead>
-                <tr className="border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider">
-                  <th className="py-3 px-3">Date & Time</th>
-                  <th className="py-3 px-3">Patient</th>
-                  <th className="py-3 px-3">Doctor</th>
-                  <th className="py-3 px-3">Department</th>
-                  <th className="py-3 px-3">Status</th>
-                  <th className="py-3 px-3 text-right">Action</th>
+                <tr className="border-b border-[#dde5e9] font-bold uppercase tracking-wider text-ink-soft">
+                  <th className="px-3 py-3">Date & Time</th>
+                  <th className="px-3 py-3">Patient</th>
+                  <th className="px-3 py-3">Doctor</th>
+                  <th className="px-3 py-3">Department</th>
+                  <th className="px-3 py-3">Status</th>
+                  <th className="px-3 py-3 text-right">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 font-medium">
+              <tbody className="divide-y divide-[#eef2f4] font-medium">
                 {recentApptsResult.appointments.map((a) => (
-                  <tr key={a.id} className="hover:bg-slate-50/80 transition">
-                    <td className="py-3.5 px-3 font-semibold text-slate-800">
-                      {a.dateStr} <span className="text-slate-400 font-normal">({formatTimeTo12Hour(a.startTime)})</span>
+                  <tr key={a.id} className="transition hover:bg-brand-50/40">
+                    <td className="px-3 py-3.5 font-semibold text-ink">
+                      {a.dateStr}{' '}
+                      <span className="font-normal text-ink-soft">
+                        ({formatTimeTo12Hour(a.startTime)})
+                      </span>
                     </td>
-                    <td className="py-3.5 px-3 text-slate-700">{a.patient.fullName}</td>
-                    <td className="py-3.5 px-3 text-slate-700">{a.doctor.fullName}</td>
-                    <td className="py-3.5 px-3 text-purple-700 font-semibold">{a.doctor.department.name}</td>
-                    <td className="py-3.5 px-3">
+                    <td className="px-3 py-3.5 text-ink-muted">{a.patient.fullName}</td>
+                    <td className="px-3 py-3.5 text-ink-muted">{a.doctor.fullName}</td>
+                    <td className="px-3 py-3.5 font-semibold text-brand-700">
+                      {a.doctor.department.name}
+                    </td>
+                    <td className="px-3 py-3.5">
                       <StatusBadge status={a.status} />
                     </td>
-                    <td className="py-3.5 px-3 text-right">
+                    <td className="px-3 py-3.5 text-right">
                       <Link
                         href={`/admin/appointments/${a.id}`}
-                        className="text-purple-600 hover:underline font-bold"
+                        className="font-bold text-brand-700 hover:underline"
                       >
                         Detail →
                       </Link>
@@ -183,7 +179,7 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
             </table>
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
 }

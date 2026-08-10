@@ -51,12 +51,12 @@ describe('Patient Doctor Discovery Queries & Security Projection', () => {
 
     // Create Active & Inactive Test Departments
     const activeDept = await prisma.department.create({
-      data: { name: 'Search Test Dept Active', isActive: true },
+      data: { name: 'Search Test Dept Active', slug: 'search-test-dept-active', isActive: true },
     });
     activeDeptId = activeDept.id;
 
     const inactiveDept = await prisma.department.create({
-      data: { name: 'Search Test Dept Inactive', isActive: false },
+      data: { name: 'Search Test Dept Inactive', slug: 'search-test-dept-inactive', isActive: false },
     });
     inactiveDeptId = inactiveDept.id;
 
@@ -74,6 +74,7 @@ describe('Patient Doctor Discovery Queries & Security Projection', () => {
         userId: userA.id,
         departmentId: activeDeptId,
         fullName: 'Dr. Alice Specialist',
+        slug: 'doc-search-alice',
         phoneNumber: '+91 99999 11111',
         qualification: 'MBBS, MD Cardiology',
         experienceYears: 10,
@@ -96,6 +97,7 @@ describe('Patient Doctor Discovery Queries & Security Projection', () => {
         userId: userB.id,
         departmentId: activeDeptId,
         fullName: 'Dr. Bob Inactive',
+        slug: 'doc-search-bob-inactive',
         phoneNumber: '+91 99999 22222',
         qualification: 'MBBS',
         experienceYears: 5,
@@ -116,6 +118,7 @@ describe('Patient Doctor Discovery Queries & Security Projection', () => {
         userId: userC.id,
         departmentId: inactiveDeptId, // Inactive department
         fullName: 'Dr. Charlie InactiveDept',
+        slug: 'doc-search-charlie-inactdept',
         phoneNumber: '+91 99999 33333',
         qualification: 'MBBS',
         experienceYears: 7,

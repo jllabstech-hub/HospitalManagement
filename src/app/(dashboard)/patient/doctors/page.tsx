@@ -1,7 +1,16 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { requirePatient } from '@/server/security/auth-helpers';
 import { getPublicDepartments, searchDoctors } from '@/features/doctors/queries';
 import InteractiveSearchInput from '@/components/shared/InteractiveSearchInput';
+import DoctorCard from '@/components/doctors/DoctorCard';
+import EmptyState from '@/components/ui/EmptyState';
+import { APP_CONFIG } from '@/config';
+
+export const metadata: Metadata = {
+  title: 'Find a Doctor',
+  description: `Search ${APP_CONFIG.shortName} specialists by name or department and book a 30-minute consultation.`,
+};
 
 interface PageProps {
   searchParams: Promise<{
@@ -33,20 +42,25 @@ export default async function FindDoctorPage({ searchParams }: PageProps) {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
       <div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-800">Find a Doctor</h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Search doctors by specialty, department, or name.
+        <p className="eyebrow">Doctor directory</p>
+        <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight text-ink">
+          Find a Doctor
+        </h1>
+        <p className="mt-2 max-w-2xl text-base text-ink-muted">
+          Find the Right Doctor — search by specialty, department, or name, then book a
+          30-minute consultation.
         </p>
       </div>
 
-      {/* Search & Filter Form */}
-      <form method="GET" action="/patient/doctors" className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-          {/* Interactive Search Input */}
+      <form
+        method="GET"
+        action="/patient/doctors"
+        className="card-surface space-y-4 p-5 sm:p-6"
+      >
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
           <div className="md:col-span-6">
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
+            <label className="mb-1 block text-xs font-semibold text-ink">
               Interactive Search (Doctor / Specialization / Keyword)
             </label>
             <InteractiveSearchInput
@@ -55,16 +69,15 @@ export default async function FindDoctorPage({ searchParams }: PageProps) {
             />
           </div>
 
-          {/* Department Filter */}
           <div className="md:col-span-4">
-            <label htmlFor="deptFilter" className="block text-xs font-semibold text-slate-700 mb-1">
+            <label htmlFor="deptFilter" className="mb-1 block text-xs font-semibold text-ink">
               Medical Department
             </label>
             <select
               id="deptFilter"
               name="department"
               defaultValue={departmentId}
-              className="w-full px-4 py-2.5 text-xs sm:text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
+              className="input-field"
             >
               <option value="">All Departments</option>
               {departments.map((d) => (
@@ -75,103 +88,52 @@ export default async function FindDoctorPage({ searchParams }: PageProps) {
             </select>
           </div>
 
-          {/* Submit Button */}
-          <div className="md:col-span-2 flex items-end">
-            <button
-              type="submit"
-              className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs sm:text-sm rounded-xl shadow-sm transition"
-            >
+          <div className="flex items-end md:col-span-2">
+            <button type="submit" className="btn-primary w-full">
               Search
             </button>
           </div>
         </div>
 
         {(search || departmentId) && (
-          <div className="pt-2 flex items-center justify-between text-xs">
-            <span className="text-slate-500">
-              Found <strong className="text-slate-800">{totalCount}</strong> matching {totalCount === 1 ? 'doctor' : 'doctors'}
+          <div className="flex items-center justify-between pt-1 text-xs">
+            <span className="text-ink-muted">
+              Found <strong className="text-ink">{totalCount}</strong> matching{' '}
+              {totalCount === 1 ? 'doctor' : 'doctors'}
             </span>
-            <Link href="/patient/doctors" className="text-blue-600 font-semibold hover:underline">
+            <Link href="/patient/doctors" className="font-semibold text-brand-700 hover:underline">
               Reset Filters
             </Link>
           </div>
         )}
       </form>
 
-      {/* Doctor Grid */}
       {doctors.length === 0 ? (
-        <div className="bg-white p-12 rounded-2xl border border-dashed border-slate-300 text-center space-y-3">
-          <div className="text-4xl">🔍</div>
-          <h3 className="text-base font-bold text-slate-700">No Doctors Found</h3>
-          <p className="text-xs text-slate-500 max-w-sm mx-auto">
-            We couldn&apos;t find any active doctors matching your search criteria. Try adjusting your search keyword or department filter.
-          </p>
-          <div className="pt-2">
-            <Link
-              href="/patient/doctors"
-              className="inline-block px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl"
-            >
-              View All Doctors
-            </Link>
-          </div>
-        </div>
+        <EmptyState
+          title="No Doctors Found"
+          description="We couldn't find any active doctors matching your search criteria. Try adjusting your search keyword or department filter."
+          actionHref="/patient/doctors"
+          actionLabel="View All Doctors"
+        />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
           {doctors.map((doc) => (
-            <div
-              key={doc.id}
-              className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col justify-between p-6"
-            >
-              <div>
-                {/* Department Badge */}
-                <div className="flex justify-between items-start mb-3">
-                  <span className="bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
-                    {doc.department.name}
-                  </span>
-                  <span className="text-[11px] font-semibold text-slate-400">
-                    {doc.experienceYears} Yrs Exp.
-                  </span>
-                </div>
-
-                {/* Doctor Name & Qualification */}
-                <h3 className="text-base font-bold text-slate-800">{doc.fullName}</h3>
-                <p className="text-xs text-blue-600 font-medium mt-0.5">{doc.qualification}</p>
-
-                {/* Short Bio */}
-                <p className="text-xs text-slate-500 mt-3 line-clamp-3 leading-relaxed">
-                  {doc.bio || 'Experienced specialist available for outpatient consultations.'}
-                </p>
-              </div>
-
-              {/* Action Button */}
-              <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
-                <span className="text-[11px] text-slate-400 font-medium">
-                  30-Min Consults
-                </span>
-                <Link
-                  href={`/patient/doctors/${doc.id}`}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-xl shadow-xs transition"
-                >
-                  View Profile & Book →
-                </Link>
-              </div>
-            </div>
+            <DoctorCard key={doc.id} doctor={doc} />
           ))}
         </div>
       )}
 
-      {/* Pagination Controls */}
       {doctors.length > 0 && (
-        <div className="bg-white p-4 rounded-xl border border-slate-200 flex items-center justify-between text-xs font-semibold">
+        <div className="card-surface flex items-center justify-between p-4 text-xs font-semibold">
           <div>
-            Showing Page <span className="text-slate-800">{currentPage}</span> of{' '}
-            <span className="text-slate-800">{totalPages}</span>
+            Showing Page <span className="text-ink">{currentPage}</span> of{' '}
+            <span className="text-ink">{totalPages}</span>
           </div>
           <div className="flex space-x-2">
             {currentPage > 1 && (
               <Link
                 href={`/patient/doctors?search=${encodeURIComponent(search)}&department=${encodeURIComponent(departmentId)}&page=${currentPage - 1}`}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg"
+                className="btn-secondary"
               >
                 ← Previous
               </Link>
@@ -179,7 +141,7 @@ export default async function FindDoctorPage({ searchParams }: PageProps) {
             {currentPage < totalPages && (
               <Link
                 href={`/patient/doctors?search=${encodeURIComponent(search)}&department=${encodeURIComponent(departmentId)}&page=${currentPage + 1}`}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+                className="btn-primary"
               >
                 Next →
               </Link>

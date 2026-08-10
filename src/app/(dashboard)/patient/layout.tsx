@@ -2,59 +2,38 @@ import { ReactNode } from 'react';
 import Link from 'next/link';
 import { requirePatient } from '@/server/security/auth-helpers';
 import LogoutButton from '@/components/shared/LogoutButton';
+import BrandLogo from '@/components/layout/BrandLogo';
 
 export default async function PatientLayout({ children }: { children: ReactNode }) {
   const user = await requirePatient();
 
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col font-sans">
-      {/* Header Bar */}
-      <header className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white shadow-md sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          {/* Branding */}
-          <div className="flex items-center space-x-3">
-            <div className="w-9 h-9 rounded-xl bg-blue-500/20 border border-blue-400/30 flex items-center justify-center text-blue-300 font-black text-lg">
-              🏥
-            </div>
-            <div>
-              <Link href="/patient/dashboard" className="font-bold text-base tracking-wide hover:text-blue-200 transition">
-                CarePulse Portal
-              </Link>
-              <span className="block text-[10px] text-blue-300/80 uppercase tracking-widest font-semibold">
-                Patient Self-Service
-              </span>
-            </div>
+    <div className="flex min-h-screen flex-col bg-surface-warm font-sans">
+      <header className="sticky top-0 z-40 border-b border-[#dde5e9]/90 bg-white/95 shadow-header backdrop-blur-md">
+        <div className="mx-auto flex h-16 max-w-wide items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+          <div className="flex min-w-0 items-center gap-3">
+            <BrandLogo href="/patient/dashboard" size="sm" />
+            <span className="hidden border-l border-[#dde5e9] pl-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-600 sm:block">
+              Patient Self-Service
+            </span>
           </div>
 
-          {/* Navigation Links */}
-          <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
-            <Link
-              href="/patient/dashboard"
-              className="text-slate-200 hover:text-white transition py-1 border-b-2 border-transparent hover:border-blue-400"
-            >
+          <nav className="hidden items-center gap-6 text-sm font-medium md:flex" aria-label="Patient">
+            <Link href="/patient/dashboard" className="link-nav">
               Dashboard
             </Link>
-            <Link
-              href="/patient/doctors"
-              className="text-slate-200 hover:text-white transition py-1 border-b-2 border-transparent hover:border-blue-400"
-            >
+            <Link href="/patient/doctors" className="link-nav">
               Find a Doctor
             </Link>
-            <Link
-              href="/patient/appointments"
-              className="text-slate-200 hover:text-white transition py-1 border-b-2 border-transparent hover:border-blue-400"
-            >
+            <Link href="/patient/appointments" className="link-nav">
               My Appointments
             </Link>
           </nav>
 
-          {/* User Badge & Logout */}
-          <div className="flex items-center space-x-4">
-            <div className="text-right hidden sm:block">
-              <p className="text-xs font-semibold text-white truncate max-w-[160px]">
-                {user.email}
-              </p>
-              <span className="inline-block bg-blue-500/20 text-blue-300 font-semibold px-2 py-0.5 rounded text-[10px] tracking-wide">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="hidden text-right sm:block">
+              <p className="max-w-[160px] truncate text-xs font-semibold text-ink">{user.email}</p>
+              <span className="mt-0.5 inline-block rounded bg-brand-50 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-brand-700">
                 PATIENT
               </span>
             </div>
@@ -63,27 +42,25 @@ export default async function PatientLayout({ children }: { children: ReactNode 
         </div>
       </header>
 
-      {/* Mobile Navigation Bar */}
-      <div className="md:hidden bg-slate-800 text-slate-200 px-4 py-2 flex justify-around text-xs font-medium border-b border-slate-700">
-        <Link href="/patient/dashboard" className="hover:text-white py-1">
+      <div className="flex justify-around border-b border-[#dde5e9] bg-white px-2 py-2 text-xs font-medium text-ink-muted md:hidden">
+        <Link href="/patient/dashboard" className="rounded-button px-3 py-2 hover:bg-brand-50 hover:text-brand-800">
           Dashboard
         </Link>
-        <Link href="/patient/doctors" className="hover:text-white py-1 font-bold text-blue-300">
-          🔍 Find Doctor
+        <Link
+          href="/patient/doctors"
+          className="rounded-button px-3 py-2 font-semibold text-brand-700 hover:bg-brand-50"
+        >
+          Find Doctor
         </Link>
-        <Link href="/patient/appointments" className="hover:text-white py-1">
-          My Appointments
+        <Link href="/patient/appointments" className="rounded-button px-3 py-2 hover:bg-brand-50 hover:text-brand-800">
+          Appointments
         </Link>
       </div>
 
-      {/* Main Content Body */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {children}
-      </main>
+      <main className="mx-auto w-full max-w-wide flex-1 px-4 py-8 sm:px-6 lg:px-8">{children}</main>
 
-      {/* Footer */}
-      <footer className="bg-white border-t border-slate-200 text-center py-4 text-xs text-slate-500">
-        Hospital Appointment Management System &copy; {new Date().getUTCFullYear()} CarePulse Health. All rights reserved.
+      <footer className="border-t border-[#dde5e9] bg-white py-4 text-center text-xs text-ink-soft">
+        CarePulse Hospital Portal © {new Date().getUTCFullYear()}. All rights reserved.
       </footer>
     </div>
   );

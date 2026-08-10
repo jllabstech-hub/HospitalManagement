@@ -1,32 +1,44 @@
 'use client';
 
-import { useState, useEffect, useCallback, useTransition } from 'react';
+import { useState, useEffect, useCallback, useTransition, useMemo } from 'react';
 import Link from 'next/link';
 import { AvailableSlot } from '../domain/slot-types';
 import { getAvailableSlotsAction, bookAppointmentAction } from '../actions';
 import { formatTimeTo12Hour } from '@/lib/date-utils';
 import { BookAppointmentSuccessResult } from '../schemas/booking-schema';
 
-interface DoctorProfileInfo {
-  id: string;
-  fullName: string;
-  phoneNumber: string;
-  qualification: string;
-  experienceYears: number;
-  bio: string | null;
-  department: {
-    id: string;
-    name: string;
-    description: string | null;
-  };
-}
-
 interface Props {
-  doctor: DoctorProfileInfo;
+  doctorId: string;
+  doctorName: string;
+  departmentName: string;
   todayDate: string;
 }
 
-export default function DoctorProfileSlotPicker({ doctor, todayDate }: Props) {
+function addDays(isoDate: string, days: number) {
+  const [y, m, d] = isoDate.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() + days);
+  return dt.toISOString().slice(0, 10);
+}
+
+function formatChipLabel(isoDate: string, todayDate: string) {
+  if (isoDate === todayDate) return 'Today';
+  if (isoDate === addDays(todayDate, 1)) return 'Tomorrow';
+  const [y, m, d] = isoDate.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  return dt.toLocaleDateString('en-IN', { weekday: 'short', timeZone: 'UTC' });
+}
+
+/**
+ * Interactive slot selection + booking confirmation.
+ * Availability and booking authority remain on the server via Server Actions.
+ */
+export default function DoctorProfileSlotPicker({
+  doctorId,
+  doctorName,
+  departmentName,
+  todayDate,
+}: Props) {
   const [selectedDate, setSelectedDate] = useState<string>(todayDate);
   const [slots, setSlots] = useState<AvailableSlot[]>([]);
   const [isPending, startTransition] = useTransition();
@@ -36,36 +48,42 @@ export default function DoctorProfileSlotPicker({ doctor, todayDate }: Props) {
   const [selectedSlot, setSelectedSlot] = useState<AvailableSlot | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
 
-  // Booking state
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [bookingConflictMsg, setBookingConflictMsg] = useState<string | null>(null);
-  const [bookedAppointment, setBookedAppointment] = useState<BookAppointmentSuccessResult['appointment'] | null>(null);
+  const [bookedAppointment, setBookedAppointment] = useState<
+    BookAppointmentSuccessResult['appointment'] | null
+  >(null);
 
-  // Fetch slots function
-  const fetchSlots = useCallback((dateToFetch: string) => {
-    setErrorMsg(null);
-    setIsFullyBlocked(false);
-    setSelectedSlot(null);
+  const dateChips = useMemo(
+    () => Array.from({ length: 7 }, (_, i) => addDays(todayDate, i)),
+    [todayDate]
+  );
 
-    startTransition(async () => {
-      const res = await getAvailableSlotsAction(doctor.id, dateToFetch);
+  const fetchSlots = useCallback(
+    (dateToFetch: string) => {
+      setErrorMsg(null);
+      setIsFullyBlocked(false);
+      setSelectedSlot(null);
 
-      if (!res.success) {
-        setErrorMsg(res.error || 'Failed to fetch slots.');
-        setSlots([]);
-      } else {
-        setSlots(res.slots);
-        setIsFullyBlocked(Boolean(res.isFullyBlocked));
-      }
-    });
-  }, [doctor.id]);
+      startTransition(async () => {
+        const res = await getAvailableSlotsAction(doctorId, dateToFetch);
 
-  // Fetch slots whenever selectedDate changes
+        if (!res.success) {
+          setErrorMsg(res.error || 'Failed to fetch slots.');
+          setSlots([]);
+        } else {
+          setSlots(res.slots);
+          setIsFullyBlocked(Boolean(res.isFullyBlocked));
+        }
+      });
+    },
+    [doctorId]
+  );
+
   useEffect(() => {
     fetchSlots(selectedDate);
   }, [fetchSlots, selectedDate]);
 
-  // Handle booking submission
   const handleConfirmBooking = async () => {
     if (!selectedSlot || isSubmitting) return;
 
@@ -74,7 +92,7 @@ export default function DoctorProfileSlotPicker({ doctor, todayDate }: Props) {
 
     try {
       const res = await bookAppointmentAction({
-        doctorId: doctor.id,
+        doctorId,
         appointmentDate: selectedDate,
         startTime: selectedSlot.startTime,
       });
@@ -83,7 +101,6 @@ export default function DoctorProfileSlotPicker({ doctor, todayDate }: Props) {
         setBookedAppointment(res.appointment);
         setShowConfirmModal(false);
       } else {
-        // Conflict or Validation error: set message, close modal, and refresh available slots
         setBookingConflictMsg(res.message);
         setShowConfirmModal(false);
         fetchSlots(selectedDate);
@@ -98,7 +115,6 @@ export default function DoctorProfileSlotPicker({ doctor, todayDate }: Props) {
     }
   };
 
-  // Group slots into Morning, Afternoon, Evening
   const morningSlots = slots.filter((s) => {
     const hour = parseInt(s.startTime.split(':')[0], 10);
     return hour < 12;
@@ -114,53 +130,84 @@ export default function DoctorProfileSlotPicker({ doctor, todayDate }: Props) {
     return hour >= 17;
   });
 
-  // Render Success Screen after booking
+  const renderSlotGroup = (label: string, group: AvailableSlot[]) => {
+    if (group.length === 0) return null;
+    return (
+      <div>
+        <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-ink-soft">
+          {label}
+        </h3>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+          {group.map((slot) => {
+            const isSelected = selectedSlot?.startTime === slot.startTime;
+            return (
+              <button
+                key={slot.startTime}
+                type="button"
+                onClick={() => setSelectedSlot(slot)}
+                className={`flex flex-col items-center justify-center rounded-button border p-3 text-xs font-semibold transition duration-brand ${
+                  isSelected
+                    ? 'border-brand-700 bg-brand-700 text-white shadow-soft ring-2 ring-brand-300'
+                    : 'border-[#dde5e9] bg-white text-ink hover:border-brand-400 hover:bg-brand-50'
+                }`}
+              >
+                <span>{formatTimeTo12Hour(slot.startTime)}</span>
+                <span
+                  className={`mt-0.5 text-[10px] font-medium ${
+                    isSelected ? 'text-brand-100' : 'text-ink-soft'
+                  }`}
+                >
+                  30 min
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
   if (bookedAppointment) {
     return (
-      <div className="bg-white rounded-2xl p-8 border border-emerald-200 shadow-lg text-center space-y-6 max-w-xl mx-auto my-8">
-        <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 text-3xl mx-auto">
-          ✅
+      <div className="mx-auto my-8 max-w-xl space-y-6 rounded-card border border-accent-200 bg-white p-8 text-center shadow-card">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-accent-50 text-2xl text-accent-700">
+          ✓
         </div>
         <div>
-          <span className="bg-emerald-100 text-emerald-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+          <span className="rounded-pill bg-accent-50 px-3 py-1 text-xs font-bold uppercase tracking-wider text-accent-800">
             Status: {bookedAppointment.status}
           </span>
-          <h2 className="text-2xl font-extrabold text-slate-800 mt-3">Appointment Booked!</h2>
-          <p className="text-xs text-slate-500 mt-1">Your outpatient consultation has been scheduled.</p>
+          <h2 className="mt-3 font-display text-2xl font-semibold text-ink">Appointment Booked!</h2>
+          <p className="mt-1 text-sm text-ink-muted">Your outpatient consultation has been scheduled.</p>
         </div>
 
-        <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 text-left text-xs space-y-3">
-          <div className="flex justify-between">
-            <span className="text-slate-500 font-medium">Doctor:</span>
-            <span className="font-bold text-slate-800">{bookedAppointment.doctorName}</span>
+        <div className="space-y-3 rounded-card border border-[#dde5e9] bg-surface-muted p-6 text-left text-sm">
+          <div className="flex justify-between gap-4">
+            <span className="text-ink-muted">Doctor:</span>
+            <span className="font-semibold text-ink">{bookedAppointment.doctorName}</span>
           </div>
-          <div className="flex justify-between">
-            <span className="text-slate-500 font-medium">Department:</span>
-            <span className="font-semibold text-slate-700">{bookedAppointment.departmentName}</span>
+          <div className="flex justify-between gap-4">
+            <span className="text-ink-muted">Department:</span>
+            <span className="font-medium text-ink">{bookedAppointment.departmentName}</span>
           </div>
-          <div className="flex justify-between border-t border-slate-200 pt-3">
-            <span className="text-slate-500 font-medium">Date:</span>
-            <span className="font-bold text-blue-700">{bookedAppointment.appointmentDate}</span>
+          <div className="flex justify-between gap-4 border-t border-[#dde5e9] pt-3">
+            <span className="text-ink-muted">Date:</span>
+            <span className="font-semibold text-brand-700">{bookedAppointment.appointmentDate}</span>
           </div>
-          <div className="flex justify-between">
-            <span className="text-slate-500 font-medium">Time Slot:</span>
-            <span className="font-bold text-blue-700">
-              {formatTimeTo12Hour(bookedAppointment.startTime)} – {formatTimeTo12Hour(bookedAppointment.endTime)}
+          <div className="flex justify-between gap-4">
+            <span className="text-ink-muted">Time Slot:</span>
+            <span className="font-semibold text-brand-700">
+              {formatTimeTo12Hour(bookedAppointment.startTime)} –{' '}
+              {formatTimeTo12Hour(bookedAppointment.endTime)}
             </span>
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row justify-center gap-3 pt-2">
-          <Link
-            href="/patient/dashboard"
-            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm transition"
-          >
+        <div className="flex flex-col justify-center gap-3 pt-2 sm:flex-row">
+          <Link href="/patient/dashboard" className="btn-primary">
             Go to Patient Dashboard
           </Link>
-          <Link
-            href="/patient/doctors"
-            className="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition"
-          >
+          <Link href="/patient/doctors" className="btn-secondary">
             Back to Doctor Directory
           </Link>
         </div>
@@ -170,64 +217,28 @@ export default function DoctorProfileSlotPicker({ doctor, todayDate }: Props) {
 
   return (
     <div className="space-y-8">
-      {/* Booking Conflict Alert Notice */}
       {bookingConflictMsg && (
-        <div className="p-4 bg-amber-50 border border-amber-300 rounded-2xl text-amber-900 text-xs font-semibold flex items-center justify-between gap-4 shadow-sm animate-pulse">
-          <div className="flex items-center space-x-2">
-            <span className="text-lg">⚠️</span>
-            <span>{bookingConflictMsg}</span>
-          </div>
+        <div className="flex items-center justify-between gap-4 rounded-card border border-amber-300 bg-amber-50 p-4 text-sm font-semibold text-amber-900 shadow-soft">
+          <span>{bookingConflictMsg}</span>
           <button
+            type="button"
             onClick={() => setBookingConflictMsg(null)}
-            className="text-amber-700 hover:text-amber-950 font-bold text-xs px-2 py-1"
+            className="px-2 py-1 text-xs font-bold text-amber-800 hover:text-amber-950"
           >
             ✕ Dismiss
           </button>
         </div>
       )}
 
-      {/* Doctor Profile Header Card */}
-      <div className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-6">
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+      <div className="card-surface space-y-6 p-6 sm:p-8">
+        <div className="flex flex-col justify-between gap-4 border-b border-[#dde5e9] pb-4 sm:flex-row sm:items-center">
           <div>
-            <div className="flex items-center space-x-3 mb-2">
-              <span className="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                {doctor.department.name}
-              </span>
-              <span className="text-xs text-slate-500 font-medium">
-                {doctor.experienceYears} Years Experience
-              </span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-800">{doctor.fullName}</h1>
-            <p className="text-sm font-semibold text-blue-600 mt-1">{doctor.qualification}</p>
+            <h2 className="text-lg font-semibold text-ink">Available Appointments</h2>
+            <p className="text-sm text-ink-muted">Pick an available 30-minute consultation slot.</p>
           </div>
 
-          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs text-slate-600 space-y-1">
-            <p><strong className="text-slate-700">Contact:</strong> {doctor.phoneNumber}</p>
-            <p><strong className="text-slate-700">Department:</strong> {doctor.department.name}</p>
-            <p><strong className="text-slate-700">Consultation:</strong> 30 Minutes</p>
-          </div>
-        </div>
-
-        {doctor.bio && (
-          <div className="border-t border-slate-100 pt-4">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">About Doctor</h3>
-            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">{doctor.bio}</p>
-          </div>
-        )}
-      </div>
-
-      {/* Date & Slot Selection Container */}
-      <div className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
-          <div>
-            <h2 className="text-lg font-bold text-slate-800">📅 Select Appointment Date & Slot</h2>
-            <p className="text-xs text-slate-500">Pick an available 30-minute consultation slot.</p>
-          </div>
-
-          {/* Date Picker Input */}
-          <div className="flex items-center space-x-2">
-            <label htmlFor="slotDatePicker" className="text-xs font-semibold text-slate-700">
+          <div className="flex items-center gap-2">
+            <label htmlFor="slotDatePicker" className="text-xs font-semibold text-ink">
               Date:
             </label>
             <input
@@ -236,153 +247,89 @@ export default function DoctorProfileSlotPicker({ doctor, todayDate }: Props) {
               min={todayDate}
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white font-medium text-slate-800"
+              className="input-field !w-auto font-medium"
             />
           </div>
         </div>
 
-        {/* Loading Spinner */}
+        <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+          {dateChips.map((date) => {
+            const active = date === selectedDate;
+            return (
+              <button
+                key={date}
+                type="button"
+                onClick={() => setSelectedDate(date)}
+                className={`min-w-[4.75rem] shrink-0 rounded-button border px-3 py-2.5 text-center transition duration-brand ${
+                  active
+                    ? 'border-brand-700 bg-brand-700 text-white shadow-soft'
+                    : 'border-[#dde5e9] bg-white text-ink hover:border-brand-300'
+                }`}
+              >
+                <span className="block text-xs font-semibold">{formatChipLabel(date, todayDate)}</span>
+                <span className={`mt-0.5 block text-[10px] ${active ? 'text-brand-100' : 'text-ink-soft'}`}>
+                  {date.slice(5)}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
         {isPending && (
-          <div className="py-12 text-center text-slate-500 text-xs space-y-2">
-            <div className="inline-block w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          <div className="space-y-2 py-12 text-center text-sm text-ink-muted">
+            <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-brand-600 border-t-transparent" />
             <p>Checking live doctor schedule...</p>
           </div>
         )}
 
-        {/* Error State */}
         {!isPending && errorMsg && (
-          <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-800 text-xs text-center font-medium">
+          <div className="rounded-card border border-rose-200 bg-rose-50 p-4 text-center text-sm font-medium text-rose-800">
             {errorMsg}
           </div>
         )}
 
-        {/* Fully Blocked State */}
         {!isPending && !errorMsg && isFullyBlocked && (
-          <div className="p-8 text-center bg-amber-50 rounded-2xl border border-amber-200 space-y-2">
-            <div className="text-3xl">🚫</div>
+          <div className="space-y-2 rounded-card border border-amber-200 bg-amber-50 p-8 text-center">
             <h4 className="text-sm font-bold text-amber-900">Doctor Unavailable on Date</h4>
             <p className="text-xs text-amber-700">
-              The doctor has blocked full-day leave or is unavailable on <strong className="font-semibold">{selectedDate}</strong>. Please select another date.
+              The doctor has blocked full-day leave or is unavailable on{' '}
+              <strong className="font-semibold">{selectedDate}</strong>. Please select another date.
             </p>
           </div>
         )}
 
-        {/* Empty Slots State */}
         {!isPending && !errorMsg && !isFullyBlocked && slots.length === 0 && (
-          <div className="p-8 text-center bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-            <div className="text-3xl">📅</div>
-            <h4 className="text-sm font-bold text-slate-700">No Appointments Available</h4>
-            <p className="text-xs text-slate-500">
-              No 30-minute slots are available for <strong className="font-semibold text-slate-700">{selectedDate}</strong>. The doctor may be off-duty or fully booked.
+          <div className="space-y-2 rounded-card border border-[#dde5e9] bg-surface-muted p-8 text-center">
+            <h4 className="text-sm font-bold text-ink">No Appointments Available</h4>
+            <p className="text-xs text-ink-muted">
+              No 30-minute slots are available for{' '}
+              <strong className="font-semibold text-ink">{selectedDate}</strong>. The doctor may be
+              off-duty or fully booked.
             </p>
           </div>
         )}
 
-        {/* Slots Available Display */}
         {!isPending && !errorMsg && slots.length > 0 && (
           <div className="space-y-6">
-            {/* Morning Section */}
-            {morningSlots.length > 0 && (
-              <div>
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 flex items-center space-x-2">
-                  <span>🌅 Morning Slots (Before 12:00 PM)</span>
-                </h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                  {morningSlots.map((slot) => {
-                    const isSelected = selectedSlot?.startTime === slot.startTime;
-                    return (
-                      <button
-                        key={slot.startTime}
-                        onClick={() => setSelectedSlot(slot)}
-                        className={`p-3 rounded-xl border text-xs font-bold transition flex flex-col items-center justify-center ${
-                          isSelected
-                            ? 'bg-blue-600 text-white border-blue-600 shadow-md ring-2 ring-blue-400'
-                            : 'bg-white text-slate-700 border-slate-200 hover:border-blue-400 hover:bg-blue-50/50'
-                        }`}
-                      >
-                        <span>{formatTimeTo12Hour(slot.startTime)}</span>
-                        <span className={`text-[10px] font-medium mt-0.5 ${isSelected ? 'text-blue-100' : 'text-slate-400'}`}>
-                          to {formatTimeTo12Hour(slot.endTime)}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+            {renderSlotGroup('Morning', morningSlots)}
+            {renderSlotGroup('Afternoon', afternoonSlots)}
+            {renderSlotGroup('Evening', eveningSlots)}
 
-            {/* Afternoon Section */}
-            {afternoonSlots.length > 0 && (
-              <div>
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 flex items-center space-x-2">
-                  <span>☀️ Afternoon Slots (12:00 PM - 05:00 PM)</span>
-                </h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                  {afternoonSlots.map((slot) => {
-                    const isSelected = selectedSlot?.startTime === slot.startTime;
-                    return (
-                      <button
-                        key={slot.startTime}
-                        onClick={() => setSelectedSlot(slot)}
-                        className={`p-3 rounded-xl border text-xs font-bold transition flex flex-col items-center justify-center ${
-                          isSelected
-                            ? 'bg-blue-600 text-white border-blue-600 shadow-md ring-2 ring-blue-400'
-                            : 'bg-white text-slate-700 border-slate-200 hover:border-blue-400 hover:bg-blue-50/50'
-                        }`}
-                      >
-                        <span>{formatTimeTo12Hour(slot.startTime)}</span>
-                        <span className={`text-[10px] font-medium mt-0.5 ${isSelected ? 'text-blue-100' : 'text-slate-400'}`}>
-                          to {formatTimeTo12Hour(slot.endTime)}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Evening Section */}
-            {eveningSlots.length > 0 && (
-              <div>
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 flex items-center space-x-2">
-                  <span>🌙 Evening Slots (After 05:00 PM)</span>
-                </h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                  {eveningSlots.map((slot) => {
-                    const isSelected = selectedSlot?.startTime === slot.startTime;
-                    return (
-                      <button
-                        key={slot.startTime}
-                        onClick={() => setSelectedSlot(slot)}
-                        className={`p-3 rounded-xl border text-xs font-bold transition flex flex-col items-center justify-center ${
-                          isSelected
-                            ? 'bg-blue-600 text-white border-blue-600 shadow-md ring-2 ring-blue-400'
-                            : 'bg-white text-slate-700 border-slate-200 hover:border-blue-400 hover:bg-blue-50/50'
-                        }`}
-                      >
-                        <span>{formatTimeTo12Hour(slot.startTime)}</span>
-                        <span className={`text-[10px] font-medium mt-0.5 ${isSelected ? 'text-blue-100' : 'text-slate-400'}`}>
-                          to {formatTimeTo12Hour(slot.endTime)}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Selected Slot Action Bar */}
             {selectedSlot && (
-              <div className="pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 bg-blue-50/80 p-4 rounded-xl border border-blue-100">
+              <div className="flex flex-col items-center justify-between gap-4 rounded-card border border-brand-100 bg-brand-50/80 p-4 sm:flex-row">
                 <div>
-                  <span className="text-xs font-semibold text-blue-900 block">Selected Consultation Slot:</span>
-                  <span className="text-sm font-extrabold text-blue-950">
-                    {selectedDate} ({formatTimeTo12Hour(selectedSlot.startTime)} – {formatTimeTo12Hour(selectedSlot.endTime)})
+                  <span className="block text-xs font-semibold text-brand-900">
+                    Selected Consultation Slot:
+                  </span>
+                  <span className="text-sm font-bold text-brand-950">
+                    {selectedDate} ({formatTimeTo12Hour(selectedSlot.startTime)} –{' '}
+                    {formatTimeTo12Hour(selectedSlot.endTime)})
                   </span>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setShowConfirmModal(true)}
-                  className="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-md transition transform hover:-translate-y-0.5"
+                  className="btn-primary w-full sm:w-auto"
                 >
                   Proceed to Confirmation →
                 </button>
@@ -392,46 +339,54 @@ export default function DoctorProfileSlotPicker({ doctor, todayDate }: Props) {
         )}
       </div>
 
-      {/* BOOKING CONFIRMATION MODAL */}
       {showConfirmModal && selectedSlot && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 sm:p-8 border border-slate-200 space-y-6">
-            <div className="border-b border-slate-100 pb-4">
-              <span className="text-[10px] font-extrabold uppercase tracking-widest text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/50 p-4 backdrop-blur-[2px]">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="confirm-booking-title"
+            className="w-full max-w-md space-y-6 rounded-card border border-[#dde5e9] bg-white p-6 shadow-elevated sm:p-8"
+          >
+            <div className="border-b border-[#dde5e9] pb-4">
+              <span className="rounded-pill border border-brand-100 bg-brand-50 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-widest text-brand-700">
                 Confirm Booking
               </span>
-              <h3 className="text-xl font-extrabold text-slate-800 mt-2">Confirm Appointment Selection</h3>
-              <p className="text-xs text-slate-500 mt-1">Review your selected consultation slot before booking.</p>
+              <h3 id="confirm-booking-title" className="mt-2 font-display text-xl font-semibold text-ink">
+                Confirm Appointment Selection
+              </h3>
+              <p className="mt-1 text-xs text-ink-muted">
+                Review your selected consultation slot before booking.
+              </p>
             </div>
 
-            {/* Details Table */}
-            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs space-y-3">
-              <div className="flex justify-between">
-                <span className="text-slate-500 font-medium">Doctor:</span>
-                <span className="font-bold text-slate-800">{doctor.fullName}</span>
+            <div className="space-y-3 rounded-card border border-[#dde5e9] bg-surface-muted p-4 text-sm">
+              <div className="flex justify-between gap-4">
+                <span className="text-ink-muted">Doctor:</span>
+                <span className="font-semibold text-ink">{doctorName}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500 font-medium">Department:</span>
-                <span className="font-semibold text-slate-700">{doctor.department.name}</span>
+              <div className="flex justify-between gap-4">
+                <span className="text-ink-muted">Department:</span>
+                <span className="font-medium text-ink">{departmentName}</span>
               </div>
-              <div className="flex justify-between border-t border-slate-200 pt-2">
-                <span className="text-slate-500 font-medium">Date:</span>
-                <span className="font-bold text-blue-700">{selectedDate}</span>
+              <div className="flex justify-between gap-4 border-t border-[#dde5e9] pt-2">
+                <span className="text-ink-muted">Date:</span>
+                <span className="font-semibold text-brand-700">{selectedDate}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500 font-medium">Time Slot:</span>
-                <span className="font-bold text-blue-700">
-                  {formatTimeTo12Hour(selectedSlot.startTime)} – {formatTimeTo12Hour(selectedSlot.endTime)}
+              <div className="flex justify-between gap-4">
+                <span className="text-ink-muted">Time Slot:</span>
+                <span className="font-semibold text-brand-700">
+                  {formatTimeTo12Hour(selectedSlot.startTime)} –{' '}
+                  {formatTimeTo12Hour(selectedSlot.endTime)}
                 </span>
               </div>
             </div>
 
-            <div className="flex justify-end space-x-3 pt-2">
+            <div className="flex justify-end gap-3 pt-2">
               <button
                 type="button"
                 disabled={isSubmitting}
                 onClick={() => setShowConfirmModal(false)}
-                className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl disabled:opacity-50"
+                className="btn-secondary disabled:opacity-50"
               >
                 Change Time
               </button>
@@ -439,11 +394,11 @@ export default function DoctorProfileSlotPicker({ doctor, todayDate }: Props) {
                 type="button"
                 disabled={isSubmitting}
                 onClick={handleConfirmBooking}
-                className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-sm transition flex items-center space-x-2 disabled:opacity-50 cursor-pointer"
+                className="btn-primary disabled:opacity-50"
               >
                 {isSubmitting ? (
                   <>
-                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
                     <span>Booking...</span>
                   </>
                 ) : (

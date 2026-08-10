@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -63,6 +63,11 @@ export default function DepartmentManagement({
   const [confirmToggleDept, setConfirmToggleDept] = useState<DepartmentItem | null>(null);
   const [serverError, setServerError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [departmentRows, setDepartmentRows] = useState(departments);
+
+  useEffect(() => {
+    setDepartmentRows(departments);
+  }, [departments]);
 
   // Form hook for Create
   const createForm = useForm<CreateDepartmentInput>({
@@ -109,16 +114,23 @@ export default function DepartmentManagement({
     setServerError(null);
     setSuccessMessage(null);
 
-    const res = await toggleDepartmentStatusAction(confirmToggleDept.id);
+    const dept = confirmToggleDept;
+    const wasActive = dept.isActive;
+    setConfirmToggleDept(null);
+
+    const res = await toggleDepartmentStatusAction(dept.id);
     if (!res.success) {
       setServerError(res.error);
     } else {
+      setDepartmentRows((rows) =>
+        rows.map((row) =>
+          row.id === dept.id ? { ...row, isActive: !wasActive } : row
+        )
+      );
       setSuccessMessage(
-        `Department ${confirmToggleDept.isActive ? 'deactivated' : 'activated'} successfully!`
+        `Department ${wasActive ? 'deactivated' : 'activated'} successfully!`
       );
     }
-
-    setConfirmToggleDept(null);
   };
 
   const openEditModal = (dept: DepartmentItem) => {
@@ -133,10 +145,10 @@ export default function DepartmentManagement({
   return (
     <div className="space-y-6">
       {/* Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Departments</h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <h1 className="font-display text-2xl font-semibold tracking-tight text-ink">Departments</h1>
+          <p className="mt-2 text-sm text-ink-muted">
             Manage hospital medical departments and specialties.
           </p>
         </div>
@@ -145,7 +157,7 @@ export default function DepartmentManagement({
             setServerError(null);
             setIsCreateOpen(true);
           }}
-          className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded-xl shadow-sm transition duration-150 flex items-center justify-center space-x-2"
+          className="btn-primary"
         >
           <span>+ Add Department</span>
         </button>
@@ -153,23 +165,33 @@ export default function DepartmentManagement({
 
       {/* Notifications */}
       {successMessage && (
-        <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm rounded-xl flex justify-between items-center">
+        <div className="flex items-center justify-between rounded-card border border-accent-200 bg-accent-50 p-4 text-sm text-accent-800">
           <span>{successMessage}</span>
-          <button onClick={() => setSuccessMessage(null)} className="text-xs text-emerald-600 hover:text-emerald-900 font-bold">✕</button>
+          <button
+            onClick={() => setSuccessMessage(null)}
+            className="text-xs font-bold text-accent-600 hover:text-accent-900"
+          >
+            ✕
+          </button>
         </div>
       )}
 
       {serverError && (
-        <div className="p-4 bg-red-50 border border-red-200 text-red-800 text-sm rounded-xl flex justify-between items-center">
+        <div className="flex items-center justify-between rounded-card border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">
           <span>{serverError}</span>
-          <button onClick={() => setServerError(null)} className="text-xs text-red-600 hover:text-red-900 font-bold">✕</button>
+          <button
+            onClick={() => setServerError(null)}
+            className="text-xs font-bold text-rose-600 hover:text-rose-900"
+          >
+            ✕
+          </button>
         </div>
       )}
 
       {/* Search & Filter Toolbar */}
-      <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+      <div className="card-surface grid grid-cols-1 items-end gap-3 p-4 sm:grid-cols-12">
         <div className="sm:col-span-8">
-          <label className="block text-xs font-semibold text-slate-600 mb-1">Interactive Search Departments</label>
+          <label className="mb-1 block text-xs font-semibold text-ink-muted">Interactive Search Departments</label>
           <InteractiveSearchInput
             placeholder="Type department name or description..."
             defaultValue={currentSearch}
@@ -177,7 +199,7 @@ export default function DepartmentManagement({
         </div>
 
         <div className="sm:col-span-4">
-          <label className="block text-xs font-semibold text-slate-600 mb-1">Entries per page</label>
+          <label className="mb-1 block text-xs font-semibold text-ink-muted">Entries per page</label>
           <select
             value={limitFilter}
             onChange={(e) => {
@@ -185,7 +207,7 @@ export default function DepartmentManagement({
               setLimitFilter(newLimit);
               applyFilters(currentSearch, 1, newLimit);
             }}
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white font-medium"
+            className="input-field !py-2 text-xs font-medium sm:text-sm"
           >
             <option value="5">5 entries</option>
             <option value="10">10 entries</option>
@@ -197,23 +219,19 @@ export default function DepartmentManagement({
       </div>
 
       {/* Departments Table */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-        {departments.length === 0 ? (
+      <div className="card-surface overflow-hidden">
+        {departmentRows.length === 0 ? (
           <div className="p-12 text-center">
-            <div className="text-4xl mb-3">🏢</div>
-            <h3 className="text-base font-semibold text-slate-800">No departments found</h3>
-            <p className="text-sm text-slate-500 mt-1">Create your first medical department to get started.</p>
-            <button
-              onClick={() => setIsCreateOpen(true)}
-              className="mt-4 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700"
-            >
+            <h3 className="text-base font-semibold text-ink">No departments found</h3>
+            <p className="mt-1 text-sm text-ink-muted">Create your first medical department to get started.</p>
+            <button onClick={() => setIsCreateOpen(true)} className="btn-primary mt-4">
               + Create Department
             </button>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-slate-600">
-              <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500 border-b border-slate-200">
+            <table className="w-full text-left text-sm text-ink-muted">
+              <thead className="border-b border-[#dde5e9] bg-surface-muted text-xs font-semibold uppercase text-ink-muted">
                 <tr>
                   <th className="px-6 py-4">Department Name</th>
                   <th className="px-6 py-4">Description</th>
@@ -222,42 +240,42 @@ export default function DepartmentManagement({
                   <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
-                {departments.map((dept) => (
-                  <tr key={dept.id} className="hover:bg-slate-50/80 transition duration-100">
-                    <td className="px-6 py-4 font-semibold text-slate-800">{dept.name}</td>
-                    <td className="px-6 py-4 max-w-xs truncate text-slate-500">
-                      {dept.description || <span className="italic text-slate-400">No description</span>}
+              <tbody className="divide-y divide-[#dde5e9]/60">
+                {departmentRows.map((dept) => (
+                  <tr key={dept.id} className="transition hover:bg-brand-50/40">
+                    <td className="px-6 py-4 font-semibold text-ink">{dept.name}</td>
+                    <td className="max-w-xs truncate px-6 py-4 text-ink-muted">
+                      {dept.description || <span className="italic text-ink-soft">No description</span>}
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <span className="inline-flex items-center justify-center px-2.5 py-1 text-xs font-semibold rounded-full bg-slate-100 text-slate-700">
+                      <span className="inline-flex items-center justify-center rounded-pill bg-surface-soft px-2.5 py-1 text-xs font-semibold text-ink">
                         {dept._count.doctors} {dept._count.doctors === 1 ? 'Doctor' : 'Doctors'}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-center">
                       {dept.isActive ? (
-                        <span className="inline-block px-2.5 py-0.5 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800">
+                        <span className="inline-block rounded-pill bg-accent-100 px-2.5 py-0.5 text-xs font-semibold text-accent-800">
                           Active
                         </span>
                       ) : (
-                        <span className="inline-block px-2.5 py-0.5 text-xs font-semibold rounded-full bg-slate-200 text-slate-700">
+                        <span className="inline-block rounded-pill bg-surface-soft px-2.5 py-0.5 text-xs font-semibold text-ink-muted">
                           Inactive
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-right space-x-2">
+                    <td className="space-x-2 px-6 py-4 text-right">
                       <button
                         onClick={() => openEditModal(dept)}
-                        className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs rounded-lg transition"
+                        className="rounded-button bg-surface-muted px-3 py-1.5 text-xs font-medium text-ink transition hover:bg-brand-50"
                       >
                         Edit
                       </button>
                       <button
                         onClick={() => setConfirmToggleDept(dept)}
-                        className={`px-3 py-1.5 font-medium text-xs rounded-lg transition ${
+                        className={`rounded-button px-3 py-1.5 text-xs font-medium transition ${
                           dept.isActive
-                            ? 'bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200'
-                            : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200'
+                            ? 'border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100'
+                            : 'border border-accent-200 bg-accent-50 text-accent-700 hover:bg-accent-100'
                         }`}
                       >
                         {dept.isActive ? 'Deactivate' : 'Activate'}
@@ -271,8 +289,8 @@ export default function DepartmentManagement({
         )}
 
         {/* Pagination Bar */}
-        {departments.length > 0 && (
-          <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs text-slate-500">
+        {departmentRows.length > 0 && (
+          <div className="flex flex-col items-center justify-between gap-3 border-t border-[#dde5e9] bg-surface-muted p-4 text-xs text-ink-muted sm:flex-row">
             <span>
               Showing Page {currentPage} of {totalPages} ({totalDepartments} total departments)
             </span>
@@ -280,14 +298,14 @@ export default function DepartmentManagement({
               <button
                 disabled={currentPage <= 1}
                 onClick={() => applyFilters(currentSearch, currentPage - 1, limitFilter)}
-                className="px-3 py-1.5 bg-white border border-slate-300 rounded-md disabled:opacity-40 hover:bg-slate-50 font-medium text-slate-700 transition"
+                className="btn-secondary !px-3 !py-1.5 !text-xs disabled:opacity-40"
               >
                 Previous
               </button>
               <button
                 disabled={currentPage >= totalPages}
                 onClick={() => applyFilters(currentSearch, currentPage + 1, limitFilter)}
-                className="px-3 py-1.5 bg-white border border-slate-300 rounded-md disabled:opacity-40 hover:bg-slate-50 font-medium text-slate-700 transition"
+                className="btn-secondary !px-3 !py-1.5 !text-xs disabled:opacity-40"
               >
                 Next
               </button>
@@ -298,51 +316,43 @@ export default function DepartmentManagement({
 
       {/* Create Modal */}
       {isCreateOpen && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 border border-slate-200">
-            <h2 className="text-xl font-bold text-slate-800 mb-1">Add Department</h2>
-            <p className="text-xs text-slate-500 mb-4">Create a new medical department or specialty area.</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/50 p-4 backdrop-blur-[2px]">
+          <div className="w-full max-w-md rounded-card border border-[#dde5e9] bg-white p-6 shadow-elevated">
+            <h2 className="font-display text-xl font-semibold text-ink">Add Department</h2>
+            <p className="mb-4 mt-1 text-xs text-ink-muted">Create a new medical department or specialty area.</p>
 
             <form onSubmit={createForm.handleSubmit(handleCreateSubmit)} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Department Name *</label>
+                <label className="mb-1 block text-xs font-semibold text-ink">Department Name *</label>
                 <input
                   type="text"
                   {...createForm.register('name')}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="input-field"
                   placeholder="e.g. Cardiology"
                 />
                 {createForm.formState.errors.name && (
-                  <p className="text-xs text-red-600 mt-1">{createForm.formState.errors.name.message}</p>
+                  <p className="mt-1 text-xs text-rose-600">{createForm.formState.errors.name.message}</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Description (Optional)</label>
+                <label className="mb-1 block text-xs font-semibold text-ink">Description (Optional)</label>
                 <textarea
                   rows={3}
                   {...createForm.register('description')}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="input-field"
                   placeholder="Summary of department services..."
                 />
                 {createForm.formState.errors.description && (
-                  <p className="text-xs text-red-600 mt-1">{createForm.formState.errors.description.message}</p>
+                  <p className="mt-1 text-xs text-rose-600">{createForm.formState.errors.description.message}</p>
                 )}
               </div>
 
               <div className="flex justify-end space-x-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setIsCreateOpen(false)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-lg"
-                >
+                <button type="button" onClick={() => setIsCreateOpen(false)} className="btn-secondary">
                   Cancel
                 </button>
-                <button
-                  type="submit"
-                  disabled={createForm.formState.isSubmitting}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg disabled:opacity-50"
-                >
+                <button type="submit" disabled={createForm.formState.isSubmitting} className="btn-primary">
                   {createForm.formState.isSubmitting ? 'Creating...' : 'Create Department'}
                 </button>
               </div>
@@ -353,51 +363,35 @@ export default function DepartmentManagement({
 
       {/* Edit Modal */}
       {editingDept && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 border border-slate-200">
-            <h2 className="text-xl font-bold text-slate-800 mb-1">Edit Department</h2>
-            <p className="text-xs text-slate-500 mb-4">Update department details.</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/50 p-4 backdrop-blur-[2px]">
+          <div className="w-full max-w-md rounded-card border border-[#dde5e9] bg-white p-6 shadow-elevated">
+            <h2 className="font-display text-xl font-semibold text-ink">Edit Department</h2>
+            <p className="mb-4 mt-1 text-xs text-ink-muted">Update department details.</p>
 
             <form onSubmit={editForm.handleSubmit(handleEditSubmit)} className="space-y-4">
               <input type="hidden" {...editForm.register('id')} />
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Department Name *</label>
-                <input
-                  type="text"
-                  {...editForm.register('name')}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                />
+                <label className="mb-1 block text-xs font-semibold text-ink">Department Name *</label>
+                <input type="text" {...editForm.register('name')} className="input-field" />
                 {editForm.formState.errors.name && (
-                  <p className="text-xs text-red-600 mt-1">{editForm.formState.errors.name.message}</p>
+                  <p className="mt-1 text-xs text-rose-600">{editForm.formState.errors.name.message}</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Description (Optional)</label>
-                <textarea
-                  rows={3}
-                  {...editForm.register('description')}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                />
+                <label className="mb-1 block text-xs font-semibold text-ink">Description (Optional)</label>
+                <textarea rows={3} {...editForm.register('description')} className="input-field" />
                 {editForm.formState.errors.description && (
-                  <p className="text-xs text-red-600 mt-1">{editForm.formState.errors.description.message}</p>
+                  <p className="mt-1 text-xs text-rose-600">{editForm.formState.errors.description.message}</p>
                 )}
               </div>
 
               <div className="flex justify-end space-x-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setEditingDept(null)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-lg"
-                >
+                <button type="button" onClick={() => setEditingDept(null)} className="btn-secondary">
                   Cancel
                 </button>
-                <button
-                  type="submit"
-                  disabled={editForm.formState.isSubmitting}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg disabled:opacity-50"
-                >
+                <button type="submit" disabled={editForm.formState.isSubmitting} className="btn-primary">
                   {editForm.formState.isSubmitting ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
@@ -408,29 +402,27 @@ export default function DepartmentManagement({
 
       {/* Confirmation Dialog for Deactivation / Reactivation */}
       {confirmToggleDept && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-sm rounded-2xl shadow-2xl p-6 border border-slate-200 text-center">
-            <div className="text-3xl mb-2">{confirmToggleDept.isActive ? '⚠️' : '✅'}</div>
-            <h3 className="text-lg font-bold text-slate-800">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/50 p-4 backdrop-blur-[2px]">
+          <div className="w-full max-w-sm rounded-card border border-[#dde5e9] bg-white p-6 text-center shadow-elevated">
+            <h3 className="font-display text-lg font-semibold text-ink">
               {confirmToggleDept.isActive ? 'Deactivate Department?' : 'Reactivate Department?'}
             </h3>
-            <p className="text-xs text-slate-500 mt-2">
+            <p className="mt-2 text-xs text-ink-muted">
               {confirmToggleDept.isActive
                 ? `Deactivating "${confirmToggleDept.name}" will prevent new doctors from being assigned to it. Existing doctor relationships and historical records remain preserved.`
                 : `Reactivating "${confirmToggleDept.name}" will allow new doctors to be assigned to this department.`}
             </p>
 
-            <div className="flex justify-center space-x-3 mt-6">
-              <button
-                onClick={() => setConfirmToggleDept(null)}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-lg"
-              >
+            <div className="mt-6 flex justify-center space-x-3">
+              <button onClick={() => setConfirmToggleDept(null)} className="btn-secondary">
                 Cancel
               </button>
               <button
                 onClick={handleToggleStatus}
-                className={`px-4 py-2 text-white text-sm font-medium rounded-lg ${
-                  confirmToggleDept.isActive ? 'bg-amber-600 hover:bg-amber-700' : 'bg-emerald-600 hover:bg-emerald-700'
+                className={`rounded-button px-4 py-2.5 text-sm font-semibold text-white shadow-soft ${
+                  confirmToggleDept.isActive
+                    ? 'bg-amber-600 hover:bg-amber-700'
+                    : 'bg-accent-600 hover:bg-accent-700'
                 }`}
               >
                 Confirm {confirmToggleDept.isActive ? 'Deactivate' : 'Activate'}

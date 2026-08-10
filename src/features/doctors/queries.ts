@@ -1,6 +1,23 @@
 import { Prisma } from '@prisma/client';
+import { unstable_cache } from 'next/cache';
 import { prisma } from '@/server/db/client';
 import { buildFuzzyDoctorWhere } from '@/lib/fuzzy-search';
+
+/**
+ * Uses Next.js data cache when running in an App Router request.
+ * Falls back to a direct query in unit tests / non-Next contexts.
+ */
+async function cachedQuery<T>(
+  key: string[],
+  opts: { revalidate: number; tags: string[] },
+  query: () => Promise<T>
+): Promise<T> {
+  try {
+    return await unstable_cache(query, key, opts)();
+  } catch {
+    return query();
+  }
+}
 
 export interface DoctorPublicProfile {
   id: string;
@@ -37,17 +54,23 @@ export interface SearchDoctorsResult {
 
 /**
  * Retrieves active medical departments for patient discovery filter.
+ * Cached briefly — not used for appointment availability decisions.
  */
 export async function getPublicDepartments() {
-  return prisma.department.findMany({
-    where: { isActive: true },
-    select: {
-      id: true,
-      name: true,
-      description: true,
-    },
-    orderBy: { name: 'asc' },
-  });
+  return cachedQuery(
+    ['public-departments'],
+    { revalidate: 300, tags: ['public-departments'] },
+    () =>
+      prisma.department.findMany({
+        where: { isActive: true },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+        },
+        orderBy: { name: 'asc' },
+      })
+  );
 }
 
 /**
@@ -121,35 +144,39 @@ export async function searchDoctors(params: SearchDoctorsParams): Promise<Search
 
 /**
  * Retrieves a single doctor's public professional profile by doctorProfileId.
+ * Profile text is cacheable; live slot availability is never cached here.
  */
 export async function getDoctorPublicProfile(doctorId: string): Promise<DoctorPublicProfile | null> {
   if (!doctorId || typeof doctorId !== 'string') return null;
 
-  const doctor = await prisma.doctorProfile.findUnique({
-    where: { id: doctorId },
-    select: {
-      id: true,
-      fullName: true,
-      phoneNumber: true,
-      qualification: true,
-      experienceYears: true,
-      bio: true,
-      department: {
+  return cachedQuery(
+    ['public-doctor-profile', doctorId],
+    { revalidate: 120, tags: ['public-doctors', `doctor-${doctorId}`] },
+    () =>
+      prisma.doctorProfile.findUnique({
+        where: { id: doctorId },
         select: {
           id: true,
-          name: true,
-          description: true,
-          isActive: true,
+          fullName: true,
+          phoneNumber: true,
+          qualification: true,
+          experienceYears: true,
+          bio: true,
+          department: {
+            select: {
+              id: true,
+              name: true,
+              description: true,
+              isActive: true,
+            },
+          },
+          user: {
+            select: {
+              email: true,
+              isActive: true,
+            },
+          },
         },
-      },
-      user: {
-        select: {
-          email: true,
-          isActive: true,
-        },
-      },
-    },
-  });
-
-  return doctor;
+      })
+  );
 }

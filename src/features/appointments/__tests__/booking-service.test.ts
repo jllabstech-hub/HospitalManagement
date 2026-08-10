@@ -41,12 +41,12 @@ describe('Transactional Appointment Booking Service & Validation Suite', () => {
 
     // Create active & inactive departments
     const activeDept = await prisma.department.create({
-      data: { name: 'Booking Serv Dept Active', isActive: true },
+      data: { name: 'Booking Serv Dept Active', slug: 'booking-serv-dept-active', isActive: true },
     });
     activeDeptId = activeDept.id;
 
     const inactiveDept = await prisma.department.create({
-      data: { name: 'Booking Serv Dept Inactive', isActive: false },
+      data: { name: 'Booking Serv Dept Inactive', slug: 'booking-serv-dept-inactive', isActive: false },
     });
     inactiveDeptId = inactiveDept.id;
 
@@ -64,6 +64,7 @@ describe('Transactional Appointment Booking Service & Validation Suite', () => {
         userId: userDocA.id,
         departmentId: activeDeptId,
         fullName: 'Dr. Active BookingServ',
+        slug: 'booking-serv-doc-act',
         phoneNumber: '111',
         qualification: 'MBBS',
       },
@@ -96,6 +97,7 @@ describe('Transactional Appointment Booking Service & Validation Suite', () => {
         userId: userDocB.id,
         departmentId: activeDeptId,
         fullName: 'Dr. Inactive BookingServ',
+        slug: 'booking-serv-doc-inact',
         phoneNumber: '222',
         qualification: 'MBBS',
       },
@@ -157,7 +159,7 @@ describe('Transactional Appointment Booking Service & Validation Suite', () => {
       data: { email: 'bookingserv.test.doc.inactdept@hospital.com', passwordHash: 'h', role: Role.DOCTOR, isActive: true },
     });
     const docC = await prisma.doctorProfile.create({
-      data: { userId: userC.id, departmentId: inactiveDeptId, fullName: 'Dr. Inact Dept', phoneNumber: '444', qualification: 'MBBS' },
+      data: { userId: userC.id, departmentId: inactiveDeptId, fullName: 'Dr. Inact Dept', slug: 'booking-serv-doc-inactdept', phoneNumber: '444', qualification: 'MBBS' },
     });
     const resInactiveDept = await bookAppointmentTransaction(patientProfileId, {
       doctorId: docC.id,

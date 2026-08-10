@@ -35,10 +35,7 @@ export default function PatientCancelButton({ appointmentId }: Props) {
 
   return (
     <>
-      <button
-        onClick={() => setIsOpen(true)}
-        className="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-xs transition"
-      >
+      <button onClick={() => setIsOpen(true)} className="btn-danger !px-5 !py-2.5 !text-xs">
         Cancel Appointment
       </button>
 
@@ -55,12 +52,12 @@ export default function PatientCancelButton({ appointmentId }: Props) {
       >
         <div className="space-y-3">
           {errorMsg && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-800 text-xs font-semibold">
+            <div className="rounded-card border border-rose-200 bg-rose-50 p-3 text-xs font-semibold text-rose-800">
               {errorMsg}
             </div>
           )}
           <div>
-            <label htmlFor="cancelReasonInput" className="block text-xs font-semibold text-slate-700 mb-1">
+            <label htmlFor="cancelReasonInput" className="mb-1 block text-xs font-semibold text-ink">
               Cancellation Reason (Optional):
             </label>
             <input
@@ -69,7 +66,7 @@ export default function PatientCancelButton({ appointmentId }: Props) {
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="e.g. Schedule conflict, feeling better"
-              className="w-full px-3 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-rose-500 focus:outline-none"
+              className="input-field !py-2 !text-xs"
             />
           </div>
         </div>

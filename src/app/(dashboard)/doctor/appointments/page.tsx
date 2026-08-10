@@ -35,18 +35,20 @@ export default async function DoctorAppointmentsPage({ searchParams }: PageProps
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-800">Doctor Appointments</h1>
-        <p className="text-sm text-slate-500 mt-1">
+        <h1 className="font-display text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
+          Doctor Appointments
+        </h1>
+        <p className="mt-2 text-sm text-ink-muted">
           View and manage patient outpatient consultations for selected dates.
         </p>
       </div>
 
       {/* Filter Form */}
-      <form method="GET" action="/doctor/appointments" className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+      <form method="GET" action="/doctor/appointments" className="card-surface space-y-4 p-6">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
           {/* Date Selector */}
           <div className="md:col-span-4">
-            <label htmlFor="docDateInput" className="block text-xs font-semibold text-slate-700 mb-1">
+            <label htmlFor="docDateInput" className="mb-1 block text-xs font-semibold text-ink">
               Select Date:
             </label>
             <input
@@ -54,20 +56,20 @@ export default async function DoctorAppointmentsPage({ searchParams }: PageProps
               type="date"
               name="date"
               defaultValue={dateStr}
-              className="w-full px-4 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white font-medium text-slate-800"
+              className="input-field !py-2 text-xs font-medium sm:text-sm"
             />
           </div>
 
           {/* Status Filter */}
           <div className="md:col-span-4">
-            <label htmlFor="docStatusFilter" className="block text-xs font-semibold text-slate-700 mb-1">
+            <label htmlFor="docStatusFilter" className="mb-1 block text-xs font-semibold text-ink">
               Status Filter:
             </label>
             <select
               id="docStatusFilter"
               name="status"
               defaultValue={statusFilter}
-              className="w-full px-4 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white font-medium text-slate-800"
+              className="input-field !py-2 text-xs font-medium sm:text-sm"
             >
               <option value="">All Statuses</option>
               <option value="BOOKED">BOOKED</option>
@@ -80,14 +82,14 @@ export default async function DoctorAppointmentsPage({ searchParams }: PageProps
 
           {/* Entries per page */}
           <div className="md:col-span-2">
-            <label htmlFor="docLimitFilter" className="block text-xs font-semibold text-slate-700 mb-1">
+            <label htmlFor="docLimitFilter" className="mb-1 block text-xs font-semibold text-ink">
               Entries per page
             </label>
             <select
               id="docLimitFilter"
               name="limit"
               defaultValue={limit}
-              className="w-full px-4 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white font-medium text-slate-800"
+              className="input-field !py-2 text-xs font-medium sm:text-sm"
             >
               <option value="5">5 entries</option>
               <option value="10">10 entries</option>
@@ -98,22 +100,19 @@ export default async function DoctorAppointmentsPage({ searchParams }: PageProps
           </div>
 
           {/* Submit */}
-          <div className="md:col-span-2 flex items-end">
-            <button
-              type="submit"
-              className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow-xs transition"
-            >
+          <div className="flex items-end md:col-span-2">
+            <button type="submit" className="btn-primary w-full !py-2 !text-xs sm:!text-sm">
               Filter
             </button>
           </div>
         </div>
 
         {(dateStr !== todayStr || statusFilter) && (
-          <div className="pt-2 flex items-center justify-between text-xs">
-            <span className="text-slate-500">
-              Showing records for Date: <strong className="text-slate-800">{dateStr}</strong>
+          <div className="flex items-center justify-between pt-2 text-xs">
+            <span className="text-ink-muted">
+              Showing records for Date: <strong className="text-ink">{dateStr}</strong>
             </span>
-            <Link href="/doctor/appointments" className="text-indigo-600 font-semibold hover:underline">
+            <Link href="/doctor/appointments" className="font-semibold text-brand-700 hover:underline">
               Reset to Today
             </Link>
           </div>
@@ -121,21 +120,32 @@ export default async function DoctorAppointmentsPage({ searchParams }: PageProps
       </form>
 
       {/* Daily Summary Bar */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 flex flex-wrap gap-4 text-xs font-semibold text-slate-600">
-        <span>Total: <strong className="text-slate-800">{counts.total}</strong></span>
-        <span>Booked: <strong className="text-blue-700">{counts.booked}</strong></span>
-        <span>Confirmed: <strong className="text-indigo-700">{counts.confirmed}</strong></span>
-        <span>Completed: <strong className="text-emerald-700">{counts.completed}</strong></span>
-        <span>Cancelled: <strong className="text-rose-700">{counts.cancelled}</strong></span>
-        <span>No-Show: <strong className="text-amber-700">{counts.noShow}</strong></span>
+      <div className="card-surface flex flex-wrap gap-4 p-4 text-xs font-semibold text-ink-muted">
+        <span>
+          Total: <strong className="text-ink">{counts.total}</strong>
+        </span>
+        <span>
+          Booked: <strong className="text-brand-700">{counts.booked}</strong>
+        </span>
+        <span>
+          Confirmed: <strong className="text-brand-800">{counts.confirmed}</strong>
+        </span>
+        <span>
+          Completed: <strong className="text-accent-700">{counts.completed}</strong>
+        </span>
+        <span>
+          Cancelled: <strong className="text-rose-700">{counts.cancelled}</strong>
+        </span>
+        <span>
+          No-Show: <strong className="text-amber-700">{counts.noShow}</strong>
+        </span>
       </div>
 
       {/* Appointments List */}
       {appointments.length === 0 ? (
-        <div className="bg-white p-12 rounded-2xl border border-dashed border-slate-300 text-center space-y-2">
-          <div className="text-4xl">📅</div>
-          <h3 className="text-base font-bold text-slate-700">No Appointments Found</h3>
-          <p className="text-xs text-slate-500 max-w-sm mx-auto">
+        <div className="space-y-2 rounded-card border border-dashed border-[#c9d5db] bg-surface-muted p-12 text-center">
+          <h3 className="text-base font-semibold text-ink">No Appointments Found</h3>
+          <p className="mx-auto max-w-sm text-xs text-ink-muted">
             No consultations match your date and status filter criteria.
           </p>
         </div>
@@ -144,23 +154,23 @@ export default async function DoctorAppointmentsPage({ searchParams }: PageProps
           {appointments.map((appt) => (
             <div
               key={appt.id}
-              className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col md:flex-row md:items-center justify-between gap-4"
+              className="card-surface flex flex-col justify-between gap-4 p-6 transition hover:border-brand-200 md:flex-row md:items-center"
             >
               <div className="space-y-2">
                 <div className="flex items-center space-x-3">
-                  <span className="font-extrabold text-sm text-indigo-700 bg-indigo-50 px-3 py-1 rounded-lg border border-indigo-200">
+                  <span className="rounded-button border border-brand-200 bg-brand-50 px-3 py-1 text-sm font-bold text-brand-800">
                     {formatTimeTo12Hour(appt.startTime)} – {formatTimeTo12Hour(appt.endTime)}
                   </span>
                   <StatusBadge status={appt.status} />
                 </div>
 
-                <h3 className="text-base font-bold text-slate-800">{appt.patient.fullName}</h3>
-                <p className="text-xs text-slate-500">
+                <h3 className="text-base font-semibold text-ink">{appt.patient.fullName}</h3>
+                <p className="text-xs text-ink-muted">
                   Phone: {appt.patient.phoneNumber} | Gender: {appt.patient.gender}
                 </p>
 
                 {appt.cancellationReason && (
-                  <p className="text-[11px] text-rose-700 font-medium">
+                  <p className="text-[11px] font-medium text-rose-700">
                     Reason: {appt.cancellationReason} ({appt.cancelledBy})
                   </p>
                 )}
@@ -170,7 +180,7 @@ export default async function DoctorAppointmentsPage({ searchParams }: PageProps
                 <DoctorAppointmentActionButtons appointmentId={appt.id} currentStatus={appt.status} />
                 <Link
                   href={`/doctor/appointments/${appt.id}`}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 font-bold text-xs rounded-xl transition"
+                  className="btn-secondary !px-4 !py-2 !text-xs"
                 >
                   View Detail →
                 </Link>
@@ -180,23 +190,23 @@ export default async function DoctorAppointmentsPage({ searchParams }: PageProps
 
           {/* Pagination Controls */}
           {appointments.length > 0 && (
-            <div className="bg-white p-4 rounded-2xl border border-slate-200 flex justify-between items-center text-xs text-slate-500 shadow-xs">
+            <div className="card-surface flex items-center justify-between p-4 text-xs text-ink-muted">
               <span>
                 Showing Page {currentPage} of {totalPages} ({totalCount} matching appointments)
               </span>
               <div className="flex space-x-2">
                 <Link
                   href={`/doctor/appointments?date=${dateStr}${statusFilter ? `&status=${statusFilter}` : ''}&limit=${limit}&page=${currentPage - 1}`}
-                  className={`px-3 py-1.5 bg-white border border-slate-300 rounded-lg font-medium text-slate-700 transition ${
-                    currentPage <= 1 ? 'pointer-events-none opacity-40' : 'hover:bg-slate-50'
+                  className={`btn-secondary !px-3 !py-1.5 !text-xs ${
+                    currentPage <= 1 ? 'pointer-events-none opacity-40' : ''
                   }`}
                 >
                   Previous
                 </Link>
                 <Link
                   href={`/doctor/appointments?date=${dateStr}${statusFilter ? `&status=${statusFilter}` : ''}&limit=${limit}&page=${currentPage + 1}`}
-                  className={`px-3 py-1.5 bg-white border border-slate-300 rounded-lg font-medium text-slate-700 transition ${
-                    currentPage >= totalPages ? 'pointer-events-none opacity-40' : 'hover:bg-slate-50'
+                  className={`btn-secondary !px-3 !py-1.5 !text-xs ${
+                    currentPage >= totalPages ? 'pointer-events-none opacity-40' : ''
                   }`}
                 >
                   Next

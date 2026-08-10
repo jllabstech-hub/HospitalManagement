@@ -50,7 +50,7 @@ describe('Available Slot Retrieval Service (Integration with Pure Engine)', () =
     });
 
     const activeDept = await prisma.department.create({
-      data: { name: 'Slot Service Dept Active', isActive: true },
+      data: { name: 'Slot Service Dept Active', slug: 'slot-service-dept-active', isActive: true },
     });
     activeDeptId = activeDept.id;
 
@@ -68,6 +68,7 @@ describe('Available Slot Retrieval Service (Integration with Pure Engine)', () =
         userId: userA.id,
         departmentId: activeDeptId,
         fullName: 'Dr. Active SlotServ',
+        slug: 'slot-serv-doc-act',
         phoneNumber: '111',
         qualification: 'MBBS',
       },
@@ -100,6 +101,7 @@ describe('Available Slot Retrieval Service (Integration with Pure Engine)', () =
         userId: userB.id,
         departmentId: activeDeptId,
         fullName: 'Dr. Inactive SlotServ',
+        slug: 'slot-serv-doc-inact',
         phoneNumber: '222',
         qualification: 'MBBS',
       },

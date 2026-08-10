@@ -52,13 +52,14 @@ export default function InteractiveSearchInput({
 
   return (
     <div className={`relative flex items-center ${className}`}>
-      <span className="absolute left-3 text-slate-400 text-sm pointer-events-none">🔍</span>
       <input
+        id="searchInput"
         type="text"
+        name="search"
         value={text}
         onChange={(e) => setText(e.target.value)}
         placeholder={placeholder}
-        className="w-full pl-9 pr-8 py-2 border border-slate-300 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white font-medium text-slate-800 placeholder-slate-400 transition"
+        className="input-field pr-8 text-xs font-medium sm:text-sm"
       />
       {text ? (
         <button
@@ -72,13 +73,13 @@ export default function InteractiveSearchInput({
               router.replace(`${pathname}?${params.toString()}`, { scroll: false });
             });
           }}
-          className="absolute right-2.5 text-xs text-slate-400 hover:text-slate-700 font-bold p-1 rounded-full hover:bg-slate-100 transition"
+          className="absolute right-2.5 rounded-full p-1 text-xs font-bold text-ink-soft transition hover:bg-brand-50 hover:text-ink"
           title="Clear search"
         >
           ✕
         </button>
       ) : isPending ? (
-        <span className="absolute right-3 text-xs text-purple-600 animate-spin">⏳</span>
+        <span className="absolute right-3 h-3.5 w-3.5 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" />
       ) : null}
     </div>
   );

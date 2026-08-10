@@ -58,11 +58,12 @@ export default function DoctorAppointmentActionButtons({ appointmentId, currentS
 
   return (
     <>
-      <div className="flex flex-wrap gap-2 justify-end">
+      <div className="flex flex-wrap justify-end gap-2">
         {currentStatus === AppointmentStatus.BOOKED && (
           <button
+            type="button"
             onClick={() => setActionType('confirm')}
-            className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs transition"
+            className="btn-primary !rounded-button !px-3 !py-1.5 !text-xs"
           >
             Confirm
           </button>
@@ -71,14 +72,16 @@ export default function DoctorAppointmentActionButtons({ appointmentId, currentS
         {currentStatus === AppointmentStatus.CONFIRMED && (
           <>
             <button
+              type="button"
               onClick={() => setActionType('complete')}
-              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition"
+              className="inline-flex items-center justify-center rounded-button bg-accent-600 px-3 py-1.5 text-xs font-semibold text-white shadow-soft transition hover:bg-accent-700"
             >
               Complete
             </button>
             <button
+              type="button"
               onClick={() => setActionType('noshow')}
-              className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow-xs transition"
+              className="inline-flex items-center justify-center rounded-button bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white shadow-soft transition hover:bg-amber-700"
             >
               No-Show
             </button>
@@ -87,8 +90,9 @@ export default function DoctorAppointmentActionButtons({ appointmentId, currentS
 
         {(currentStatus === AppointmentStatus.BOOKED || currentStatus === AppointmentStatus.CONFIRMED) && (
           <button
+            type="button"
             onClick={() => setActionType('cancel')}
-            className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-xs transition"
+            className="btn-danger !px-3 !py-1.5 !text-xs"
           >
             Cancel
           </button>
@@ -132,14 +136,14 @@ export default function DoctorAppointmentActionButtons({ appointmentId, currentS
       >
         <div className="space-y-3">
           {errorMsg && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-800 text-xs font-semibold">
+            <div className="rounded-card border border-rose-200 bg-rose-50 p-3 text-xs font-semibold text-rose-800">
               {errorMsg}
             </div>
           )}
 
           {actionType === 'cancel' && (
             <div>
-              <label htmlFor="docCancelReasonInput" className="block text-xs font-semibold text-slate-700 mb-1">
+              <label htmlFor="docCancelReasonInput" className="mb-1 block text-xs font-semibold text-ink">
                 Cancellation Reason (Optional):
               </label>
               <input
@@ -148,7 +152,7 @@ export default function DoctorAppointmentActionButtons({ appointmentId, currentS
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
                 placeholder="e.g. Doctor emergency leave"
-                className="w-full px-3 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-rose-500 focus:outline-none"
+                className="input-field !py-2 !text-xs"
               />
             </div>
           )}

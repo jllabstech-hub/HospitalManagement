@@ -9,7 +9,8 @@ import {
   UpdateDepartmentSchema,
   UpdateDepartmentInput,
 } from './schemas';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
+import { slugify } from '@/lib/slug';
 
 export type ActionResult<T = undefined> =
   | { success: true; data?: T }
@@ -18,6 +19,16 @@ export type ActionResult<T = undefined> =
 function safeRevalidate(path: string) {
   try {
     revalidatePath(path);
+  } catch {
+    // Ignored outside Next.js request context (e.g., in unit tests)
+  }
+}
+
+function safeRevalidatePublicDepartmentCaches() {
+  try {
+    revalidateTag('public-departments');
+    revalidatePath('/');
+    revalidatePath('/patient/doctors');
   } catch {
     // Ignored outside Next.js request context (e.g., in unit tests)
   }
@@ -41,6 +52,13 @@ export async function createDepartmentAction(
 
     const { name, description } = parsed.data;
     const normalizedName = name.trim();
+    const baseSlug = slugify(normalizedName) || 'department';
+    let slug = baseSlug;
+    let suffix = 0;
+    while (await prisma.department.findUnique({ where: { slug } })) {
+      suffix += 1;
+      slug = `${baseSlug}-${suffix}`;
+    }
 
     // Check case-insensitive duplicate department name
     const existing = await prisma.department.findFirst({
@@ -56,13 +74,16 @@ export async function createDepartmentAction(
     const department = await prisma.department.create({
       data: {
         name: normalizedName,
+        slug,
         description: description || null,
+        shortDescription: description || null,
         isActive: true,
       },
     });
 
     safeRevalidate('/admin/departments');
     safeRevalidate('/admin/dashboard');
+    safeRevalidatePublicDepartmentCaches();
     return { success: true, data: { id: department.id } };
   } catch (error: unknown) {
     if (error instanceof DomainError) {
@@ -119,6 +140,7 @@ export async function updateDepartmentAction(
 
     safeRevalidate('/admin/departments');
     safeRevalidate('/admin/dashboard');
+    safeRevalidatePublicDepartmentCaches();
     return { success: true };
   } catch (error: unknown) {
     if (error instanceof DomainError) {
@@ -153,6 +175,7 @@ export async function toggleDepartmentStatusAction(id: string): Promise<ActionRe
 
     safeRevalidate('/admin/departments');
     safeRevalidate('/admin/dashboard');
+    safeRevalidatePublicDepartmentCaches();
     return { success: true };
   } catch (error: unknown) {
     if (error instanceof DomainError) {

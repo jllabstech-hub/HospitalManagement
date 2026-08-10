@@ -55,7 +55,7 @@ describe('Real Concurrency & Race-Condition Suite (Requirement 21 & PostgreSQL P
     });
 
     const activeDept = await prisma.department.create({
-      data: { name: 'Concurrency Dept Active', isActive: true },
+      data: { name: 'Concurrency Dept Active', slug: 'concurrency-dept-active', isActive: true },
     });
     activeDeptId = activeDept.id;
 
@@ -73,6 +73,7 @@ describe('Real Concurrency & Race-Condition Suite (Requirement 21 & PostgreSQL P
         userId: userDoc.id,
         departmentId: activeDeptId,
         fullName: 'Dr. Concurrency Specialist',
+        slug: 'concurrency-doc',
         phoneNumber: '111',
         qualification: 'MBBS',
       },

@@ -224,37 +224,41 @@ export default function ScheduleManager({ availabilities, blockedDates, doctorNa
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-slate-800">Doctor Schedule Manager</h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Welcome <span className="font-semibold text-slate-700">{doctorName}</span>. Configure your recurring weekly working hours and schedule blocked dates.
+        <h1 className="font-display text-2xl font-semibold tracking-tight text-ink">Doctor Schedule Manager</h1>
+        <p className="mt-2 text-sm text-ink-muted">
+          Welcome <span className="font-semibold text-ink">{doctorName}</span>. Configure your recurring weekly working hours and schedule blocked dates.
         </p>
       </div>
 
       {/* Notifications */}
       {successMessage && (
-        <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm rounded-xl flex justify-between items-center">
+        <div className="flex items-center justify-between rounded-card border border-accent-200 bg-accent-50 p-4 text-sm text-accent-800">
           <span>{successMessage}</span>
-          <button onClick={() => setSuccessMessage(null)} className="text-xs text-emerald-600 font-bold">✕</button>
+          <button onClick={() => setSuccessMessage(null)} className="text-xs font-bold text-accent-600">
+            ✕
+          </button>
         </div>
       )}
 
       {serverError && (
-        <div className="p-4 bg-red-50 border border-red-200 text-red-800 text-sm rounded-xl flex justify-between items-center">
+        <div className="flex items-center justify-between rounded-card border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">
           <span>{serverError}</span>
-          <button onClick={() => setServerError(null)} className="text-xs text-red-600 font-bold">✕</button>
+          <button onClick={() => setServerError(null)} className="text-xs font-bold text-rose-600">
+            ✕
+          </button>
         </div>
       )}
 
       {/* SECTION 1: WEEKLY RECURRING AVAILABILITY */}
-      <section className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-4">
+      <section className="card-surface space-y-6 p-6">
+        <div className="flex flex-col justify-between gap-2 border-b border-[#dde5e9] pb-4 sm:flex-row sm:items-center">
           <div>
-            <h2 className="text-lg font-bold text-slate-800">📅 Weekly Recurring Working Hours</h2>
-            <p className="text-xs text-slate-500">Define the working windows for each day of the week.</p>
+            <h2 className="font-display text-lg font-semibold text-ink">Weekly Recurring Working Hours</h2>
+            <p className="text-xs text-ink-muted">Define the working windows for each day of the week.</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {DAYS_OF_WEEK.map(({ day, name }) => {
             const dayWindows = availabilities.filter((a) => a.dayOfWeek === day);
 
@@ -262,17 +266,17 @@ export default function ScheduleManager({ availabilities, blockedDates, doctorNa
               <div
                 key={day}
                 data-testid={`day-card-${day}`}
-                className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col justify-between"
+                className="flex flex-col justify-between rounded-card border border-[#dde5e9] bg-surface-muted p-4"
               >
                 <div>
-                  <div className="flex justify-between items-center mb-3">
-                    <h3 className="font-bold text-sm text-slate-800">{name}</h3>
+                  <div className="mb-3 flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-ink">{name}</h3>
                     {dayWindows.length > 0 ? (
-                      <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
+                      <span className="rounded-pill bg-accent-100 px-2 py-0.5 text-[10px] font-bold text-accent-800">
                         {dayWindows.length} {dayWindows.length === 1 ? 'Window' : 'Windows'}
                       </span>
                     ) : (
-                      <span className="text-[10px] bg-slate-200 text-slate-600 font-medium px-2 py-0.5 rounded-full">
+                      <span className="rounded-pill bg-surface-soft px-2 py-0.5 text-[10px] font-medium text-ink-muted">
                         Unavailable
                       </span>
                     )}
@@ -280,27 +284,27 @@ export default function ScheduleManager({ availabilities, blockedDates, doctorNa
 
                   {/* Windows List */}
                   {dayWindows.length === 0 ? (
-                    <p className="text-xs text-slate-400 italic mb-4">No working hours set</p>
+                    <p className="mb-4 text-xs italic text-ink-soft">No working hours set</p>
                   ) : (
-                    <div className="space-y-2 mb-4">
+                    <div className="mb-4 space-y-2">
                       {dayWindows.map((win) => (
                         <div
                           key={win.id}
-                          className="bg-white p-2.5 rounded-lg border border-slate-200 shadow-2xs flex justify-between items-center text-xs"
+                          className="flex items-center justify-between rounded-button border border-[#dde5e9] bg-white p-2.5 text-xs shadow-soft"
                         >
-                          <span className="font-medium text-slate-700">
+                          <span className="font-medium text-ink">
                             {formatTimeTo12Hour(win.startTime)} – {formatTimeTo12Hour(win.endTime)}
                           </span>
                           <div className="flex space-x-1">
                             <button
                               onClick={() => openEditWindowModal(win)}
-                              className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded text-[11px]"
+                              className="rounded-button bg-surface-muted px-2 py-1 text-[11px] text-ink-muted transition hover:bg-brand-50 hover:text-brand-800"
                             >
                               Edit
                             </button>
                             <button
                               onClick={() => setConfirmDeleteWindow(win)}
-                              className="px-2 py-1 bg-red-50 hover:bg-red-100 text-red-600 rounded text-[11px]"
+                              className="rounded-button bg-rose-50 px-2 py-1 text-[11px] text-rose-600 transition hover:bg-rose-100"
                             >
                               Delete
                             </button>
@@ -313,7 +317,7 @@ export default function ScheduleManager({ availabilities, blockedDates, doctorNa
 
                 <button
                   onClick={() => openAddWindowModal(day)}
-                  className="w-full py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold rounded-lg border border-blue-200 transition"
+                  className="w-full rounded-button border border-brand-200 bg-brand-50 py-2 text-xs font-semibold text-brand-700 transition hover:bg-brand-100"
                 >
                   + Add Working Window
                 </button>
@@ -324,11 +328,11 @@ export default function ScheduleManager({ availabilities, blockedDates, doctorNa
       </section>
 
       {/* SECTION 2: BLOCKED DATES & SCHEDULE EXCEPTIONS */}
-      <section className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+      <section className="card-surface space-y-6 p-6">
+        <div className="flex flex-col justify-between gap-4 border-b border-[#dde5e9] pb-4 sm:flex-row sm:items-center">
           <div>
-            <h2 className="text-lg font-bold text-slate-800">🚫 Blocked Dates & Schedule Exceptions</h2>
-            <p className="text-xs text-slate-500">Block full days or specific time ranges for leave or hospital meetings.</p>
+            <h2 className="font-display text-lg font-semibold text-ink">Blocked Dates & Schedule Exceptions</h2>
+            <p className="text-xs text-ink-muted">Block full days or specific time ranges for leave or hospital meetings.</p>
           </div>
           <button
             onClick={() => {
@@ -343,22 +347,21 @@ export default function ScheduleManager({ availabilities, blockedDates, doctorNa
               });
               setIsAddBlockOpen(true);
             }}
-            className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-xl shadow-sm flex items-center justify-center space-x-2"
+            className="inline-flex items-center justify-center rounded-button bg-amber-600 px-4 py-2 text-xs font-semibold text-white shadow-soft transition hover:bg-amber-700"
           >
             <span>+ Block Date / Range</span>
           </button>
         </div>
 
         {blockedDates.length === 0 ? (
-          <div className="p-8 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200">
-            <div className="text-3xl mb-2">🌴</div>
-            <h4 className="text-sm font-semibold text-slate-700">No Blocked Dates Scheduled</h4>
-            <p className="text-xs text-slate-500 mt-1">You currently have no leave or partial-day exceptions.</p>
+          <div className="rounded-card border border-dashed border-[#c9d5db] bg-surface-muted p-8 text-center">
+            <h4 className="text-sm font-semibold text-ink">No Blocked Dates Scheduled</h4>
+            <p className="mt-1 text-xs text-ink-muted">You currently have no leave or partial-day exceptions.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-slate-600">
-              <thead className="bg-slate-50 text-[11px] uppercase font-semibold text-slate-500 border-b border-slate-200">
+            <table className="w-full text-left text-xs text-ink-muted">
+              <thead className="border-b border-[#dde5e9] bg-surface-muted text-[11px] font-semibold uppercase text-ink-muted">
                 <tr>
                   <th className="px-4 py-3">Blocked Date</th>
                   <th className="px-4 py-3">Block Type</th>
@@ -367,41 +370,43 @@ export default function ScheduleManager({ availabilities, blockedDates, doctorNa
                   <th className="px-4 py-3 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-[#dde5e9]/60">
                 {blockedDates.map((b) => {
                   const startDateStr = formatDateToYYYYMMDD(b.startDate);
                   const isFull = !b.startTime || !b.endTime;
 
                   return (
-                    <tr key={b.id} className="hover:bg-slate-50">
-                      <td className="px-4 py-3 font-semibold text-slate-800">{startDateStr}</td>
+                    <tr key={b.id} className="hover:bg-brand-50/40">
+                      <td className="px-4 py-3 font-semibold text-ink">{startDateStr}</td>
                       <td className="px-4 py-3">
                         {isFull ? (
-                          <span className="bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full text-[10px]">
+                          <span className="rounded-pill bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">
                             Full Day Block
                           </span>
                         ) : (
-                          <span className="bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded-full text-[10px]">
+                          <span className="rounded-pill bg-brand-100 px-2 py-0.5 text-[10px] font-bold text-brand-800">
                             Partial Day Block
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-3 font-medium text-slate-700">
+                      <td className="px-4 py-3 font-medium text-ink">
                         {isFull
                           ? 'Entire Day (00:00 – 23:59)'
                           : `${formatTimeTo12Hour(b.startTime!)} – ${formatTimeTo12Hour(b.endTime!)}`}
                       </td>
-                      <td className="px-4 py-3 text-slate-500">{b.reason || <span className="italic text-slate-400">None specified</span>}</td>
-                      <td className="px-4 py-3 text-right space-x-2">
+                      <td className="px-4 py-3 text-ink-muted">
+                        {b.reason || <span className="italic text-ink-soft">None specified</span>}
+                      </td>
+                      <td className="space-x-2 px-4 py-3 text-right">
                         <button
                           onClick={() => openEditBlockModal(b)}
-                          className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded"
+                          className="rounded-button bg-surface-muted px-2.5 py-1 text-ink transition hover:bg-brand-50"
                         >
                           Edit
                         </button>
                         <button
                           onClick={() => setConfirmDeleteBlock(b)}
-                          className="px-2.5 py-1 bg-red-50 hover:bg-red-100 text-red-600 rounded"
+                          className="rounded-button bg-rose-50 px-2.5 py-1 text-rose-600 transition hover:bg-rose-100"
                         >
                           Delete
                         </button>
@@ -417,10 +422,10 @@ export default function ScheduleManager({ availabilities, blockedDates, doctorNa
 
       {/* ADD AVAILABILITY MODAL */}
       {activeAddDay !== null && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-sm rounded-2xl shadow-2xl p-6 border border-slate-200">
-            <h3 className="text-lg font-bold text-slate-800 mb-1">Add Working Window</h3>
-            <p className="text-xs text-slate-500 mb-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/50 p-4 backdrop-blur-[2px]">
+          <div className="w-full max-w-sm rounded-card border border-[#dde5e9] bg-white p-6 shadow-elevated">
+            <h3 className="font-display text-lg font-semibold text-ink">Add Working Window</h3>
+            <p className="mb-4 mt-1 text-xs text-ink-muted">
               Add recurring working hours for {DAYS_OF_WEEK.find((d) => d.day === activeAddDay)?.name}.
             </p>
 
@@ -429,44 +434,44 @@ export default function ScheduleManager({ availabilities, blockedDates, doctorNa
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label htmlFor="availStartTime" className="block font-semibold text-slate-700 mb-1">Start Time *</label>
+                  <label htmlFor="availStartTime" className="mb-1 block font-semibold text-ink">
+                    Start Time *
+                  </label>
                   <input
                     id="availStartTime"
                     type="time"
                     {...addAvailForm.register('startTime')}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="input-field !py-2"
                   />
                   {addAvailForm.formState.errors.startTime && (
-                    <p className="text-red-600 mt-1">{addAvailForm.formState.errors.startTime.message}</p>
+                    <p className="mt-1 text-rose-600">{addAvailForm.formState.errors.startTime.message}</p>
                   )}
                 </div>
 
                 <div>
-                  <label htmlFor="availEndTime" className="block font-semibold text-slate-700 mb-1">End Time *</label>
+                  <label htmlFor="availEndTime" className="mb-1 block font-semibold text-ink">
+                    End Time *
+                  </label>
                   <input
                     id="availEndTime"
                     type="time"
                     {...addAvailForm.register('endTime')}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="input-field !py-2"
                   />
                   {addAvailForm.formState.errors.endTime && (
-                    <p className="text-red-600 mt-1">{addAvailForm.formState.errors.endTime.message}</p>
+                    <p className="mt-1 text-rose-600">{addAvailForm.formState.errors.endTime.message}</p>
                   )}
                 </div>
               </div>
 
               <div className="flex justify-end space-x-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setActiveAddDay(null)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg"
-                >
+                <button type="button" onClick={() => setActiveAddDay(null)} className="btn-secondary !px-4 !py-2 !text-xs">
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={addAvailForm.formState.isSubmitting}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg disabled:opacity-50"
+                  className="btn-primary !px-4 !py-2 !text-xs"
                 >
                   {addAvailForm.formState.isSubmitting ? 'Saving...' : 'Add Window'}
                 </button>
@@ -478,54 +483,54 @@ export default function ScheduleManager({ availabilities, blockedDates, doctorNa
 
       {/* EDIT AVAILABILITY MODAL */}
       {editingWindow && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-sm rounded-2xl shadow-2xl p-6 border border-slate-200">
-            <h3 className="text-lg font-bold text-slate-800 mb-1">Edit Working Window</h3>
-            <p className="text-xs text-slate-500 mb-4">Modify existing working hours.</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/50 p-4 backdrop-blur-[2px]">
+          <div className="w-full max-w-sm rounded-card border border-[#dde5e9] bg-white p-6 shadow-elevated">
+            <h3 className="font-display text-lg font-semibold text-ink">Edit Working Window</h3>
+            <p className="mb-4 mt-1 text-xs text-ink-muted">Modify existing working hours.</p>
 
             <form onSubmit={editAvailForm.handleSubmit(handleEditAvailability)} className="space-y-4 text-xs">
               <input type="hidden" {...editAvailForm.register('id')} />
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label htmlFor="editAvailStartTime" className="block font-semibold text-slate-700 mb-1">Start Time *</label>
+                  <label htmlFor="editAvailStartTime" className="mb-1 block font-semibold text-ink">
+                    Start Time *
+                  </label>
                   <input
                     id="editAvailStartTime"
                     type="time"
                     {...editAvailForm.register('startTime')}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="input-field !py-2"
                   />
                   {editAvailForm.formState.errors.startTime && (
-                    <p className="text-red-600 mt-1">{editAvailForm.formState.errors.startTime.message}</p>
+                    <p className="mt-1 text-rose-600">{editAvailForm.formState.errors.startTime.message}</p>
                   )}
                 </div>
 
                 <div>
-                  <label htmlFor="editAvailEndTime" className="block font-semibold text-slate-700 mb-1">End Time *</label>
+                  <label htmlFor="editAvailEndTime" className="mb-1 block font-semibold text-ink">
+                    End Time *
+                  </label>
                   <input
                     id="editAvailEndTime"
                     type="time"
                     {...editAvailForm.register('endTime')}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="input-field !py-2"
                   />
                   {editAvailForm.formState.errors.endTime && (
-                    <p className="text-red-600 mt-1">{editAvailForm.formState.errors.endTime.message}</p>
+                    <p className="mt-1 text-rose-600">{editAvailForm.formState.errors.endTime.message}</p>
                   )}
                 </div>
               </div>
 
               <div className="flex justify-end space-x-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setEditingWindow(null)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg"
-                >
+                <button type="button" onClick={() => setEditingWindow(null)} className="btn-secondary !px-4 !py-2 !text-xs">
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={editAvailForm.formState.isSubmitting}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg disabled:opacity-50"
+                  className="btn-primary !px-4 !py-2 !text-xs"
                 >
                   {editAvailForm.formState.isSubmitting ? 'Saving...' : 'Save Changes'}
                 </button>
@@ -537,25 +542,22 @@ export default function ScheduleManager({ availabilities, blockedDates, doctorNa
 
       {/* CONFIRM DELETE WINDOW DIALOG */}
       {confirmDeleteWindow && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-sm rounded-2xl shadow-2xl p-6 border border-slate-200 text-center">
-            <div className="text-3xl mb-2">🗑️</div>
-            <h3 className="text-lg font-bold text-slate-800">Delete Availability Window?</h3>
-            <p className="text-xs text-slate-500 mt-2">
-              Are you sure you want to remove {formatTimeTo12Hour(confirmDeleteWindow.startTime)} – {formatTimeTo12Hour(confirmDeleteWindow.endTime)}?
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/50 p-4 backdrop-blur-[2px]">
+          <div className="w-full max-w-sm rounded-card border border-[#dde5e9] bg-white p-6 text-center shadow-elevated">
+            <h3 className="font-display text-lg font-semibold text-ink">Delete Availability Window?</h3>
+            <p className="mt-2 text-xs text-ink-muted">
+              Are you sure you want to remove {formatTimeTo12Hour(confirmDeleteWindow.startTime)} –{' '}
+              {formatTimeTo12Hour(confirmDeleteWindow.endTime)}?
             </p>
 
-            <div className="flex justify-center space-x-3 mt-6">
+            <div className="mt-6 flex justify-center space-x-3">
               <button
                 onClick={() => setConfirmDeleteWindow(null)}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-lg"
+                className="btn-secondary !px-4 !py-2 !text-xs"
               >
                 Cancel
               </button>
-              <button
-                onClick={handleDeleteAvailability}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded-lg"
-              >
+              <button onClick={handleDeleteAvailability} className="btn-danger !px-4 !py-2 !text-xs">
                 Delete Window
               </button>
             </div>
@@ -565,90 +567,94 @@ export default function ScheduleManager({ availabilities, blockedDates, doctorNa
 
       {/* ADD BLOCKED DATE MODAL */}
       {isAddBlockOpen && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 border border-slate-200">
-            <h3 className="text-lg font-bold text-slate-800 mb-1">Add Blocked Date / Range</h3>
-            <p className="text-xs text-slate-500 mb-4">Set leave or partial unavailability.</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/50 p-4 backdrop-blur-[2px]">
+          <div className="w-full max-w-md rounded-card border border-[#dde5e9] bg-white p-6 shadow-elevated">
+            <h3 className="font-display text-lg font-semibold text-ink">Add Blocked Date / Range</h3>
+            <p className="mb-4 mt-1 text-xs text-ink-muted">Set leave or partial unavailability.</p>
 
             <form onSubmit={addBlockForm.handleSubmit(handleAddBlockedDate)} className="space-y-3 text-xs">
               <div>
-                <label htmlFor="blockStartDate" className="block font-semibold text-slate-700 mb-1">Date (YYYY-MM-DD) *</label>
+                <label htmlFor="blockStartDate" className="mb-1 block font-semibold text-ink">
+                  Date (YYYY-MM-DD) *
+                </label>
                 <input
                   id="blockStartDate"
                   type="date"
                   min={getHospitalTodayDateString()}
                   {...addBlockForm.register('startDate')}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                  className="input-field !py-2"
                 />
                 {addBlockForm.formState.errors.startDate && (
-                  <p className="text-red-600 mt-1">{addBlockForm.formState.errors.startDate.message}</p>
+                  <p className="mt-1 text-rose-600">{addBlockForm.formState.errors.startDate.message}</p>
                 )}
               </div>
 
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                <label className="flex items-center space-x-2 font-semibold text-slate-700 cursor-pointer">
+              <div className="rounded-card border border-[#dde5e9] bg-surface-muted p-3">
+                <label className="flex cursor-pointer items-center space-x-2 font-semibold text-ink">
                   <input
                     type="checkbox"
                     {...addBlockForm.register('isFullDay')}
-                    className="w-4 h-4 text-amber-600 rounded focus:ring-amber-500"
+                    className="h-4 w-4 rounded border-[#dde5e9] text-brand-600 focus:ring-brand-500"
                   />
                   <span>Block Full Day (Entire 24 Hours)</span>
                 </label>
               </div>
 
               {!addBlockForm.watch('isFullDay') && (
-                <div className="grid grid-cols-2 gap-3 p-3 bg-amber-50/50 rounded-xl border border-amber-200">
+                <div className="grid grid-cols-2 gap-3 rounded-card border border-amber-200 bg-amber-50/50 p-3">
                   <div>
-                    <label htmlFor="blockStartTime" className="block font-semibold text-slate-700 mb-1">Blocked Start Time *</label>
+                    <label htmlFor="blockStartTime" className="mb-1 block font-semibold text-ink">
+                      Blocked Start Time *
+                    </label>
                     <input
                       id="blockStartTime"
                       type="time"
                       {...addBlockForm.register('startTime')}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none bg-white"
+                      className="input-field !py-2"
                     />
                     {addBlockForm.formState.errors.startTime && (
-                      <p className="text-red-600 mt-1">{addBlockForm.formState.errors.startTime.message}</p>
+                      <p className="mt-1 text-rose-600">{addBlockForm.formState.errors.startTime.message}</p>
                     )}
                   </div>
 
                   <div>
-                    <label htmlFor="blockEndTime" className="block font-semibold text-slate-700 mb-1">Blocked End Time *</label>
+                    <label htmlFor="blockEndTime" className="mb-1 block font-semibold text-ink">
+                      Blocked End Time *
+                    </label>
                     <input
                       id="blockEndTime"
                       type="time"
                       {...addBlockForm.register('endTime')}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none bg-white"
+                      className="input-field !py-2"
                     />
                     {addBlockForm.formState.errors.endTime && (
-                      <p className="text-red-600 mt-1">{addBlockForm.formState.errors.endTime.message}</p>
+                      <p className="mt-1 text-rose-600">{addBlockForm.formState.errors.endTime.message}</p>
                     )}
                   </div>
                 </div>
               )}
 
               <div>
-                <label htmlFor="blockReason" className="block font-semibold text-slate-700 mb-1">Reason (Optional)</label>
+                <label htmlFor="blockReason" className="mb-1 block font-semibold text-ink">
+                  Reason (Optional)
+                </label>
                 <input
                   id="blockReason"
                   type="text"
                   {...addBlockForm.register('reason')}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                  className="input-field !py-2"
                   placeholder="e.g. Personal Leave, Hospital Meeting"
                 />
               </div>
 
               <div className="flex justify-end space-x-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setIsAddBlockOpen(false)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg"
-                >
+                <button type="button" onClick={() => setIsAddBlockOpen(false)} className="btn-secondary !px-4 !py-2 !text-xs">
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={addBlockForm.formState.isSubmitting}
-                  className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-lg disabled:opacity-50"
+                  className="inline-flex items-center justify-center rounded-button bg-amber-600 px-4 py-2 text-xs font-semibold text-white shadow-soft transition hover:bg-amber-700 disabled:opacity-50"
                 >
                   {addBlockForm.formState.isSubmitting ? 'Saving...' : 'Add Blocked Date'}
                 </button>
@@ -660,91 +666,95 @@ export default function ScheduleManager({ availabilities, blockedDates, doctorNa
 
       {/* EDIT BLOCKED DATE MODAL */}
       {editingBlock && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 border border-slate-200">
-            <h3 className="text-lg font-bold text-slate-800 mb-1">Edit Blocked Date</h3>
-            <p className="text-xs text-slate-500 mb-4">Modify blocked date range or reason.</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/50 p-4 backdrop-blur-[2px]">
+          <div className="w-full max-w-md rounded-card border border-[#dde5e9] bg-white p-6 shadow-elevated">
+            <h3 className="font-display text-lg font-semibold text-ink">Edit Blocked Date</h3>
+            <p className="mb-4 mt-1 text-xs text-ink-muted">Modify blocked date range or reason.</p>
 
             <form onSubmit={editBlockForm.handleSubmit(handleEditBlockedDate)} className="space-y-3 text-xs">
               <input type="hidden" {...editBlockForm.register('id')} />
 
               <div>
-                <label htmlFor="editBlockStartDate" className="block font-semibold text-slate-700 mb-1">Date (YYYY-MM-DD) *</label>
+                <label htmlFor="editBlockStartDate" className="mb-1 block font-semibold text-ink">
+                  Date (YYYY-MM-DD) *
+                </label>
                 <input
                   id="editBlockStartDate"
                   type="date"
                   min={getHospitalTodayDateString()}
                   {...editBlockForm.register('startDate')}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                  className="input-field !py-2"
                 />
                 {editBlockForm.formState.errors.startDate && (
-                  <p className="text-red-600 mt-1">{editBlockForm.formState.errors.startDate.message}</p>
+                  <p className="mt-1 text-rose-600">{editBlockForm.formState.errors.startDate.message}</p>
                 )}
               </div>
 
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                <label className="flex items-center space-x-2 font-semibold text-slate-700 cursor-pointer">
+              <div className="rounded-card border border-[#dde5e9] bg-surface-muted p-3">
+                <label className="flex cursor-pointer items-center space-x-2 font-semibold text-ink">
                   <input
                     type="checkbox"
                     {...editBlockForm.register('isFullDay')}
-                    className="w-4 h-4 text-amber-600 rounded focus:ring-amber-500"
+                    className="h-4 w-4 rounded border-[#dde5e9] text-brand-600 focus:ring-brand-500"
                   />
                   <span>Block Full Day</span>
                 </label>
               </div>
 
               {!editBlockForm.watch('isFullDay') && (
-                <div className="grid grid-cols-2 gap-3 p-3 bg-amber-50/50 rounded-xl border border-amber-200">
+                <div className="grid grid-cols-2 gap-3 rounded-card border border-amber-200 bg-amber-50/50 p-3">
                   <div>
-                    <label htmlFor="editBlockStartTime" className="block font-semibold text-slate-700 mb-1">Blocked Start Time *</label>
+                    <label htmlFor="editBlockStartTime" className="mb-1 block font-semibold text-ink">
+                      Blocked Start Time *
+                    </label>
                     <input
                       id="editBlockStartTime"
                       type="time"
                       {...editBlockForm.register('startTime')}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none bg-white"
+                      className="input-field !py-2"
                     />
                     {editBlockForm.formState.errors.startTime && (
-                      <p className="text-red-600 mt-1">{editBlockForm.formState.errors.startTime.message}</p>
+                      <p className="mt-1 text-rose-600">{editBlockForm.formState.errors.startTime.message}</p>
                     )}
                   </div>
 
                   <div>
-                    <label htmlFor="editBlockEndTime" className="block font-semibold text-slate-700 mb-1">Blocked End Time *</label>
+                    <label htmlFor="editBlockEndTime" className="mb-1 block font-semibold text-ink">
+                      Blocked End Time *
+                    </label>
                     <input
                       id="editBlockEndTime"
                       type="time"
                       {...editBlockForm.register('endTime')}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none bg-white"
+                      className="input-field !py-2"
                     />
                     {editBlockForm.formState.errors.endTime && (
-                      <p className="text-red-600 mt-1">{editBlockForm.formState.errors.endTime.message}</p>
+                      <p className="mt-1 text-rose-600">{editBlockForm.formState.errors.endTime.message}</p>
                     )}
                   </div>
                 </div>
               )}
 
               <div>
-                <label htmlFor="editBlockReason" className="block font-semibold text-slate-700 mb-1">Reason (Optional)</label>
+                <label htmlFor="editBlockReason" className="mb-1 block font-semibold text-ink">
+                  Reason (Optional)
+                </label>
                 <input
                   id="editBlockReason"
                   type="text"
                   {...editBlockForm.register('reason')}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                  className="input-field !py-2"
                 />
               </div>
 
               <div className="flex justify-end space-x-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setEditingBlock(null)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg"
-                >
+                <button type="button" onClick={() => setEditingBlock(null)} className="btn-secondary !px-4 !py-2 !text-xs">
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={editBlockForm.formState.isSubmitting}
-                  className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-lg disabled:opacity-50"
+                  className="inline-flex items-center justify-center rounded-button bg-amber-600 px-4 py-2 text-xs font-semibold text-white shadow-soft transition hover:bg-amber-700 disabled:opacity-50"
                 >
                   {editBlockForm.formState.isSubmitting ? 'Saving...' : 'Save Changes'}
                 </button>
@@ -756,25 +766,21 @@ export default function ScheduleManager({ availabilities, blockedDates, doctorNa
 
       {/* CONFIRM DELETE BLOCK DIALOG */}
       {confirmDeleteBlock && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-sm rounded-2xl shadow-2xl p-6 border border-slate-200 text-center">
-            <div className="text-3xl mb-2">🗑️</div>
-            <h3 className="text-lg font-bold text-slate-800">Remove Blocked Date?</h3>
-            <p className="text-xs text-slate-500 mt-2">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/50 p-4 backdrop-blur-[2px]">
+          <div className="w-full max-w-sm rounded-card border border-[#dde5e9] bg-white p-6 text-center shadow-elevated">
+            <h3 className="font-display text-lg font-semibold text-ink">Remove Blocked Date?</h3>
+            <p className="mt-2 text-xs text-ink-muted">
               Are you sure you want to remove the block for {formatDateToYYYYMMDD(confirmDeleteBlock.startDate)}?
             </p>
 
-            <div className="flex justify-center space-x-3 mt-6">
+            <div className="mt-6 flex justify-center space-x-3">
               <button
                 onClick={() => setConfirmDeleteBlock(null)}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-lg"
+                className="btn-secondary !px-4 !py-2 !text-xs"
               >
                 Cancel
               </button>
-              <button
-                onClick={handleDeleteBlockedDate}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded-lg"
-              >
+              <button onClick={handleDeleteBlockedDate} className="btn-danger !px-4 !py-2 !text-xs">
                 Remove Block
               </button>
             </div>

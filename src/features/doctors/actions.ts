@@ -11,7 +11,8 @@ import {
   UpdateDoctorInput,
 } from './schemas';
 import { Role } from '@prisma/client';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
+import { slugify } from '@/lib/slug';
 
 export type ActionResult<T = undefined> =
   | { success: true; data?: T }
@@ -20,6 +21,17 @@ export type ActionResult<T = undefined> =
 function safeRevalidate(path: string) {
   try {
     revalidatePath(path);
+  } catch {
+    // Ignored outside Next.js request context (e.g., in unit tests)
+  }
+}
+
+function safeRevalidatePublicDoctorCaches() {
+  try {
+    revalidateTag('public-doctors');
+    revalidateTag('public-departments');
+    revalidatePath('/');
+    revalidatePath('/patient/doctors');
   } catch {
     // Ignored outside Next.js request context (e.g., in unit tests)
   }
@@ -96,11 +108,22 @@ export async function createDoctorAction(
         },
       });
 
+      const baseSlug = slugify(fullName.trim()) || 'doctor';
+      let slug = baseSlug;
+      let suffix = 0;
+      while (await tx.doctorProfile.findUnique({ where: { slug } })) {
+        suffix += 1;
+        slug = `${baseSlug}-${suffix}`;
+      }
+
       const profile = await tx.doctorProfile.create({
         data: {
           userId: user.id,
           departmentId,
           fullName: fullName.trim(),
+          slug,
+          publicDisplayName: fullName.trim(),
+          publicBio: bio || null,
           phoneNumber: phoneNumber.trim(),
           qualification: qualification.trim(),
           experienceYears,
@@ -126,6 +149,7 @@ export async function createDoctorAction(
 
     safeRevalidate('/admin/doctors');
     safeRevalidate('/admin/dashboard');
+    safeRevalidatePublicDoctorCaches();
     return { success: true, data: { id: doctorProfile.id } };
   } catch (error: unknown) {
     if (error instanceof DomainError) {
@@ -200,6 +224,7 @@ export async function updateDoctorAction(
 
     safeRevalidate('/admin/doctors');
     safeRevalidate('/admin/dashboard');
+    safeRevalidatePublicDoctorCaches();
     return { success: true };
   } catch (error: unknown) {
     if (error instanceof DomainError) {
@@ -238,6 +263,7 @@ export async function toggleDoctorStatusAction(id: string): Promise<ActionResult
 
     safeRevalidate('/admin/doctors');
     safeRevalidate('/admin/dashboard');
+    safeRevalidatePublicDoctorCaches();
     return { success: true };
   } catch (error: unknown) {
     if (error instanceof DomainError) {
