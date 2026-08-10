@@ -9,6 +9,7 @@ interface PageProps {
   searchParams: Promise<{
     date?: string;
     status?: string;
+    page?: string;
   }>;
 }
 
@@ -19,10 +20,13 @@ export default async function DoctorAppointmentsPage({ searchParams }: PageProps
   const todayStr = getHospitalTodayDateString();
   const dateStr = resolvedParams.date || todayStr;
   const statusFilter = resolvedParams.status || '';
+  const page = Math.max(1, parseInt(resolvedParams.page || '1', 10));
 
-  const { appointments, counts } = await getDoctorAppointments(user.doctorProfileId, {
+  const { appointments, counts, currentPage, totalPages, totalCount } = await getDoctorAppointments(user.doctorProfileId, {
     dateStr,
     status: statusFilter,
+    page,
+    limit: 10,
   });
 
   return (
@@ -152,6 +156,33 @@ export default async function DoctorAppointmentsPage({ searchParams }: PageProps
               </div>
             </div>
           ))}
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 flex justify-between items-center text-xs text-slate-500 shadow-xs">
+              <span>
+                Showing Page {currentPage} of {totalPages} ({totalCount} matching appointments)
+              </span>
+              <div className="flex space-x-2">
+                <Link
+                  href={`/doctor/appointments?date=${dateStr}${statusFilter ? `&status=${statusFilter}` : ''}&page=${currentPage - 1}`}
+                  className={`px-3 py-1.5 bg-white border border-slate-300 rounded-lg font-medium text-slate-700 transition ${
+                    currentPage <= 1 ? 'pointer-events-none opacity-40' : 'hover:bg-slate-50'
+                  }`}
+                >
+                  Previous
+                </Link>
+                <Link
+                  href={`/doctor/appointments?date=${dateStr}${statusFilter ? `&status=${statusFilter}` : ''}&page=${currentPage + 1}`}
+                  className={`px-3 py-1.5 bg-white border border-slate-300 rounded-lg font-medium text-slate-700 transition ${
+                    currentPage >= totalPages ? 'pointer-events-none opacity-40' : 'hover:bg-slate-50'
+                  }`}
+                >
+                  Next
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

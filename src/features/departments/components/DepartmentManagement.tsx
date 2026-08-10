@@ -15,6 +15,8 @@ import {
   toggleDepartmentStatusAction,
 } from '../actions';
 
+import { useRouter, useSearchParams } from 'next/navigation';
+
 interface DepartmentItem {
   id: string;
   name: string;
@@ -28,9 +30,25 @@ interface DepartmentItem {
 
 interface Props {
   departments: DepartmentItem[];
+  currentPage?: number;
+  totalPages?: number;
+  totalDepartments?: number;
 }
 
-export default function DepartmentManagement({ departments }: Props) {
+export default function DepartmentManagement({
+  departments,
+  currentPage = 1,
+  totalPages = 1,
+  totalDepartments = departments.length,
+}: Props) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const handlePageChange = (newPage: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('page', newPage.toString());
+    router.push(`/admin/departments?${params.toString()}`);
+  };
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingDept, setEditingDept] = useState<DepartmentItem | null>(null);
   const [confirmToggleDept, setConfirmToggleDept] = useState<DepartmentItem | null>(null);
@@ -210,6 +228,31 @@ export default function DepartmentManagement({ departments }: Props) {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* Pagination Bar */}
+        {totalPages > 1 && (
+          <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-between items-center text-xs text-slate-500">
+            <span>
+              Showing Page {currentPage} of {totalPages} ({totalDepartments} total departments)
+            </span>
+            <div className="flex space-x-2">
+              <button
+                disabled={currentPage <= 1}
+                onClick={() => handlePageChange(currentPage - 1)}
+                className="px-3 py-1.5 bg-white border border-slate-300 rounded-md disabled:opacity-40 hover:bg-slate-50 font-medium text-slate-700 transition"
+              >
+                Previous
+              </button>
+              <button
+                disabled={currentPage >= totalPages}
+                onClick={() => handlePageChange(currentPage + 1)}
+                className="px-3 py-1.5 bg-white border border-slate-300 rounded-md disabled:opacity-40 hover:bg-slate-50 font-medium text-slate-700 transition"
+              >
+                Next
+              </button>
+            </div>
           </div>
         )}
       </div>

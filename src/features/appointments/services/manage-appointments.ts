@@ -244,10 +244,13 @@ export async function getPatientAppointmentDetail(patientProfileId: string, appo
  */
 export async function getDoctorAppointments(
   doctorProfileId: string,
-  params: { dateStr?: string; status?: string }
+  params: { dateStr?: string; status?: string; page?: number; limit?: number }
 ) {
   const targetDateStr = params.dateStr || getHospitalTodayDateString();
   const targetUtcDate = new Date(Date.parse(`${targetDateStr}T00:00:00.000Z`));
+  const page = Math.max(1, params.page || 1);
+  const limit = Math.max(1, Math.min(50, params.limit || 10));
+  const skip = (page - 1) * limit;
 
   const whereClause: Prisma.AppointmentWhereInput = {
     doctorId: doctorProfileId,
@@ -258,28 +261,41 @@ export async function getDoctorAppointments(
     whereClause.status = params.status as AppointmentStatus;
   }
 
-  const appointments = await prisma.appointment.findMany({
-    where: whereClause,
-    select: {
-      id: true,
-      appointmentDate: true,
-      startTime: true,
-      endTime: true,
-      status: true,
-      cancellationReason: true,
-      cancelledBy: true,
-      patient: {
-        select: {
-          id: true,
-          fullName: true,
-          phoneNumber: true,
-          dateOfBirth: true,
-          gender: true,
+  const [appointments, allDayAppts] = await Promise.all([
+    prisma.appointment.findMany({
+      where: whereClause,
+      select: {
+        id: true,
+        appointmentDate: true,
+        startTime: true,
+        endTime: true,
+        status: true,
+        cancellationReason: true,
+        cancelledBy: true,
+        patient: {
+          select: {
+            id: true,
+            fullName: true,
+            phoneNumber: true,
+            dateOfBirth: true,
+            gender: true,
+          },
         },
       },
-    },
-    orderBy: { startTime: 'asc' },
-  });
+      orderBy: { startTime: 'asc' },
+      skip,
+      take: limit,
+    }),
+    prisma.appointment.findMany({
+      where: { doctorId: doctorProfileId, appointmentDate: targetUtcDate },
+      select: { status: true },
+    }),
+  ]);
+
+  const filteredTotalCount = whereClause.status
+    ? allDayAppts.filter((a) => a.status === whereClause.status).length
+    : allDayAppts.length;
+  const totalPages = Math.ceil(filteredTotalCount / limit) || 1;
 
   const formattedAppts = appointments.map((a) => ({
     ...a,
@@ -288,15 +304,22 @@ export async function getDoctorAppointments(
 
   // Summary counts for target date
   const counts = {
-    total: appointments.length,
-    booked: appointments.filter((a) => a.status === AppointmentStatus.BOOKED).length,
-    confirmed: appointments.filter((a) => a.status === AppointmentStatus.CONFIRMED).length,
-    completed: appointments.filter((a) => a.status === AppointmentStatus.COMPLETED).length,
-    cancelled: appointments.filter((a) => a.status === AppointmentStatus.CANCELLED).length,
-    noShow: appointments.filter((a) => a.status === AppointmentStatus.NO_SHOW).length,
+    total: allDayAppts.length,
+    booked: allDayAppts.filter((a) => a.status === AppointmentStatus.BOOKED).length,
+    confirmed: allDayAppts.filter((a) => a.status === AppointmentStatus.CONFIRMED).length,
+    completed: allDayAppts.filter((a) => a.status === AppointmentStatus.COMPLETED).length,
+    cancelled: allDayAppts.filter((a) => a.status === AppointmentStatus.CANCELLED).length,
+    noShow: allDayAppts.filter((a) => a.status === AppointmentStatus.NO_SHOW).length,
   };
 
-  return { appointments: formattedAppts, targetDateStr, counts };
+  return {
+    appointments: formattedAppts,
+    targetDateStr,
+    counts,
+    currentPage: page,
+    totalPages,
+    totalCount: filteredTotalCount,
+  };
 }
 
 /**
