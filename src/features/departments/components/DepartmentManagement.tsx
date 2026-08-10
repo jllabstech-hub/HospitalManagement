@@ -232,8 +232,8 @@ export default function DepartmentManagement({
         )}
 
         {/* Pagination Bar */}
-        {totalPages > 1 && (
-          <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-between items-center text-xs text-slate-500">
+        {departments.length > 0 && (
+          <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs text-slate-500">
             <span>
               Showing Page {currentPage} of {totalPages} ({totalDepartments} total departments)
             </span>

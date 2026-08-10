@@ -12,7 +12,7 @@ export default async function AdminDepartmentsPage({ searchParams }: PageProps) 
   await requireAdmin();
   const resolvedParams = await searchParams;
   const page = Math.max(1, parseInt(resolvedParams.page || '1', 10));
-  const limit = 10;
+  const limit = 5;
   const skip = (page - 1) * limit;
 
   const [departments, totalDepartments] = await Promise.all([

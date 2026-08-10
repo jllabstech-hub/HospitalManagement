@@ -136,7 +136,7 @@ export default async function PatientAppointmentsPage({ searchParams }: PageProp
           </div>
 
           {/* Pagination Bar */}
-          {totalPages > 1 && (
+          {currentList.length > 0 && (
             <div className="bg-white p-4 rounded-2xl border border-slate-200 flex justify-between items-center text-xs text-slate-500 shadow-xs">
               <span>
                 Showing Page {currentPage} of {totalPages} ({totalItems} {activeTab} appointments)

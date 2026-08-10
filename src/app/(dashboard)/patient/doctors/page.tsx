@@ -164,7 +164,7 @@ export default async function FindDoctorPage({ searchParams }: PageProps) {
       )}
 
       {/* Pagination Controls */}
-      {totalPages > 1 && (
+      {doctors.length > 0 && (
         <div className="bg-white p-4 rounded-xl border border-slate-200 flex items-center justify-between text-xs font-semibold">
           <div>
             Showing Page <span className="text-slate-800">{currentPage}</span> of{' '}

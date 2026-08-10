@@ -12,7 +12,7 @@ interface PageProps {
   }>;
 }
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 5;
 
 export default async function AdminDoctorsPage({ searchParams }: PageProps) {
   await requireAdmin();

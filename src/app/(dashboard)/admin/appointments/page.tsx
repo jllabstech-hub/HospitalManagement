@@ -30,18 +30,18 @@ export default async function AdminAppointmentsMasterPage({ searchParams }: Page
   const [departments, doctors, result] = await Promise.all([
     prisma.department.findMany({ select: { id: true, name: true }, orderBy: { name: 'asc' } }),
     prisma.doctorProfile.findMany({ select: { id: true, fullName: true }, orderBy: { fullName: 'asc' } }),
-    getAdminAppointments({
-      page,
-      limit: 15,
-      search,
-      departmentId,
-      doctorId,
-      status: statusFilter,
-      dateStr,
-    }),
-  ]);
+      getAdminAppointments({
+        page,
+        limit: 5,
+        search,
+        departmentId,
+        doctorId,
+        status: statusFilter,
+        dateStr,
+      }),
+    ]);
 
-  const { appointments, totalCount, currentPage, totalPages } = result;
+    const { appointments, totalCount, currentPage, totalPages } = result;
 
   return (
     <div className="space-y-8">
@@ -204,7 +204,7 @@ export default async function AdminAppointmentsMasterPage({ searchParams }: Page
           </div>
 
           {/* Pagination Controls */}
-          {totalPages > 1 && (
+          {appointments.length > 0 && (
             <div className="bg-slate-50 p-4 border-t border-slate-200 flex items-center justify-between text-xs font-semibold">
               <div>
                 Showing Page <span className="text-slate-800">{currentPage}</span> of{' '}
