@@ -21,7 +21,7 @@ export default function Hero() {
       <div className="container-page relative grid min-h-[min(88vh,52rem)] items-center gap-10 py-16 lg:grid-cols-12 lg:py-24">
         <div className="animate-fade-up lg:col-span-7">
           <p className="eyebrow text-brand-200">{APP_CONFIG.shortName} Hospital</p>
-          <h1 className="mt-4 max-w-xl font-display text-4xl font-semibold leading-[1.08] tracking-tight text-white sm:text-5xl lg:text-6xl text-balance">
+          <h1 className="mt-4 max-w-xl font-display text-[1.75rem] font-semibold leading-[1.08] tracking-tight text-white sm:text-5xl lg:text-6xl text-balance">
             Exceptional Care.
             <span className="mt-1 block text-brand-100">Right When You Need It.</span>
           </h1>
@@ -67,7 +67,7 @@ export default function Hero() {
         <div className="relative hidden animate-fade-in lg:col-span-5 lg:block">
           <div className="relative aspect-[4/5] overflow-hidden rounded-card shadow-elevated ring-1 ring-white/20">
             <Image
-              src="https://images.unsplash.com/photo-1631217868264-e5b90bb7e629?auto=format&fit=crop&w=1200&q=75"
+              src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=1200&q=75"
               alt="Physician consulting with a patient in a modern clinic"
               fill
               className="object-cover"

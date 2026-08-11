@@ -54,23 +54,19 @@ export interface SearchDoctorsResult {
 
 /**
  * Retrieves active medical departments for patient discovery filter.
- * Cached briefly — not used for appointment availability decisions.
+ * Not cached: option values are live department UUIDs that must match
+ * current FK rows after seed/admin mutations (stale IDs yield empty results).
  */
 export async function getPublicDepartments() {
-  return cachedQuery(
-    ['public-departments'],
-    { revalidate: 300, tags: ['public-departments'] },
-    () =>
-      prisma.department.findMany({
-        where: { isActive: true },
-        select: {
-          id: true,
-          name: true,
-          description: true,
-        },
-        orderBy: { name: 'asc' },
-      })
-  );
+  return prisma.department.findMany({
+    where: { isActive: true },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+    },
+    orderBy: { name: 'asc' },
+  });
 }
 
 /**

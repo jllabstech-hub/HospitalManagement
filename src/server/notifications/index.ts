@@ -7,22 +7,21 @@ import type {
 } from './types';
 
 class NoopNotificationService implements NotificationService {
-  async sendAppointmentConfirmation(_params: AppointmentConfirmationParams): Promise<void> {}
+  async sendAppointmentConfirmation(params: AppointmentConfirmationParams): Promise<void> {
+    void params;
+  }
 
-  async sendAppointmentCancellation(_params: AppointmentCancellationParams): Promise<void> {}
+  async sendAppointmentCancellation(params: AppointmentCancellationParams): Promise<void> {
+    void params;
+  }
 
-  async sendAppointmentReminder(_params: AppointmentReminderParams): Promise<void> {}
+  async sendAppointmentReminder(params: AppointmentReminderParams): Promise<void> {
+    void params;
+  }
 
-  async sendEnquiryAcknowledgement(_params: EnquiryAcknowledgementParams): Promise<void> {}
+  async sendEnquiryAcknowledgement(params: EnquiryAcknowledgementParams): Promise<void> {
+    void params;
+  }
 }
 
 export const notificationService: NotificationService = new NoopNotificationService();
-
-export { NoopNotificationService };
-export type {
-  AppointmentCancellationParams,
-  AppointmentConfirmationParams,
-  AppointmentReminderParams,
-  EnquiryAcknowledgementParams,
-  NotificationService,
-} from './types';

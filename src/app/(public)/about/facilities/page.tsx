@@ -34,8 +34,8 @@ export default async function FacilitiesPage() {
 
           {facilities.length === 0 ? (
             <EmptyState
-              title="Facility listings coming soon"
-              description="Published facility descriptions will appear here once added to the CMS."
+              title="No facilities published"
+              description="Published facility descriptions will appear here when available from the hospital content library."
             />
           ) : (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">

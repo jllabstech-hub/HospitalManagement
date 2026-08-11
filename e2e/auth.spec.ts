@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+﻿import { test, expect } from '@playwright/test';
 
 test.describe('Authentication & Role-Based Authorization E2E Suite', () => {
   const timestamp = Date.now();
@@ -12,8 +12,8 @@ test.describe('Authentication & Role-Based Authorization E2E Suite', () => {
     // 2. Fill Registration Form
     await page.fill('input[id="fullName"]', 'E2E Test Patient');
     await page.fill('input[id="email"]', testPatientEmail);
-    await page.fill('input[id="password"]', 'Password123!');
-    await page.fill('input[id="confirmPassword"]', 'Password123!');
+    await page.fill('input[id="password"]', 'test123');
+    await page.fill('input[id="confirmPassword"]', 'test123');
 
     // 3. Submit Form
     await page.click('button[type="submit"]');
@@ -28,7 +28,7 @@ test.describe('Authentication & Role-Based Authorization E2E Suite', () => {
   test('TEST 3: Doctor Login with Seeded Account', async ({ page }) => {
     await page.goto('/login');
     await page.fill('input[id="email"]', 'dr.smith@hospital.com');
-    await page.fill('input[id="password"]', 'Password123!');
+    await page.fill('input[id="password"]', 'test123');
     await page.click('button[type="submit"]');
 
     await page.waitForURL('**/doctor/dashboard');
@@ -40,7 +40,7 @@ test.describe('Authentication & Role-Based Authorization E2E Suite', () => {
   test('TEST 4: Admin Login with Seeded Account', async ({ page }) => {
     await page.goto('/login');
     await page.fill('input[id="email"]', 'admin@hospital.com');
-    await page.fill('input[id="password"]', 'Password123!');
+    await page.fill('input[id="password"]', 'test123');
     await page.click('button[type="submit"]');
 
     await page.waitForURL('**/admin/dashboard');
@@ -59,7 +59,7 @@ test.describe('Authentication & Role-Based Authorization E2E Suite', () => {
     // Log in as patient
     await page.goto('/login');
     await page.fill('input[id="email"]', 'patient.alice@example.com');
-    await page.fill('input[id="password"]', 'Password123!');
+    await page.fill('input[id="password"]', 'test123');
     await page.click('button[type="submit"]');
     await page.waitForURL('**/patient/dashboard');
 
@@ -73,7 +73,7 @@ test.describe('Authentication & Role-Based Authorization E2E Suite', () => {
     // Log in as doctor
     await page.goto('/login');
     await page.fill('input[id="email"]', 'dr.smith@hospital.com');
-    await page.fill('input[id="password"]', 'Password123!');
+    await page.fill('input[id="password"]', 'test123');
     await page.click('button[type="submit"]');
     await page.waitForURL('**/doctor/dashboard');
 
@@ -87,7 +87,7 @@ test.describe('Authentication & Role-Based Authorization E2E Suite', () => {
     // Log in as admin
     await page.goto('/login');
     await page.fill('input[id="email"]', 'admin@hospital.com');
-    await page.fill('input[id="password"]', 'Password123!');
+    await page.fill('input[id="password"]', 'test123');
     await page.click('button[type="submit"]');
     await page.waitForURL('**/admin/dashboard');
 

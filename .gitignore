@@ -16,6 +16,10 @@
 /coverage
 /playwright-report
 /test-results
+/docs/e2e-junit-results.xml
+
+# Local scratch scripts
+/scratch
 
 # Debug & OS logs
 *.log

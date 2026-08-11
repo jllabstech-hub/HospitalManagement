@@ -6,6 +6,7 @@ import PageHero from '@/components/public/PageHero';
 import DoctorCard from '@/components/doctors/DoctorCard';
 import EmptyState from '@/components/ui/EmptyState';
 import { getDepartmentBySlug, getPublishedDepartments } from '@/features/cms/queries/catalog';
+import { publicPageMetadata } from '@/lib/seo';
 import { APP_CONFIG } from '@/config';
 
 interface PageProps {
@@ -20,12 +21,13 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const dept = await getDepartmentBySlug(slug);
-  if (!dept) return { title: 'Department not found' };
-  return {
+  if (!dept) return { title: 'Department not found', robots: { index: false } };
+  return publicPageMetadata({
     title: dept.seoTitle ?? `${dept.name} · ${APP_CONFIG.appName}`,
     description:
       dept.seoDescription ?? dept.shortDescription ?? `${dept.name} outpatient department.`,
-  };
+    path: `/departments/${dept.slug}`,
+  });
 }
 
 export default async function DepartmentDetailPage({ params }: PageProps) {

@@ -26,7 +26,7 @@ export default function ContactSection() {
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-brand-600">Email</p>
             <a
               href={`mailto:${APP_CONFIG.contact.email}`}
-              className="mt-2 block text-lg font-semibold text-ink hover:text-brand-700"
+              className="mt-2 block break-all text-lg font-semibold text-ink hover:text-brand-700"
             >
               {APP_CONFIG.contact.email}
             </a>

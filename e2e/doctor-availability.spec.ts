@@ -1,11 +1,11 @@
-import { test, expect } from '@playwright/test';
+﻿import { test, expect } from '@playwright/test';
 
 test.describe('Doctor Schedule Manager E2E Suite', () => {
   test('TEST 1: Doctor Login, Weekly Availability & Blocked Date CRUD', async ({ page }) => {
     // 1. Doctor Login
     await page.goto('/login');
     await page.fill('input[id="email"]', 'dr.smith@hospital.com');
-    await page.fill('input[id="password"]', 'Password123!');
+    await page.fill('input[id="password"]', 'test123');
     await page.click('button[type="submit"]');
     await page.waitForURL('**/doctor/dashboard');
 
@@ -56,7 +56,7 @@ test.describe('Doctor Schedule Manager E2E Suite', () => {
     // 1. Patient Login
     await page.goto('/login');
     await page.fill('input[id="email"]', 'patient.alice@example.com');
-    await page.fill('input[id="password"]', 'Password123!');
+    await page.fill('input[id="password"]', 'test123');
     await page.click('button[type="submit"]');
     await page.waitForURL('**/patient/dashboard');
 
@@ -69,7 +69,7 @@ test.describe('Doctor Schedule Manager E2E Suite', () => {
     // 1. Admin Login
     await page.goto('/login');
     await page.fill('input[id="email"]', 'admin@hospital.com');
-    await page.fill('input[id="password"]', 'Password123!');
+    await page.fill('input[id="password"]', 'test123');
     await page.click('button[type="submit"]');
     await page.waitForURL('**/admin/dashboard');
 

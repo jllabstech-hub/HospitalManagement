@@ -13,7 +13,7 @@ export const RegisterSchema = z
       .email({ message: 'Please enter a valid email address.' }),
     password: z
       .string()
-      .min(8, { message: 'Password must be at least 8 characters long.' }),
+      .min(6, { message: 'Password must be at least 6 characters long.' }),
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {

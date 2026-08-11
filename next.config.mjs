@@ -15,6 +15,16 @@ const nextConfig = {
     ],
   },
 
+  async redirects() {
+    return [
+      {
+        source: '/faqs',
+        destination: '/patient-resources/faq',
+        permanent: true,
+      },
+    ];
+  },
+
   async headers() {
     return [
       {

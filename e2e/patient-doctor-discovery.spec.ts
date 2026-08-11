@@ -1,11 +1,11 @@
-import { test, expect } from '@playwright/test';
+﻿import { test, expect } from '@playwright/test';
 
 test.describe('Patient Doctor Discovery & Slot Selection E2E Suite', () => {
   test('TEST 1: Patient Login, Search Doctor, Select Date & Slot, View Confirmation Preview Modal', async ({ page }) => {
     // 1. Patient Login
     await page.goto('/login');
     await page.fill('input[id="email"]', 'patient.alice@example.com');
-    await page.fill('input[id="password"]', 'Password123!');
+    await page.fill('input[id="password"]', 'test123');
     await page.click('button[type="submit"]');
     await page.waitForURL('**/patient/dashboard');
     await expect(page.getByRole('heading', { name: 'Patient Dashboard' })).toBeVisible();
@@ -39,7 +39,7 @@ test.describe('Patient Doctor Discovery & Slot Selection E2E Suite', () => {
 
     // 7. Action Bar appears with Proceed button
     await expect(page.getByText('Selected Consultation Slot:')).toBeVisible();
-    await page.click('button:has-text("Proceed to Confirmation →")');
+    await page.click('button:has-text("Proceed to Confirmation â†’")');
 
     // 8. Booking Confirmation Preview Modal
     await expect(page.getByRole('heading', { name: 'Confirm Appointment Selection' })).toBeVisible();
@@ -59,7 +59,7 @@ test.describe('Patient Doctor Discovery & Slot Selection E2E Suite', () => {
     // 1. Patient Login
     await page.goto('/login');
     await page.fill('input[id="email"]', 'patient.alice@example.com');
-    await page.fill('input[id="password"]', 'Password123!');
+    await page.fill('input[id="password"]', 'test123');
     await page.click('button[type="submit"]');
     await page.waitForURL('**/patient/dashboard');
 

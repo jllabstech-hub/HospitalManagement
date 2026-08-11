@@ -6,26 +6,28 @@ const FOOTER_COLS = [
   {
     title: 'Hospital',
     links: [
-      { href: '/#about', label: 'About CarePulse' },
-      { href: '/#excellence', label: 'Centres of Excellence' },
-      { href: '/#contact', label: 'Location & Hours' },
-      { href: '/login', label: 'Patient Portal' },
+      { href: '/about/overview', label: 'About CarePulse' },
+      { href: '/centres-of-excellence', label: 'Centres of Excellence' },
+      { href: '/locations', label: 'Locations' },
+      { href: '/contact', label: 'Contact' },
     ],
   },
   {
-    title: 'Departments',
+    title: 'Care',
     links: [
-      { href: '/#specialities', label: 'All Specialities' },
-      { href: '/login?callbackUrl=%2Fpatient%2Fdoctors', label: 'Find a Doctor' },
-      { href: '/register', label: 'Create Patient Account' },
+      { href: '/departments', label: 'Departments' },
+      { href: '/specialities', label: 'Specialities' },
+      { href: '/doctors', label: 'Find a Doctor' },
+      { href: '/services', label: 'Services' },
     ],
   },
   {
     title: 'Patient Services',
     links: [
-      { href: '/login?callbackUrl=%2Fpatient%2Fdoctors', label: 'Book Appointment' },
-      { href: '/login?callbackUrl=%2Fpatient%2Fappointments', label: 'My Appointments' },
-      { href: '/#services', label: 'Outpatient Services' },
+      { href: '/book-appointment', label: 'Book Appointment' },
+      { href: '/patient-resources', label: 'Patient Resources' },
+      { href: '/health-packages', label: 'Health Packages' },
+      { href: '/login', label: 'Patient Portal' },
     ],
   },
 ];
@@ -102,9 +104,15 @@ export default function SiteFooter() {
             © {year} {APP_CONFIG.appName}. All rights reserved.
           </p>
           <div className="flex flex-wrap gap-4">
-            <span>Privacy</span>
-            <span>Terms</span>
-            <span>Accessibility</span>
+            <Link href="/privacy" className="hover:text-white">
+              Privacy
+            </Link>
+            <Link href="/terms" className="hover:text-white">
+              Terms
+            </Link>
+            <Link href="/patient-resources" className="hover:text-white">
+              Accessibility
+            </Link>
           </div>
         </div>
       </div>

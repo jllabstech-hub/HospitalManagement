@@ -43,7 +43,7 @@ export default async function AdminContentPage() {
     { title: 'Health Packages', href: '/health-packages', count: packageCount, external: true },
     { title: 'Health Library', href: '/health-library', count: articleCount, external: true },
     { title: 'News', href: '/news', count: newsCount, external: true },
-    { title: 'FAQs', href: '/faqs', count: faqCount, external: true },
+    { title: 'FAQs', href: '/patient-resources/faq', count: faqCount, external: true },
     { title: 'Enquiries', href: '/admin/enquiries', count: newContactMessages + newAppointmentEnquiries + newInternationalEnquiries },
   ];
 

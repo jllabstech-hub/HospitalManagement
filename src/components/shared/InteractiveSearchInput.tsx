@@ -28,27 +28,30 @@ export default function InteractiveSearchInput({
     setText(searchParams.get(paramName) || '');
   }, [searchParams, paramName]);
 
-  // Debounced URL update on keypress
+  // Debounced URL update on keypress — always read the live query string so
+  // concurrent GET form submits (e.g. department filter) are not wiped by a
+  // stale useSearchParams closure.
   useEffect(() => {
     const timer = setTimeout(() => {
-      const currentVal = searchParams.get(paramName) || '';
-      if (text !== currentVal) {
-        const params = new URLSearchParams(searchParams.toString());
-        if (text.trim()) {
-          params.set(paramName, text.trim());
-        } else {
-          params.delete(paramName);
-        }
-        params.set('page', '1'); // Reset to page 1 on new search
+      const liveParams = new URLSearchParams(window.location.search);
+      const currentVal = liveParams.get(paramName) || '';
+      if (text === currentVal) return;
 
-        startTransition(() => {
-          router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-        });
+      if (text.trim()) {
+        liveParams.set(paramName, text.trim());
+      } else {
+        liveParams.delete(paramName);
       }
-    }, 150); // 150ms instant response
+      liveParams.set('page', '1');
+
+      startTransition(() => {
+        const qs = liveParams.toString();
+        router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+      });
+    }, 150);
 
     return () => clearTimeout(timer);
-  }, [text, searchParams, paramName, pathname, router]);
+  }, [text, paramName, pathname, router]);
 
   return (
     <div className={`relative flex items-center ${className}`}>

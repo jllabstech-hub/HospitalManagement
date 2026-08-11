@@ -22,7 +22,7 @@ export default function BrandLogo({
   const isLight = variant === 'light';
 
   const content = (
-    <span className={cn('inline-flex items-center gap-3', className)}>
+    <span className={cn('inline-flex min-w-0 max-w-full items-center gap-2 sm:gap-3', className)}>
       <span
         className={cn(
           'relative flex shrink-0 items-center justify-center rounded-xl',
@@ -41,10 +41,10 @@ export default function BrandLogo({
           <circle cx="16" cy="16" r="12" stroke="currentColor" strokeWidth="1.5" opacity="0.35" />
         </svg>
       </span>
-      <span className="min-w-0 text-left">
+      <span className="min-w-0 truncate text-left">
         <span
           className={cn(
-            'block font-display font-semibold tracking-tight',
+            'block truncate font-display font-semibold tracking-tight',
             titleSize,
             isLight ? 'text-white' : 'text-ink'
           )}
@@ -58,7 +58,7 @@ export default function BrandLogo({
         {showTagline && (
           <span
             className={cn(
-              'mt-0.5 block text-[11px] font-medium tracking-wide',
+              'mt-0.5 hidden truncate text-[11px] font-medium tracking-wide sm:block',
               isLight ? 'text-brand-100/80' : 'text-ink-soft'
             )}
           >
@@ -72,7 +72,7 @@ export default function BrandLogo({
   if (!href) return content;
 
   return (
-    <Link href={href} className="group inline-flex focus-visible:rounded-lg">
+    <Link href={href} className="group inline-flex min-w-0 max-w-full focus-visible:rounded-lg">
       {content}
     </Link>
   );

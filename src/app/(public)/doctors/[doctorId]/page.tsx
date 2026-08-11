@@ -5,6 +5,7 @@ import Breadcrumbs from '@/components/public/Breadcrumbs';
 import DoctorProfileHeader from '@/components/doctors/DoctorProfileHeader';
 import JsonLd from '@/components/seo/JsonLd';
 import { getPublicDoctorByIdOrSlug } from '@/features/cms/queries/doctors-public';
+import { publicPageMetadata } from '@/lib/seo';
 import { APP_CONFIG } from '@/config';
 
 interface PageProps {
@@ -14,17 +15,19 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { doctorId } = await params;
   const doctor = await getPublicDoctorByIdOrSlug(doctorId);
-  if (!doctor) return { title: 'Doctor not found' };
+  if (!doctor) return { title: 'Doctor not found', robots: { index: false } };
 
   const displayName = doctor.publicDisplayName ?? doctor.fullName;
-  return {
+  const pathKey = doctor.slug ?? doctor.id;
+  return publicPageMetadata({
     title: doctor.seoTitle ?? `${displayName} · ${APP_CONFIG.appName}`,
     description:
       doctor.seoDescription ??
       doctor.publicBio ??
       doctor.bio ??
       `${displayName} — ${doctor.qualification} at ${doctor.department.name}.`,
-  };
+    path: `/doctors/${pathKey}`,
+  });
 }
 
 export default async function PublicDoctorPage({ params }: PageProps) {

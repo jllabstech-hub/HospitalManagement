@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -96,7 +96,7 @@ export default function LoginForm() {
               autoComplete="current-password"
               {...register('password')}
               className="input-field pr-16"
-              placeholder="••••••••"
+              placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
             />
             <button
               type="button"
@@ -134,7 +134,7 @@ export default function LoginForm() {
               admin@hospital.com
             </code>
           </div>
-          <span className="font-mono text-ink-soft">Password123!</span>
+          <span className="font-mono text-ink-soft">test123</span>
         </div>
         <div className="flex items-center justify-between rounded-button border border-[#dde5e9] bg-white p-2">
           <div>
@@ -143,7 +143,7 @@ export default function LoginForm() {
               dr.smith@hospital.com
             </code>
           </div>
-          <span className="font-mono text-ink-soft">Password123!</span>
+          <span className="font-mono text-ink-soft">test123</span>
         </div>
         <div className="flex items-center justify-between rounded-button border border-[#dde5e9] bg-white p-2">
           <div>
@@ -152,7 +152,7 @@ export default function LoginForm() {
               patient.alice@example.com
             </code>
           </div>
-          <span className="font-mono text-ink-soft">Password123!</span>
+          <span className="font-mono text-ink-soft">test123</span>
         </div>
       </div>
     </div>

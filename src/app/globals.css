@@ -16,6 +16,8 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    overflow-x: hidden;
+    max-width: 100%;
   }
 
   body {
@@ -24,6 +26,8 @@
     font-family: var(--font-sans), system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+    max-width: 100%;
   }
 
   ::selection {
@@ -39,7 +43,7 @@
 
 @layer components {
   .container-page {
-    @apply mx-auto w-full max-w-wide px-4 sm:px-6 lg:px-8;
+    @apply mx-auto w-full max-w-wide min-w-0 px-4 sm:px-6 lg:px-8;
   }
 
   .section-pad {

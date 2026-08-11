@@ -114,7 +114,7 @@ export default function RegisterForm() {
               autoComplete="new-password"
               {...register('password')}
               className="input-field pr-16"
-              placeholder="Minimum 8 characters"
+              placeholder="Minimum 6 characters"
             />
             <button
               type="button"

@@ -60,13 +60,13 @@ describe('Phase 7A Comprehensive Security Hardening & Vulnerability Test Suite',
     });
 
     const dept = await prisma.department.create({
-      data: { name: 'Security Audit Dept', isActive: true },
+      data: { name: 'Security Audit Dept', slug: 'security-audit-dept', isActive: true },
     });
     deptId = dept.id;
 
     // Doctor A & B
     const uDocA = await prisma.user.create({ data: { email: 'securetest.doca@h.com', passwordHash: 'h', role: Role.DOCTOR, isActive: true } });
-    const docA = await prisma.doctorProfile.create({ data: { userId: uDocA.id, departmentId: deptId, fullName: 'Dr. Secure A', phoneNumber: '1', qualification: 'MBBS' } });
+    const docA = await prisma.doctorProfile.create({ data: { userId: uDocA.id, departmentId: deptId, fullName: 'Dr. Secure A', slug: 'secure-doc-a', phoneNumber: '1', qualification: 'MBBS' } });
     docAUser = { id: uDocA.id, doctorProfileId: docA.id };
 
     for (let d = 0; d <= 6; d++) {
@@ -76,7 +76,7 @@ describe('Phase 7A Comprehensive Security Hardening & Vulnerability Test Suite',
     }
 
     const uDocB = await prisma.user.create({ data: { email: 'securetest.docb@h.com', passwordHash: 'h', role: Role.DOCTOR, isActive: true } });
-    const docB = await prisma.doctorProfile.create({ data: { userId: uDocB.id, departmentId: deptId, fullName: 'Dr. Secure B', phoneNumber: '2', qualification: 'MBBS' } });
+    const docB = await prisma.doctorProfile.create({ data: { userId: uDocB.id, departmentId: deptId, fullName: 'Dr. Secure B', slug: 'secure-doc-b', phoneNumber: '2', qualification: 'MBBS' } });
     docBUser = { id: uDocB.id, doctorProfileId: docB.id };
 
     // Patient A & B

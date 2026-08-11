@@ -1,11 +1,11 @@
-import { test, expect } from '@playwright/test';
+﻿import { test, expect } from '@playwright/test';
 
 test.describe('Patient Appointment Management E2E Suite', () => {
   test('TEST 1: View Patient Appointments, Detail Page, and Cancel Upcoming Appointment', async ({ page }) => {
     // 1. Patient Login
     await page.goto('/login');
     await page.fill('input[id="email"]', 'patient.alice@example.com');
-    await page.fill('input[id="password"]', 'Password123!');
+    await page.fill('input[id="password"]', 'test123');
     await page.click('button[type="submit"]');
     await page.waitForURL('**/patient/dashboard');
 
@@ -16,7 +16,7 @@ test.describe('Patient Appointment Management E2E Suite', () => {
     await page.click('a:has-text("View Profile & Book")');
     await page.waitForSelector('button:has-text("11:30 AM")', { timeout: 10000 });
     await page.locator('button:has-text("11:30 AM")').first().click();
-    await page.click('button[type="submit"]:has-text("Proceed to Confirmation →"), button:has-text("Proceed to Confirmation →")');
+    await page.click('button[type="submit"]:has-text("Proceed to Confirmation â†’"), button:has-text("Proceed to Confirmation â†’")');
     await page.click('button:has-text("Confirm Appointment")');
     await expect(page.getByRole('heading', { name: 'Appointment Booked!' })).toBeVisible();
 
@@ -26,7 +26,7 @@ test.describe('Patient Appointment Management E2E Suite', () => {
     await expect(page.getByText('Dr. Jane Smith').first()).toBeVisible();
 
     // 4. Open Appointment Detail Page
-    await page.click('a:has-text("View Details →")');
+    await page.click('a:has-text("View Details â†’")');
     await page.waitForURL('**/patient/appointments/*');
     await expect(page.getByRole('heading', { name: 'Consultation Details' })).toBeVisible();
 

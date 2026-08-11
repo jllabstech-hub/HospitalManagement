@@ -64,20 +64,23 @@ export default function SiteHeaderClient({
           : 'border-b border-transparent bg-surface-warm/80 backdrop-blur-sm'
       )}
     >
-      <div className="border-b border-[#dde5e9]/70 bg-brand-950 text-brand-50">
-        <div className="container-page flex h-9 items-center justify-between gap-4 text-[11px] sm:text-xs">
-          <p className="truncate font-medium tracking-wide text-brand-100">{utilityLeft}</p>
+      <div className="overflow-x-hidden border-b border-[#dde5e9]/70 bg-brand-950 text-brand-50">
+        <div className="container-page flex h-9 w-full max-w-full min-w-0 items-center justify-between gap-2 overflow-hidden text-[11px] sm:gap-4 sm:text-xs">
+          <p className="hidden min-w-0 truncate font-medium tracking-wide text-brand-100 sm:block">
+            {utilityLeft}
+          </p>
           <a
             href={utilityPhoneHref}
-            className="shrink-0 font-semibold text-white transition hover:text-brand-100"
+            className="min-w-0 truncate font-semibold text-white transition hover:text-brand-100 sm:ml-0 sm:max-w-none"
           >
-            {utilityPhone}
+            <span className="sm:hidden">Emergency · {utilityPhone}</span>
+            <span className="hidden sm:inline">{utilityPhone}</span>
           </a>
         </div>
       </div>
 
-      <div className="container-page flex h-[4.25rem] items-center justify-between gap-4">
-        {brand}
+      <div className="container-page flex h-[4.25rem] min-w-0 items-center justify-between gap-3 sm:gap-4">
+        <div className="min-w-0 shrink">{brand}</div>
 
         <div className="hidden lg:block">{desktopNav}</div>
         <div className="hidden lg:block">{desktopActions}</div>

@@ -4,16 +4,11 @@ import { notFound } from 'next/navigation';
 import Breadcrumbs from '@/components/public/Breadcrumbs';
 import PageHero from '@/components/public/PageHero';
 import PackageInfoRequestForm from '@/features/cms/components/PackageInfoRequestForm';
-import { getPackageBySlug, getPublishedPackages } from '@/features/cms/queries/catalog';
+import { getPackageBySlug } from '@/features/cms/queries/catalog';
 import { APP_CONFIG } from '@/config';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
-}
-
-export async function generateStaticParams() {
-  const packages = await getPublishedPackages();
-  return packages.map((p) => ({ slug: p.slug }));
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -26,9 +21,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-function formatPrice(price: number | { toNumber?: () => number } | null, currency: string | null) {
+function formatPrice(price: unknown, currency: string | null) {
   if (price == null) return null;
   const numPrice = typeof price === 'number' ? price : Number(price);
+  if (Number.isNaN(numPrice)) return null;
   const cur = currency ?? 'INR';
   return new Intl.NumberFormat('en-IN', { style: 'currency', currency: cur }).format(numPrice);
 }

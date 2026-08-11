@@ -35,8 +35,8 @@ export default async function LeadershipPage() {
 
           {leaders.length === 0 ? (
             <EmptyState
-              title="Leadership profiles coming soon"
-              description="Hospital leadership information will appear here once published in the CMS."
+              title="No leadership profiles published"
+              description="Hospital leadership information will appear here when profiles are published."
             />
           ) : (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">

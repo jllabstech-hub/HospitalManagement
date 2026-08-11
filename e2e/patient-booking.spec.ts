@@ -1,11 +1,11 @@
-import { test, expect } from '@playwright/test';
+﻿import { test, expect } from '@playwright/test';
 
 test.describe('Patient Transactional Booking E2E Suite (Phase 5C)', () => {
   test('TEST 1: Successful Patient Booking Flow (Status BOOKED & Success Card)', async ({ page }) => {
     // 1. Patient Login
     await page.goto('/login');
     await page.fill('input[id="email"]', 'patient.alice@example.com');
-    await page.fill('input[id="password"]', 'Password123!');
+    await page.fill('input[id="password"]', 'test123');
     await page.click('button[type="submit"]');
     await page.waitForURL('**/patient/dashboard');
 
@@ -24,7 +24,7 @@ test.describe('Patient Transactional Booking E2E Suite (Phase 5C)', () => {
     await page.locator('button:has-text("10:00 AM")').first().click();
 
     // 5. Open Modal & Confirm Booking
-    await page.click('button:has-text("Proceed to Confirmation →")');
+    await page.click('button:has-text("Proceed to Confirmation â†’")');
     await expect(page.getByRole('heading', { name: 'Confirm Appointment Selection' })).toBeVisible();
 
     await page.click('button:has-text("Confirm Appointment")');
@@ -45,7 +45,7 @@ test.describe('Patient Transactional Booking E2E Suite (Phase 5C)', () => {
     // Patient A Login in Page A
     await page.goto('/login');
     await page.fill('input[id="email"]', 'patient.alice@example.com');
-    await page.fill('input[id="password"]', 'Password123!');
+    await page.fill('input[id="password"]', 'test123');
     await page.click('button[type="submit"]');
     await page.waitForURL('**/patient/dashboard');
 
@@ -61,7 +61,7 @@ test.describe('Patient Transactional Booking E2E Suite (Phase 5C)', () => {
     const pageB = await contextB.newPage();
     await pageB.goto('/login');
     await pageB.fill('input[id="email"]', 'patient.bob@example.com');
-    await pageB.fill('input[id="password"]', 'Password123!');
+    await pageB.fill('input[id="password"]', 'test123');
     await pageB.click('button[type="submit"]');
     await pageB.waitForURL('**/patient/dashboard');
 
@@ -73,13 +73,13 @@ test.describe('Patient Transactional Booking E2E Suite (Phase 5C)', () => {
 
     // Patient A selects 11:00 AM and confirms booking
     await page.locator('button:has-text("11:00 AM")').first().click();
-    await page.click('button:has-text("Proceed to Confirmation →")');
+    await page.click('button:has-text("Proceed to Confirmation â†’")');
     await page.click('button:has-text("Confirm Appointment")');
     await expect(page.getByRole('heading', { name: 'Appointment Booked!' })).toBeVisible();
 
     // Patient B attempts to select 11:00 AM and confirms booking
     await pageB.locator('button:has-text("11:00 AM")').first().click();
-    await pageB.click('button:has-text("Proceed to Confirmation →")');
+    await pageB.click('button:has-text("Proceed to Confirmation â†’")');
     await pageB.click('button:has-text("Confirm Appointment")');
 
     // Patient B receives Conflict Notice
