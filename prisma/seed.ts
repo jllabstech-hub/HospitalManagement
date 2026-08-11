@@ -56,7 +56,7 @@ async function main() {
   await cleanDatabase();
   console.log('🧹 Cleaned existing records.');
 
-  const defaultPasswordHash = await bcrypt.hash('Password123!', 10);
+  const defaultPasswordHash = await bcrypt.hash('test123', 10);
   const publishedAt = new Date('2026-08-01');
 
   // ─── Hospital CMS (demo) ───────────────────────────────────────────────
