@@ -98,9 +98,20 @@ export default async function DepartmentDetailPage({ params }: PageProps) {
             </div>
           )}
 
-          <div className="mt-10">
-            <Link href="/book-appointment" className="btn-primary">
-              Book appointment in {dept.name}
+          <div className="mt-10 rounded-card border border-brand-100 bg-brand-50/70 p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div>
+              <h3 className="font-display text-lg font-bold text-ink">
+                Ready to consult a {dept.name} specialist?
+              </h3>
+              <p className="mt-1 text-sm text-ink-muted">
+                Choose a doctor in {dept.name} and pick a live 30-minute OPD consultation slot.
+              </p>
+            </div>
+            <Link
+              href={`/book-appointment?department=${dept.id}&step=doctors`}
+              className="btn-primary shrink-0 shadow-soft"
+            >
+              Book Appointment in {dept.name} →
             </Link>
           </div>
         </div>
