@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -96,7 +96,7 @@ export default function LoginForm() {
               autoComplete="current-password"
               {...register('password')}
               className="input-field pr-16"
-              placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+              placeholder="••••••••"
             />
             <button
               type="button"
