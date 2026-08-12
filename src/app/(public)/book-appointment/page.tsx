@@ -69,31 +69,57 @@ export default async function BookAppointmentPage({ searchParams }: PageProps) {
           </div>
 
           {preselectedDoctor && (
-            <div className="mb-10">
-              <h2 className="font-display text-xl font-semibold text-ink">Selected doctor</h2>
-              <div className="mt-4">
-                <DoctorCard
-                  doctor={{
-                    id: preselectedDoctor.id,
-                    fullName: preselectedDoctor.publicDisplayName ?? preselectedDoctor.fullName,
-                    qualification: preselectedDoctor.qualification,
-                    experienceYears: preselectedDoctor.experienceYears,
-                    bio: preselectedDoctor.publicBio ?? preselectedDoctor.bio,
-                    department: preselectedDoctor.department,
-                  }}
-                  href={`/doctors/${preselectedDoctor.slug ?? preselectedDoctor.id}`}
-                  bookHref={patientBookingHref(preselectedDoctor.id)}
-                  publicMode
-                />
+            <div className="mb-10 card-surface p-6 sm:p-8">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-6 border-b border-[#dde5e9] pb-6">
+                <div>
+                  <span className="rounded-pill bg-brand-50 px-3 py-1 text-xs font-bold uppercase tracking-wider text-brand-800">
+                    {preselectedDoctor.department.name}
+                  </span>
+                  <h2 className="mt-2 font-display text-2xl font-bold text-ink">
+                    Dr. {preselectedDoctor.publicDisplayName ?? preselectedDoctor.fullName}
+                  </h2>
+                  <p className="text-sm font-semibold text-brand-700">{preselectedDoctor.qualification}</p>
+                </div>
+                <div className="flex gap-3">
+                  <Link
+                    href={`/doctors/${preselectedDoctor.slug ?? preselectedDoctor.id}`}
+                    className="btn-secondary text-xs"
+                  >
+                    View Full Profile
+                  </Link>
+                  <Link href="/book-appointment" className="btn-secondary text-xs">
+                    Choose Another Doctor
+                  </Link>
+                </div>
               </div>
-              <div className="mt-6 flex flex-wrap gap-3">
-                <Link href={patientBookingHref(preselectedDoctor.id)} className="btn-primary">
-                  {isPatient ? 'Continue to slot picker →' : 'Sign in to book →'}
-                </Link>
-                <Link href="/book-appointment" className="btn-secondary">
-                  Choose another doctor
-                </Link>
-              </div>
+
+              {isPatient ? (
+                <div className="mt-6">
+                  <p className="mb-4 text-xs font-bold uppercase tracking-wider text-emerald-700">
+                    ✓ Logged in as Patient — Select Consultation Date & Time Slot:
+                  </p>
+                  <Link
+                    href={`/patient/doctors/${preselectedDoctor.id}`}
+                    className="btn-primary w-full sm:w-auto py-3 text-base shadow-elevated"
+                  >
+                    Proceed to Select Live Appointment Slot →
+                  </Link>
+                </div>
+              ) : (
+                <div className="mt-6 rounded-card bg-brand-50/70 p-5 border border-brand-200">
+                  <p className="text-sm font-semibold text-brand-900">
+                    Sign in with your phone number to view live 30-minute availability slots for Dr. {preselectedDoctor.fullName}:
+                  </p>
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    <Link
+                      href={`/login?callbackUrl=${encodeURIComponent(`/patient/doctors/${preselectedDoctor.id}`)}`}
+                      className="btn-primary shadow-soft"
+                    >
+                      Sign In / Enter Mobile OTP →
+                    </Link>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
