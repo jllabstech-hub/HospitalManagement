@@ -38,6 +38,7 @@ export default function DoctorProfileSlotPicker({
   doctorName,
   departmentName,
   todayDate,
+  isGuestMode = false,
 }: Props) {
   const [selectedDate, setSelectedDate] = useState<string>(todayDate);
   const [slots, setSlots] = useState<AvailableSlot[]>([]);
@@ -390,21 +391,31 @@ export default function DoctorProfileSlotPicker({
               >
                 Change Time
               </button>
-              <button
-                type="button"
-                disabled={isSubmitting}
-                onClick={handleConfirmBooking}
-                className="btn-primary disabled:opacity-50"
-              >
-                {isSubmitting ? (
-                  <>
-                    <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    <span>Booking...</span>
-                  </>
-                ) : (
-                  <span>Confirm Appointment</span>
-                )}
-              </button>
+
+              {isGuestMode ? (
+                <Link
+                  href={`/login?callbackUrl=${encodeURIComponent(`/patient/doctors/${doctorId}`)}`}
+                  className="btn-primary shadow-soft"
+                >
+                  Enter Mobile Number & Verify OTP →
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  disabled={isSubmitting}
+                  onClick={handleConfirmBooking}
+                  className="btn-primary disabled:opacity-50"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      <span>Booking...</span>
+                    </>
+                  ) : (
+                    <span>Confirm Appointment</span>
+                  )}
+                </button>
+              )}
             </div>
           </div>
         </div>
