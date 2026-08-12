@@ -1,4 +1,5 @@
 import { prisma } from '@/server/db/client';
+import { unstable_cache } from 'next/cache';
 import { ACTIVE_PUBLISHED_FILTER, PUBLISHED_FILTER } from '@/features/cms/constants';
 import { publicDoctorListSelect, publicDoctorWhere } from '@/features/cms/queries/doctors-public';
 import { buildFuzzyDoctorWhere } from '@/lib/fuzzy-search';
@@ -183,7 +184,7 @@ async function searchNews(q: string) {
 }
 
 export async function globalPublicSearch(q: string): Promise<GlobalSearchResult> {
-  const trimmed = q?.trim();
+  const trimmed = q?.trim().toLowerCase();
   if (!trimmed) {
     return {
       doctors: [],
@@ -195,14 +196,33 @@ export async function globalPublicSearch(q: string): Promise<GlobalSearchResult>
     };
   }
 
-  const [doctors, departments, specialities, services, articles, news] = await Promise.all([
-    searchDoctors(trimmed),
-    searchDepartments(trimmed),
-    searchSpecialities(trimmed),
-    searchServices(trimmed),
-    searchArticles(trimmed),
-    searchNews(trimmed),
-  ]);
+  try {
+    return await unstable_cache(
+      async () => {
+        const [doctors, departments, specialities, services, articles, news] = await Promise.all([
+          searchDoctors(trimmed),
+          searchDepartments(trimmed),
+          searchSpecialities(trimmed),
+          searchServices(trimmed),
+          searchArticles(trimmed),
+          searchNews(trimmed),
+        ]);
 
-  return { doctors, departments, specialities, services, articles, news };
+        return { doctors, departments, specialities, services, articles, news };
+      },
+      ['global-public-search', trimmed],
+      { revalidate: 300, tags: ['public-search'] }
+    )();
+  } catch {
+    const [doctors, departments, specialities, services, articles, news] = await Promise.all([
+      searchDoctors(trimmed),
+      searchDepartments(trimmed),
+      searchSpecialities(trimmed),
+      searchServices(trimmed),
+      searchArticles(trimmed),
+      searchNews(trimmed),
+    ]);
+
+    return { doctors, departments, specialities, services, articles, news };
+  }
 }
