@@ -41,8 +41,6 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const session = await auth();
-
   const [profile, departments, centres, specialities, testimonials, doctorResult] =
     await Promise.all([
       getActiveHospitalProfile(),
