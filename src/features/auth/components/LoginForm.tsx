@@ -36,7 +36,7 @@ export default function LoginForm() {
     formState: { errors: phoneErrors },
   } = useForm<PhoneInput>({
     resolver: zodResolver(PhoneInputSchema),
-    defaultValues: { phoneNumber: '+91 91234 56789' },
+    defaultValues: { phoneNumber: '' },
   });
 
   // OTP Step 2 Form
@@ -222,18 +222,7 @@ export default function LoginForm() {
               </button>
 
               <div className="mt-3 flex items-center justify-between rounded-card border border-brand-200 bg-brand-50/70 p-3 text-xs text-brand-900">
-                <span>Test OTP Code: <strong className="font-mono text-brand-950 font-bold">123456</strong></span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActivePhone('+91 91234 56789');
-                    setOtpSent(true);
-                    setInfoMsg('Demo OTP code 123456 generated! Click "Verify OTP" below to access patient portal.');
-                  }}
-                  className="rounded-button bg-brand-700 px-2.5 py-1 text-[11px] font-bold text-white hover:bg-brand-800"
-                >
-                  Quick Auto-Fill & Next →
-                </button>
+                <span>Enter any 10-digit phone number. Default OTP: <strong className="font-mono text-brand-950 font-bold">123456</strong></span>
               </div>
             </form>
           ) : (
