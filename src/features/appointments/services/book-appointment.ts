@@ -36,9 +36,22 @@ export async function bookAppointmentTransaction(
 
     const { doctorId, appointmentDate, startTime } = parseResult.data;
 
-    // 2. Validate Patient Profile Exists & Active
+    // 2. Validate Patient Profile Exists & Active in Database
     if (!patientProfileId || typeof patientProfileId !== 'string') {
       return { success: false, code: 'UNAUTHORIZED', message: 'Invalid patient profile.' };
+    }
+
+    const patient = await prisma.patientProfile.findUnique({
+      where: { id: patientProfileId },
+      select: { id: true, user: { select: { isActive: true } } },
+    });
+
+    if (!patient || !patient.user.isActive) {
+      return {
+        success: false,
+        code: 'UNAUTHORIZED',
+        message: 'Your patient profile record was not found or is inactive. Please log in again.',
+      };
     }
 
     // 3. Validate Doctor & Department Active Status
@@ -180,16 +193,22 @@ export async function bookAppointmentTransaction(
         },
       };
     } catch (dbError: unknown) {
-      // 9. Catch PostgreSQL Partial Unique Index Constraint Violation (P2002)
-      if (
-        dbError instanceof Prisma.PrismaClientKnownRequestError &&
-        dbError.code === 'P2002'
-      ) {
-        return {
-          success: false,
-          code: 'SLOT_UNAVAILABLE',
-          message: 'This time slot was just booked by another patient. Please choose another slot.',
-        };
+      // 9. Catch PostgreSQL Constraint Violations (P2002 Unique, P2003 FK)
+      if (dbError instanceof Prisma.PrismaClientKnownRequestError) {
+        if (dbError.code === 'P2002') {
+          return {
+            success: false,
+            code: 'SLOT_UNAVAILABLE',
+            message: 'This time slot was just booked by another patient. Please choose another slot.',
+          };
+        }
+        if (dbError.code === 'P2003') {
+          return {
+            success: false,
+            code: 'UNAUTHORIZED',
+            message: 'Your account session or patient profile is invalid. Please log in again.',
+          };
+        }
       }
       throw dbError;
     }
