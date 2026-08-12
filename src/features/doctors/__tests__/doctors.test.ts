@@ -115,7 +115,9 @@ describe('Doctor Management Server Actions & Security', () => {
     });
 
     expect(resPatientDup.success).toBe(false);
-    expect(resPatientDup.error).toContain('already exists');
+    if (!resPatientDup.success) {
+      expect(resPatientDup.error).toContain('already exists');
+    }
   });
 
   it('8 & 12: Should reject assignment to an INACTIVE department', async () => {
@@ -134,7 +136,9 @@ describe('Doctor Management Server Actions & Security', () => {
     });
 
     expect(res.success).toBe(false);
-    expect(res.error).toContain('inactive department');
+    if (!res.success) {
+      expect(res.error).toContain('inactive department');
+    }
   });
 
   it('9 & 10: Should allow Admin to deactivate and reactivate doctor user account', async () => {
@@ -154,7 +158,9 @@ describe('Doctor Management Server Actions & Security', () => {
       phoneNumber: '+91 98765 33333',
     });
 
-    const docId = created.data!.id;
+    expect(created.success).toBe(true);
+    if (!created.success || !created.data) return;
+    const docId = created.data.id;
 
     // Deactivate
     const deactRes = await toggleDoctorStatusAction(docId);

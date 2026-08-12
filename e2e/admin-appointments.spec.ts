@@ -1,4 +1,4 @@
-﻿import { test, expect } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
 test.describe('Admin Appointments Overview & Filtering E2E Suite', () => {
   test('TEST 1: Admin Login, View Appointments Master List & Filter by Status', async ({ page }) => {
@@ -18,7 +18,7 @@ test.describe('Admin Appointments Overview & Filtering E2E Suite', () => {
     await page.click('button[type="submit"]:has-text("Filter")');
 
     // 4. View Detail
-    const detailLink = page.locator('a:has-text("View Detail â†’")').first();
+    const detailLink = page.locator('a:has-text("View Detail")').first();
     if (await detailLink.isVisible()) {
       await detailLink.click();
       await page.waitForURL('**/admin/appointments/*');

@@ -1,4 +1,4 @@
-﻿import { test, expect } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
 test.describe('Patient Doctor Discovery & Slot Selection E2E Suite', () => {
   test('TEST 1: Patient Login, Search Doctor, Select Date & Slot, View Confirmation Preview Modal', async ({ page }) => {
@@ -39,7 +39,7 @@ test.describe('Patient Doctor Discovery & Slot Selection E2E Suite', () => {
 
     // 7. Action Bar appears with Proceed button
     await expect(page.getByText('Selected Consultation Slot:')).toBeVisible();
-    await page.click('button:has-text("Proceed to Confirmation â†’")');
+    await page.click('button:has-text("Proceed to Confirmation")');
 
     // 8. Booking Confirmation Preview Modal
     await expect(page.getByRole('heading', { name: 'Confirm Appointment Selection' })).toBeVisible();

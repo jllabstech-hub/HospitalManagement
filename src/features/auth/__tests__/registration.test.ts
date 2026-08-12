@@ -63,9 +63,11 @@ describe('Patient Self-Registration & Security', () => {
     });
 
     expect(res.success).toBe(false);
-    expect(res.error).toBe(
-      'Unable to create account with these details. Please check your information or sign in.'
-    );
+    if (!res.success) {
+      expect(res.error).toBe(
+        'Unable to create account with these details. Please check your information or sign in.'
+      );
+    }
   });
 
   it('should enforce PATIENT role and prevent role tampering', async () => {

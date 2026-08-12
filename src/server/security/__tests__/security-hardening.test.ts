@@ -132,7 +132,9 @@ describe('Phase 7A Comprehensive Security Hardening & Vulnerability Test Suite',
       });
 
       expect(res.success).toBe(false);
-      expect(res.code).toBe('VALIDATION_ERROR');
+      if (!res.success) {
+        expect(res.code).toBe('VALIDATION_ERROR');
+      }
     }
   });
 

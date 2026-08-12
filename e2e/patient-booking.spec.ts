@@ -1,4 +1,4 @@
-﻿import { test, expect } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
 test.describe('Patient Transactional Booking E2E Suite (Phase 5C)', () => {
   test('TEST 1: Successful Patient Booking Flow (Status BOOKED & Success Card)', async ({ page }) => {
@@ -24,7 +24,7 @@ test.describe('Patient Transactional Booking E2E Suite (Phase 5C)', () => {
     await page.locator('button:has-text("10:00 AM")').first().click();
 
     // 5. Open Modal & Confirm Booking
-    await page.click('button:has-text("Proceed to Confirmation â†’")');
+    await page.click('button:has-text("Proceed to Confirmation")');
     await expect(page.getByRole('heading', { name: 'Confirm Appointment Selection' })).toBeVisible();
 
     await page.click('button:has-text("Confirm Appointment")');
@@ -73,13 +73,13 @@ test.describe('Patient Transactional Booking E2E Suite (Phase 5C)', () => {
 
     // Patient A selects 11:00 AM and confirms booking
     await page.locator('button:has-text("11:00 AM")').first().click();
-    await page.click('button:has-text("Proceed to Confirmation â†’")');
+    await page.click('button:has-text("Proceed to Confirmation")');
     await page.click('button:has-text("Confirm Appointment")');
     await expect(page.getByRole('heading', { name: 'Appointment Booked!' })).toBeVisible();
 
     // Patient B attempts to select 11:00 AM and confirms booking
     await pageB.locator('button:has-text("11:00 AM")').first().click();
-    await pageB.click('button:has-text("Proceed to Confirmation â†’")');
+    await pageB.click('button:has-text("Proceed to Confirmation")');
     await pageB.click('button:has-text("Confirm Appointment")');
 
     // Patient B receives Conflict Notice

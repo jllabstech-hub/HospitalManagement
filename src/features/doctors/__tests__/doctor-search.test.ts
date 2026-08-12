@@ -179,8 +179,8 @@ describe('Patient Doctor Discovery Queries & Security Projection', () => {
     expect(doc?.department.id).toBe(activeDeptId);
 
     // Verify passwordHash is NOT present in projected payload
-    expect((doc as Record<string, unknown>).passwordHash).toBeUndefined();
-    expect(((doc as Record<string, unknown>).user as Record<string, unknown>).passwordHash).toBeUndefined();
+    expect((doc as unknown as Record<string, unknown>).passwordHash).toBeUndefined();
+    expect(((doc as unknown as Record<string, unknown>).user as Record<string, unknown>).passwordHash).toBeUndefined();
 
     const nonExistent = await getDoctorPublicProfile('00000000-0000-0000-0000-000000000000');
     expect(nonExistent).toBeNull();

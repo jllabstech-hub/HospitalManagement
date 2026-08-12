@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Role } from '@prisma/client';
 import { auth } from '@/features/auth';
 import { redirect } from 'next/navigation';
 import SiteHeader from '@/components/layout/SiteHeader';
@@ -46,10 +47,10 @@ export default async function HomePage() {
   const session = await auth();
 
   if (session?.user) {
-    if (session.user.role === 'ADMIN') {
+    if (session.user.role === Role.ADMIN) {
       redirect('/admin/dashboard');
     }
-    if (session.user.role === 'DOCTOR') {
+    if (session.user.role === Role.DOCTOR) {
       redirect('/doctor/dashboard');
     }
     redirect('/patient/dashboard');

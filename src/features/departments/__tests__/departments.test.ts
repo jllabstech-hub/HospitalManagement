@@ -46,7 +46,9 @@ describe('Department Management Server Actions & Security', () => {
     });
 
     expect(resPatient.success).toBe(false);
-    expect(resPatient.error).toBe('You do not have permission to access this resource.');
+    if (!resPatient.success) {
+      expect(resPatient.error).toBe('You do not have permission to access this resource.');
+    }
 
     // 2. Admin should succeed
     mockAuth.mockResolvedValueOnce({
@@ -59,10 +61,11 @@ describe('Department Management Server Actions & Security', () => {
     });
 
     expect(resAdmin.success).toBe(true);
-    expect(resAdmin.data?.id).toBeDefined();
+    if (!resAdmin.success || !resAdmin.data) return;
+    expect(resAdmin.data.id).toBeDefined();
 
     const dbRecord = await prisma.department.findUnique({
-      where: { id: resAdmin.data!.id },
+      where: { id: resAdmin.data.id },
     });
     expect(dbRecord).not.toBeNull();
     expect(dbRecord?.description).toBe('Test description created by admin');
@@ -85,7 +88,9 @@ describe('Department Management Server Actions & Security', () => {
       description: 'Duplicate exact',
     });
     expect(resExact.success).toBe(false);
-    expect(resExact.error).toContain('already exists');
+    if (!resExact.success) {
+      expect(resExact.error).toContain('already exists');
+    }
 
     // Attempt case-insensitive duplicate
     const resCase = await createDepartmentAction({
@@ -93,7 +98,9 @@ describe('Department Management Server Actions & Security', () => {
       description: 'Duplicate uppercase',
     });
     expect(resCase.success).toBe(false);
-    expect(resCase.error).toContain('already exists');
+    if (!resCase.success) {
+      expect(resCase.error).toContain('already exists');
+    }
   });
 
   it('4, 6 & 7: Should allow Admin to edit, deactivate, and reactivate department', async () => {
@@ -106,7 +113,9 @@ describe('Department Management Server Actions & Security', () => {
       description: 'Initial description',
     });
 
-    const deptId = created.data!.id;
+    expect(created.success).toBe(true);
+    if (!created.success || !created.data) return;
+    const deptId = created.data.id;
 
     // Edit
     const editRes = await updateDepartmentAction({

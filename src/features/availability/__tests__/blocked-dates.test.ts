@@ -117,7 +117,9 @@ describe('Doctor Blocked Date Server Actions & Security', () => {
       isFullDay: true,
     });
     expect(resPast.success).toBe(false);
-    expect(resPast.error).toBe('Cannot block a date in the past.');
+    if (!resPast.success) {
+      expect(resPast.error).toBe('Cannot block a date in the past.');
+    }
 
     // Partial block 1: 14:00 - 17:00
     const todayStr = getHospitalTodayDateString();
@@ -137,7 +139,9 @@ describe('Doctor Blocked Date Server Actions & Security', () => {
     });
 
     expect(resOverlap.success).toBe(false);
-    expect(resOverlap.error).toContain('overlaps');
+    if (!resOverlap.success) {
+      expect(resOverlap.error).toContain('overlaps');
+    }
   });
 
   it('7 & 8: Should allow Doctor to edit and delete own blocked date entry', async () => {
@@ -153,7 +157,9 @@ describe('Doctor Blocked Date Server Actions & Security', () => {
       reason: 'Initial leave',
     });
 
-    const blockId = created.data!.id;
+    expect(created.success).toBe(true);
+    if (!created.success || !created.data) return;
+    const blockId = created.data.id;
 
     // Edit
     const editRes = await updateBlockedDateAction({
@@ -187,7 +193,8 @@ describe('Doctor Blocked Date Server Actions & Security', () => {
       isFullDay: true,
     });
     expect(createdB.success).toBe(true);
-    const blockBId = createdB.data!.id;
+    if (!createdB.success || !createdB.data) return;
+    const blockBId = createdB.data.id;
 
     // Doctor A attempts to update Doctor B's block
     mockAuth.mockResolvedValueOnce({
@@ -201,7 +208,9 @@ describe('Doctor Blocked Date Server Actions & Security', () => {
       reason: 'Hacked reason',
     });
     expect(unauthorizedEdit.success).toBe(false);
-    expect(unauthorizedEdit.error).toBe('Blocked date record not found.');
+    if (!unauthorizedEdit.success) {
+      expect(unauthorizedEdit.error).toBe('Blocked date record not found.');
+    }
 
     // Doctor A attempts to delete Doctor B's block
     mockAuth.mockResolvedValueOnce({
@@ -210,6 +219,8 @@ describe('Doctor Blocked Date Server Actions & Security', () => {
 
     const unauthorizedDelete = await deleteBlockedDateAction(blockBId);
     expect(unauthorizedDelete.success).toBe(false);
-    expect(unauthorizedDelete.error).toBe('Blocked date record not found.');
+    if (!unauthorizedDelete.success) {
+      expect(unauthorizedDelete.error).toBe('Blocked date record not found.');
+    }
   });
 });

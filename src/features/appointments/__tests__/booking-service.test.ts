@@ -152,7 +152,9 @@ describe('Transactional Appointment Booking Service & Validation Suite', () => {
       startTime: '10:00',
     });
     expect(resInactiveDoc.success).toBe(false);
-    expect(resInactiveDoc.code).toBe('DOCTOR_UNAVAILABLE');
+    if (!resInactiveDoc.success) {
+      expect(resInactiveDoc.code).toBe('DOCTOR_UNAVAILABLE');
+    }
 
     // Create doctor in inactive department
     const userC = await prisma.user.create({
@@ -167,7 +169,9 @@ describe('Transactional Appointment Booking Service & Validation Suite', () => {
       startTime: '10:00',
     });
     expect(resInactiveDept.success).toBe(false);
-    expect(resInactiveDept.code).toBe('DOCTOR_UNAVAILABLE');
+    if (!resInactiveDept.success) {
+      expect(resInactiveDept.code).toBe('DOCTOR_UNAVAILABLE');
+    }
   });
 
   it('4 & 5: Should reject past dates and non-grid times (e.g. 10:15, 10:45)', async () => {
@@ -177,7 +181,9 @@ describe('Transactional Appointment Booking Service & Validation Suite', () => {
       startTime: '10:00',
     });
     expect(resPast.success).toBe(false);
-    expect(resPast.code).toBe('VALIDATION_ERROR');
+    if (!resPast.success) {
+      expect(resPast.code).toBe('VALIDATION_ERROR');
+    }
 
     const resNonGrid = await bookAppointmentTransaction(patientProfileId, {
       doctorId: activeDoctorId,
@@ -185,8 +191,10 @@ describe('Transactional Appointment Booking Service & Validation Suite', () => {
       startTime: '10:15',
     });
     expect(resNonGrid.success).toBe(false);
-    expect(resNonGrid.code).toBe('VALIDATION_ERROR');
-    expect(resNonGrid.message).toContain('30-minute grid');
+    if (!resNonGrid.success) {
+      expect(resNonGrid.code).toBe('VALIDATION_ERROR');
+      expect(resNonGrid.message).toContain('30-minute grid');
+    }
   });
 
   it('6: Should revalidate slots server-side and reject slot if already occupied by an active appointment', async () => {
@@ -212,7 +220,9 @@ describe('Transactional Appointment Booking Service & Validation Suite', () => {
     });
 
     expect(res.success).toBe(false);
-    expect(res.code).toBe('SLOT_UNAVAILABLE');
+    if (!res.success) {
+      expect(res.code).toBe('SLOT_UNAVAILABLE');
+    }
   });
 
   it('7 & 8: Should allow booking a slot previously occupied by CANCELLED or NO_SHOW appointment', async () => {

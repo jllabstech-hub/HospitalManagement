@@ -1,4 +1,4 @@
-﻿import { test, expect } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
 test.describe('Authentication & Role-Based Authorization E2E Suite', () => {
   const timestamp = Date.now();
@@ -12,8 +12,8 @@ test.describe('Authentication & Role-Based Authorization E2E Suite', () => {
     // 2. Fill Registration Form
     await page.fill('input[id="fullName"]', 'E2E Test Patient');
     await page.fill('input[id="email"]', testPatientEmail);
-    await page.fill('input[id="password"]', 'test123');
-    await page.fill('input[id="confirmPassword"]', 'test123');
+    await page.fill('input[id="password"]', 'test1234');
+    await page.fill('input[id="confirmPassword"]', 'test1234');
 
     // 3. Submit Form
     await page.click('button[type="submit"]');

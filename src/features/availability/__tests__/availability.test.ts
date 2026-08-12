@@ -130,7 +130,9 @@ describe('Doctor Weekly Availability Server Actions & Ownership Security', () =>
     });
 
     expect(resOverlap.success).toBe(false);
-    expect(resOverlap.error).toContain('overlaps');
+    if (!resOverlap.success) {
+      expect(resOverlap.error).toContain('overlaps');
+    }
   });
 
   it('7 & 8: Should allow Doctor to edit and delete own availability window', async () => {
@@ -144,7 +146,9 @@ describe('Doctor Weekly Availability Server Actions & Ownership Security', () =>
       endTime: '12:00',
     });
 
-    const winId = created.data!.id;
+    expect(created.success).toBe(true);
+    if (!created.success || !created.data) return;
+    const winId = created.data.id;
 
     // Edit
     const editRes = await updateAvailabilityAction({
@@ -175,7 +179,9 @@ describe('Doctor Weekly Availability Server Actions & Ownership Security', () =>
       startTime: '09:00',
       endTime: '17:00',
     });
-    const winBId = createdB.data!.id;
+    expect(createdB.success).toBe(true);
+    if (!createdB.success || !createdB.data) return;
+    const winBId = createdB.data.id;
 
     // Doctor A attempts to update Doctor B's window
     mockAuth.mockResolvedValueOnce({
@@ -188,7 +194,9 @@ describe('Doctor Weekly Availability Server Actions & Ownership Security', () =>
       endTime: '16:00',
     });
     expect(unauthorizedEdit.success).toBe(false);
-    expect(unauthorizedEdit.error).toBe('Availability window not found.');
+    if (!unauthorizedEdit.success) {
+      expect(unauthorizedEdit.error).toBe('Availability window not found.');
+    }
 
     // Doctor A attempts to delete Doctor B's window
     mockAuth.mockResolvedValueOnce({
@@ -197,6 +205,8 @@ describe('Doctor Weekly Availability Server Actions & Ownership Security', () =>
 
     const unauthorizedDelete = await deleteAvailabilityAction(winBId);
     expect(unauthorizedDelete.success).toBe(false);
-    expect(unauthorizedDelete.error).toBe('Availability window not found.');
+    if (!unauthorizedDelete.success) {
+      expect(unauthorizedDelete.error).toBe('Availability window not found.');
+    }
   });
 });

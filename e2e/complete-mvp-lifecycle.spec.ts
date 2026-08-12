@@ -1,4 +1,4 @@
-﻿import { test, expect } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
 test.describe('Complete System End-to-End MVP Lifecycles', () => {
   test('LIFECYCLE 1: Patient Registration -> Booking (BOOKED) -> Doctor Confirm (CONFIRMED) -> Doctor Complete (COMPLETED)', async ({ page }) => {
@@ -9,8 +9,8 @@ test.describe('Complete System End-to-End MVP Lifecycles', () => {
     await page.goto('/register');
     await page.fill('input[id="fullName"]', 'Lifecycle One Patient');
     await page.fill('input[id="email"]', patientEmail);
-    await page.fill('input[id="password"]', 'test123');
-    await page.fill('input[id="confirmPassword"]', 'test123');
+    await page.fill('input[id="password"]', 'test1234');
+    await page.fill('input[id="confirmPassword"]', 'test1234');
     await page.click('button[type="submit"]');
     await page.waitForURL('**/patient/dashboard');
 
@@ -21,7 +21,7 @@ test.describe('Complete System End-to-End MVP Lifecycles', () => {
     await page.click('a:has-text("View Profile & Book")');
     await page.waitForSelector('button:has-text("12:00 PM")', { timeout: 10000 });
     await page.locator('button:has-text("12:00 PM")').first().click();
-    await page.click('button:has-text("Proceed to Confirmation â†’")');
+    await page.click('button:has-text("Proceed to Confirmation")');
     await page.click('button:has-text("Confirm Appointment")');
     await expect(page.getByRole('heading', { name: 'Appointment Booked!' })).toBeVisible();
 
@@ -39,21 +39,21 @@ test.describe('Complete System End-to-End MVP Lifecycles', () => {
     await page.goto('/doctor/appointments');
     await page.selectOption('select[id="docStatusFilter"]', 'BOOKED');
     await page.click('button[type="submit"]:has-text("Filter")');
+    await page.waitForTimeout(1000);
 
-    const confirmBtn = page.locator('button:has-text("Confirm")').first();
-    await expect(confirmBtn).toBeVisible();
-    await confirmBtn.click();
+    await page.locator('button:has-text("Confirm")').first().click();
+    await page.waitForSelector('button:has-text("Confirm Appointment")', { timeout: 10000 });
     await page.click('button:has-text("Confirm Appointment")');
 
     // Doctor filters by CONFIRMED to view confirmed appointment
     await page.selectOption('select[id="docStatusFilter"]', 'CONFIRMED');
     await page.click('button[type="submit"]:has-text("Filter")');
+    await page.waitForTimeout(1000);
     await expect(page.locator('span:has-text("CONFIRMED")').first()).toBeVisible();
 
     // Doctor completes appointment (CONFIRMED -> COMPLETED)
-    const completeBtn = page.locator('button:has-text("Complete")').first();
-    await expect(completeBtn).toBeVisible();
-    await completeBtn.click();
+    await page.locator('button:has-text("Complete")').first().click();
+    await page.waitForSelector('button:has-text("Mark Completed")', { timeout: 10000 });
     await page.click('button:has-text("Mark Completed")');
 
     // Doctor filters by COMPLETED to verify completed status
@@ -76,13 +76,13 @@ test.describe('Complete System End-to-End MVP Lifecycles', () => {
     await page.click('a:has-text("View Profile & Book")');
     await page.waitForSelector('button:has-text("02:00 PM")', { timeout: 10000 });
     await page.locator('button:has-text("02:00 PM")').first().click();
-    await page.click('button:has-text("Proceed to Confirmation â†’")');
+    await page.click('button:has-text("Proceed to Confirmation")');
     await page.click('button:has-text("Confirm Appointment")');
     await expect(page.getByRole('heading', { name: 'Appointment Booked!' })).toBeVisible();
 
     // 2. Patient A Cancels Appointment
     await page.goto('/patient/appointments');
-    await page.click('a:has-text("View Details â†’")');
+    await page.click('a:has-text("View Details")');
     await page.click('button:has-text("Cancel Appointment")');
     await page.click('button:has-text("Yes, Cancel Appointment")');
     await expect(page.locator('span:has-text("CANCELLED")').first()).toBeVisible();
@@ -102,7 +102,7 @@ test.describe('Complete System End-to-End MVP Lifecycles', () => {
     await pageB.click('a:has-text("View Profile & Book")');
     await pageB.waitForSelector('button:has-text("02:00 PM")', { timeout: 10000 });
     await pageB.locator('button:has-text("02:00 PM")').first().click();
-    await pageB.click('button:has-text("Proceed to Confirmation â†’")');
+    await pageB.click('button:has-text("Proceed to Confirmation")');
     await pageB.click('button:has-text("Confirm Appointment")');
 
     // ASSERTION: Patient B successfully books the slot released by cancellation!
