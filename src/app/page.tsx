@@ -1,7 +1,4 @@
 import type { Metadata } from 'next';
-import { Role } from '@prisma/client';
-import { auth } from '@/features/auth';
-import { redirect } from 'next/navigation';
 import SiteHeader from '@/components/layout/SiteHeader';
 import SiteFooter from '@/components/layout/SiteFooter';
 import Hero from '@/components/home/Hero';
