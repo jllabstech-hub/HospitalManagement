@@ -1,4 +1,5 @@
 import { Prisma } from '@prisma/client';
+import { unstable_cache } from 'next/cache';
 import { prisma } from '@/server/db/client';
 import { PUBLISHED_FILTER } from '@/features/cms/constants';
 import { buildFuzzyDoctorWhere } from '@/lib/fuzzy-search';
@@ -182,16 +183,37 @@ export async function getPublicDoctorByIdOrSlug(idOrSlug: string) {
   const trimmed = idOrSlug.trim();
   const isUuid = UUID_REGEX.test(trimmed);
 
-  if (isUuid) {
-    const byId = await prisma.doctorProfile.findFirst({
-      where: { id: trimmed, ...publicDoctorWhere },
+  try {
+    return await unstable_cache(
+      async () => {
+        if (isUuid) {
+          const byId = await prisma.doctorProfile.findFirst({
+            where: { id: trimmed, ...publicDoctorWhere },
+            select: publicDoctorDetailSelect,
+          });
+          if (byId) return byId;
+        }
+
+        return prisma.doctorProfile.findFirst({
+          where: { slug: trimmed, ...publicDoctorWhere },
+          select: publicDoctorDetailSelect,
+        });
+      },
+      ['public-doctor-by-id-or-slug', trimmed],
+      { revalidate: 300, tags: ['public-doctors', `doctor-${trimmed}`] }
+    )();
+  } catch {
+    if (isUuid) {
+      const byId = await prisma.doctorProfile.findFirst({
+        where: { id: trimmed, ...publicDoctorWhere },
+        select: publicDoctorDetailSelect,
+      });
+      if (byId) return byId;
+    }
+
+    return prisma.doctorProfile.findFirst({
+      where: { slug: trimmed, ...publicDoctorWhere },
       select: publicDoctorDetailSelect,
     });
-    if (byId) return byId;
   }
-
-  return prisma.doctorProfile.findFirst({
-    where: { slug: trimmed, ...publicDoctorWhere },
-    select: publicDoctorDetailSelect,
-  });
 }
