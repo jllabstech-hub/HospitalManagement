@@ -1,18 +1,12 @@
 import type { Metadata } from 'next';
-import { Plus_Jakarta_Sans, Source_Serif_4 } from 'next/font/google';
+import { Inter } from 'next/font/google';
 import { APP_CONFIG } from '@/config';
 import { getSiteUrl } from '@/lib/seo';
 import './globals.css';
 
-const sans = Plus_Jakarta_Sans({
+const inter = Inter({
   subsets: ['latin'],
-  variable: '--font-sans',
-  display: 'swap',
-});
-
-const display = Source_Serif_4({
-  subsets: ['latin'],
-  variable: '--font-display',
+  variable: '--font-inter',
   display: 'swap',
 });
 
@@ -48,7 +42,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${sans.variable} ${display.variable}`}>
+    <html lang="en" className={inter.variable}>
       <body className="min-h-screen bg-surface-warm font-sans text-ink antialiased">
         {children}
       </body>
