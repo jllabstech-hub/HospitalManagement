@@ -2,7 +2,20 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { APP_CONFIG } from '@/config';
 
-export default function Hero() {
+interface HeroProps {
+  profile?: {
+    hospitalName: string;
+    tagline?: string | null;
+    shortDescription?: string | null;
+    heroImageUrl?: string | null;
+  } | null;
+}
+
+export default function Hero({ profile }: HeroProps) {
+  const name = profile?.hospitalName ?? APP_CONFIG.shortName;
+  const tagline = profile?.tagline ?? 'Right When You Need It.';
+  const description = profile?.shortDescription ?? 'Find the right specialist, choose a convenient 30-minute consultation slot, and manage your outpatient appointments with a calm, modern hospital experience.';
+
   return (
     <section className="relative overflow-hidden">
       <div className="absolute inset-0 hero-mesh" aria-hidden />
@@ -20,14 +33,13 @@ export default function Hero() {
 
       <div className="container-page relative grid min-h-[min(88vh,52rem)] items-center gap-10 py-16 lg:grid-cols-12 lg:py-24">
         <div className="animate-fade-up lg:col-span-7">
-          <p className="eyebrow text-brand-200">{APP_CONFIG.shortName} Hospital</p>
+          <p className="eyebrow text-brand-200">{name} Hospital</p>
           <h1 className="mt-4 max-w-xl font-display text-[1.75rem] font-semibold leading-[1.08] tracking-tight text-white sm:text-5xl lg:text-6xl text-balance">
             Exceptional Care.
-            <span className="mt-1 block text-brand-100">Right When You Need It.</span>
+            <span className="mt-1 block text-brand-100">{tagline}</span>
           </h1>
           <p className="mt-5 max-w-lg text-base leading-relaxed text-brand-100/90 sm:text-lg">
-            Find the right specialist, choose a convenient 30-minute consultation slot, and
-            manage your outpatient appointments with a calm, modern hospital experience.
+            {description}
           </p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">

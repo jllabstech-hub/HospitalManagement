@@ -98,7 +98,7 @@ export default async function HomePage() {
       <JsonLd data={[medicalOrganizationLd, breadcrumbLd]} />
       <SiteHeader />
       <main className="flex-1">
-        <Hero />
+        <Hero profile={profile} />
         <TrustStats />
         <AboutSection />
         <ExcellenceSection centres={centres} departments={deptForHome} />
