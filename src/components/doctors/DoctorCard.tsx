@@ -22,7 +22,6 @@ export default function DoctorCard({
   doctor,
   href,
   bookHref,
-  publicMode = false,
   className,
 }: DoctorCardProps) {
   const profileHref = href || `/patient/doctors/${doctor.id}`;
