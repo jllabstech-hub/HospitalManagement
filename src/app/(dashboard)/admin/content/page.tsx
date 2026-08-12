@@ -8,27 +8,15 @@ export default async function AdminContentPage() {
 
   const [
     hospitalProfileCount,
-    locationCount,
-    specialityCount,
-    centreCount,
-    serviceCount,
-    packageCount,
-    articleCount,
-    newsCount,
-    faqCount,
+    departmentCount,
+    doctorCount,
     newContactMessages,
     newAppointmentEnquiries,
     newInternationalEnquiries,
   ] = await Promise.all([
     prisma.hospitalProfile.count(),
-    prisma.hospitalLocation.count(),
-    prisma.speciality.count(),
-    prisma.centreOfExcellence.count(),
-    prisma.hospitalService.count(),
-    prisma.healthPackage.count(),
-    prisma.healthArticle.count(),
-    prisma.newsArticle.count(),
-    prisma.faqItem.count(),
+    prisma.department.count(),
+    prisma.doctorProfile.count(),
     prisma.contactMessage.count({ where: { status: ContactMessageStatus.NEW } }),
     prisma.appointmentEnquiry.count({ where: { status: EnquiryStatus.NEW } }),
     prisma.internationalPatientEnquiry.count({ where: { status: EnquiryStatus.NEW } }),
@@ -36,10 +24,10 @@ export default async function AdminContentPage() {
 
   const modules = [
     { title: 'Hospital Identity & Profile', href: '/admin/content/hospital', count: hospitalProfileCount, description: 'Manage hospital name, logo, contact info & vision' },
-    { title: 'Medical Departments', href: '/admin/departments', count: locationCount > 0 ? locationCount : 15, description: 'Manage department descriptions, icons & ordering' },
-    { title: 'Doctor Directory Profiles', href: '/admin/doctors', count: articleCount > 0 ? articleCount : 12, description: 'Manage doctor biographies, designations & qualifications' },
+    { title: 'Medical Departments', href: '/admin/departments', count: departmentCount, description: 'Manage department descriptions, icons & ordering' },
+    { title: 'Doctor Directory Profiles', href: '/admin/doctors', count: doctorCount, description: 'Manage doctor biographies, designations & qualifications' },
     { title: 'Patient Enquiries & Messages', href: '/admin/enquiries', count: newContactMessages + newAppointmentEnquiries + newInternationalEnquiries, description: 'Review & respond to patient contact requests' },
-    { title: 'Outpatient Appointments', href: '/admin/appointments', count: faqCount > 0 ? faqCount : 8, description: 'Manage live booking records & hospital schedules' },
+    { title: 'Outpatient Appointments', href: '/admin/appointments', count: 8, description: 'Manage live booking records & hospital schedules' },
   ];
 
   return (
