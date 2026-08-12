@@ -23,6 +23,25 @@ export const RegisterSchema = z
 
 export type RegisterInput = z.infer<typeof RegisterSchema>;
 
+export const PhoneInputSchema = z.object({
+  phoneNumber: z
+    .string()
+    .trim()
+    .regex(/^[0-9+\s-]{10,15}$/, { message: 'Please enter a valid 10-digit phone number.' }),
+});
+
+export type PhoneInput = z.infer<typeof PhoneInputSchema>;
+
+export const OtpInputSchema = z.object({
+  phoneNumber: z.string().trim(),
+  otp: z
+    .string()
+    .trim()
+    .length(6, { message: 'OTP must be exactly 6 digits.' }),
+});
+
+export type OtpInput = z.infer<typeof OtpInputSchema>;
+
 export const LoginSchema = z.object({
   email: z
     .string()
@@ -35,3 +54,4 @@ export const LoginSchema = z.object({
 });
 
 export type LoginInput = z.infer<typeof LoginSchema>;
+

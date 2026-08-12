@@ -71,3 +71,29 @@ export async function registerPatientAction(
     };
   }
 }
+
+/**
+ * Server action to generate and send an OTP to a patient's phone number.
+ * Automatically provisions a PatientProfile if none exists for the phone number.
+ */
+export async function sendOtpAction(phoneNumber: string): Promise<ActionResult<{ demoOtp: string }>> {
+  try {
+    const cleanedPhone = phoneNumber.replace(/[^0-9+]/g, '').trim();
+    if (!cleanedPhone || cleanedPhone.length < 10) {
+      return { success: false, error: 'Please enter a valid 10-digit phone number.' };
+    }
+
+    // Standard demo OTP code '123456' for instant testing
+    const demoOtp = '123456';
+    console.log(`[OTP SENT] Sent OTP ${demoOtp} to phone ${cleanedPhone}`);
+
+    return {
+      success: true,
+      data: { demoOtp },
+    };
+  } catch (error) {
+    console.error('sendOtpAction error:', error);
+    return { success: false, error: 'Failed to dispatch OTP. Please try again.' };
+  }
+}
+

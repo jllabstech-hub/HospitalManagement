@@ -3,27 +3,106 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { LoginSchema, LoginInput } from '@/features/auth/schemas';
+import { LoginSchema, LoginInput, PhoneInputSchema, PhoneInput, OtpInputSchema, OtpInput } from '@/features/auth/schemas';
+import { sendOtpAction } from '@/features/auth/actions';
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 
-export default function LoginForm() {
-  const [serverError, setServerError] = useState<string | null>(null);
-  const [showPassword, setShowPassword] = useState(false);
+type AuthMode = 'phone' | 'email';
 
+export default function LoginForm() {
+  const [authMode, setAuthMode] = useState<AuthMode>('phone');
+  const [otpSent, setOtpSent] = useState(false);
+  const [activePhone, setActivePhone] = useState('');
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [infoMsg, setInfoMsg] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [sendingOtp, setSendingOtp] = useState(false);
+
+  // Email form
   const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
+    register: registerEmail,
+    handleSubmit: handleSubmitEmail,
+    formState: { errors: emailErrors, isSubmitting: isEmailSubmitting },
   } = useForm<LoginInput>({
     resolver: zodResolver(LoginSchema),
-    defaultValues: {
-      email: '',
-      password: '',
-    },
+    defaultValues: { email: '', password: '' },
   });
 
-  const onSubmit = async (data: LoginInput) => {
+  // Phone Step 1 Form
+  const {
+    register: registerPhone,
+    handleSubmit: handleSubmitPhone,
+    formState: { errors: phoneErrors },
+  } = useForm<PhoneInput>({
+    resolver: zodResolver(PhoneInputSchema),
+    defaultValues: { phoneNumber: '+91 91234 56789' },
+  });
+
+  // OTP Step 2 Form
+  const {
+    register: registerOtp,
+    handleSubmit: handleSubmitOtp,
+    formState: { errors: otpErrors, isSubmitting: isOtpSubmitting },
+  } = useForm<OtpInput>({
+    resolver: zodResolver(OtpInputSchema),
+    defaultValues: { phoneNumber: '', otp: '123456' },
+  });
+
+  // 1. Dispatch OTP via Server Action
+  const onSendOtp = async (data: PhoneInput) => {
+    setServerError(null);
+    setInfoMsg(null);
+    setSendingOtp(true);
+
+    try {
+      const res = await sendOtpAction(data.phoneNumber);
+      if (!res.success) {
+        setServerError(res.error);
+        return;
+      }
+
+      setActivePhone(data.phoneNumber);
+      setOtpSent(true);
+      setInfoMsg(`OTP code sent successfully to ${data.phoneNumber}. Use demo OTP: 123456`);
+    } catch (err) {
+      console.error('Send OTP error:', err);
+      setServerError('Failed to dispatch OTP. Please try again.');
+    } finally {
+      setSendingOtp(false);
+    }
+  };
+
+  // 2. Submit OTP to NextAuth Credentials authorize()
+  const onVerifyOtp = async (data: OtpInput) => {
+    setServerError(null);
+
+    try {
+      const result = await signIn('credentials', {
+        phone: activePhone,
+        otp: data.otp,
+        isPhoneAuth: 'true',
+        redirect: false,
+      });
+
+      if (!result || result.error) {
+        if (result?.error === 'ACCOUNT_INACTIVE' || result?.error?.includes('ACCOUNT_INACTIVE')) {
+          setServerError('Your account is currently inactive. Please contact the hospital administrator.');
+        } else {
+          setServerError('Invalid OTP code. Please enter 123456.');
+        }
+        return;
+      }
+
+      window.location.href = '/patient/dashboard';
+    } catch (err) {
+      console.error('OTP login error:', err);
+      setServerError('An unexpected error occurred during OTP verification.');
+    }
+  };
+
+  // 3. Email + Password Login
+  const onSubmitEmail = async (data: LoginInput) => {
     setServerError(null);
 
     try {
@@ -35,9 +114,7 @@ export default function LoginForm() {
 
       if (!result || result.error) {
         if (result?.error === 'ACCOUNT_INACTIVE' || result?.error?.includes('ACCOUNT_INACTIVE')) {
-          setServerError(
-            'Your account is currently inactive. Please contact the hospital administrator.'
-          );
+          setServerError('Your account is currently inactive. Please contact the hospital administrator.');
         } else {
           setServerError('Invalid email or password.');
         }
@@ -46,7 +123,7 @@ export default function LoginForm() {
 
       window.location.href = '/';
     } catch (err) {
-      console.error('Login submit error:', err);
+      console.error('Email login error:', err);
       setServerError('An unexpected error occurred. Please try again.');
     }
   };
@@ -54,10 +131,44 @@ export default function LoginForm() {
   return (
     <div className="w-full max-w-md rounded-card border border-[#dde5e9] bg-white p-8 shadow-card">
       <div className="mb-6 text-center">
-        <h1 className="font-display text-2xl font-semibold text-ink">Welcome Back</h1>
+        <h1 className="font-display text-2xl font-semibold text-ink">Welcome to CarePulse</h1>
         <p className="mt-1 text-sm text-ink-muted">
-          Sign in to access your Hospital Appointment account
+          Sign in to view your medical records & appointments
         </p>
+      </div>
+
+      {/* Mode Switcher Tabs */}
+      <div className="mb-6 grid grid-cols-2 rounded-button bg-surface-muted p-1 text-xs font-bold">
+        <button
+          type="button"
+          onClick={() => {
+            setAuthMode('phone');
+            setServerError(null);
+            setInfoMsg(null);
+          }}
+          className={`rounded-button py-2 transition duration-brand ${
+            authMode === 'phone'
+              ? 'bg-white text-brand-800 shadow-soft'
+              : 'text-ink-muted hover:text-ink'
+          }`}
+        >
+          📱 Patient Phone OTP
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setAuthMode('email');
+            setServerError(null);
+            setInfoMsg(null);
+          }}
+          className={`rounded-button py-2 transition duration-brand ${
+            authMode === 'email'
+              ? 'bg-white text-brand-800 shadow-soft'
+              : 'text-ink-muted hover:text-ink'
+          }`}
+        >
+          ✉️ Email & Password
+        </button>
       </div>
 
       {serverError && (
@@ -69,52 +180,145 @@ export default function LoginForm() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-        <div>
-          <label htmlFor="email" className="mb-1 block text-sm font-medium text-ink">
-            Email Address
-          </label>
-          <input
-            id="email"
-            type="email"
-            autoComplete="email"
-            {...register('email')}
-            className="input-field"
-            placeholder="you@example.com"
-          />
-          {errors.email && <p className="mt-1 text-xs text-rose-600">{errors.email.message}</p>}
+      {infoMsg && (
+        <div
+          role="status"
+          className="mb-4 rounded-button border border-emerald-200 bg-emerald-50 p-3 text-xs font-semibold text-emerald-800"
+        >
+          {infoMsg}
         </div>
+      )}
 
-        <div>
-          <label htmlFor="password" className="mb-1 block text-sm font-medium text-ink">
-            Password
-          </label>
-          <div className="relative">
-            <input
-              id="password"
-              type={showPassword ? 'text' : 'password'}
-              autoComplete="current-password"
-              {...register('password')}
-              className="input-field pr-16"
-              placeholder="••••••••"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute inset-y-0 right-0 px-3 text-xs font-semibold text-ink-muted hover:text-ink"
-            >
-              {showPassword ? 'Hide' : 'Show'}
-            </button>
-          </div>
-          {errors.password && (
-            <p className="mt-1 text-xs text-rose-600">{errors.password.message}</p>
+      {/* TAB 1: PHONE + OTP PATIENT LOGIN */}
+      {authMode === 'phone' && (
+        <>
+          {!otpSent ? (
+            <form onSubmit={handleSubmitPhone(onSendOtp)} className="space-y-4" noValidate>
+              <div>
+                <label htmlFor="phoneNumber" className="mb-1 block text-sm font-medium text-ink">
+                  Patient Phone Number
+                </label>
+                <input
+                  id="phoneNumber"
+                  type="tel"
+                  {...registerPhone('phoneNumber')}
+                  className="input-field font-mono"
+                  placeholder="+91 98765 43210"
+                />
+                {phoneErrors.phoneNumber && (
+                  <p className="mt-1 text-xs text-rose-600">{phoneErrors.phoneNumber.message}</p>
+                )}
+                <p className="mt-1 text-[11px] text-ink-muted">
+                  We will send a 6-digit verification OTP code to your phone.
+                </p>
+              </div>
+
+              <button
+                type="submit"
+                disabled={sendingOtp}
+                className="btn-primary mt-2 w-full"
+              >
+                {sendingOtp ? 'Sending OTP...' : 'Send OTP Verification Code'}
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleSubmitOtp(onVerifyOtp)} className="space-y-4" noValidate>
+              <div>
+                <div className="flex items-center justify-between">
+                  <label htmlFor="otp" className="mb-1 block text-sm font-medium text-ink">
+                    Enter 6-Digit OTP Code
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setOtpSent(false)}
+                    className="text-xs font-semibold text-brand-700 hover:underline"
+                  >
+                    Change Phone
+                  </button>
+                </div>
+                <input
+                  id="otp"
+                  type="text"
+                  maxLength={6}
+                  {...registerOtp('otp')}
+                  className="input-field text-center font-mono text-lg tracking-widest"
+                  placeholder="123456"
+                />
+                {otpErrors.otp && (
+                  <p className="mt-1 text-xs text-rose-600">{otpErrors.otp.message}</p>
+                )}
+                <p className="mt-1 text-center text-[11px] font-semibold text-emerald-700">
+                  Demo Test OTP: <code className="rounded bg-emerald-100 px-1 py-0.5 font-mono">123456</code>
+                </p>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isOtpSubmitting}
+                className="btn-primary mt-2 w-full"
+              >
+                {isOtpSubmitting ? 'Verifying OTP...' : 'Verify OTP & Access Patient Portal'}
+              </button>
+            </form>
           )}
-        </div>
+        </>
+      )}
 
-        <button type="submit" disabled={isSubmitting} className="btn-primary mt-2 w-full">
-          {isSubmitting ? 'Signing in...' : 'Sign In'}
-        </button>
-      </form>
+      {/* TAB 2: EMAIL & PASSWORD STAFF/PATIENT LOGIN */}
+      {authMode === 'email' && (
+        <form onSubmit={handleSubmitEmail(onSubmitEmail)} className="space-y-4" noValidate>
+          <div>
+            <label htmlFor="email" className="mb-1 block text-sm font-medium text-ink">
+              Email Address
+            </label>
+            <input
+              id="email"
+              type="email"
+              autoComplete="email"
+              {...registerEmail('email')}
+              className="input-field"
+              placeholder="you@example.com"
+            />
+            {emailErrors.email && (
+              <p className="mt-1 text-xs text-rose-600">{emailErrors.email.message}</p>
+            )}
+          </div>
+
+          <div>
+            <label htmlFor="password" className="mb-1 block text-sm font-medium text-ink">
+              Password
+            </label>
+            <div className="relative">
+              <input
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                autoComplete="current-password"
+                {...registerEmail('password')}
+                className="input-field pr-16"
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 px-3 text-xs font-semibold text-ink-muted hover:text-ink"
+              >
+                {showPassword ? 'Hide' : 'Show'}
+              </button>
+            </div>
+            {emailErrors.password && (
+              <p className="mt-1 text-xs text-rose-600">{emailErrors.password.message}</p>
+            )}
+          </div>
+
+          <button
+            type="submit"
+            disabled={isEmailSubmitting}
+            className="btn-primary mt-2 w-full"
+          >
+            {isEmailSubmitting ? 'Signing in...' : 'Sign In with Password'}
+          </button>
+        </form>
+      )}
 
       <div className="mt-6 text-center text-sm text-ink-muted">
         Don&apos;t have a patient account?{' '}
@@ -125,20 +329,20 @@ export default function LoginForm() {
 
       <div className="mt-6 space-y-2 rounded-card border border-[#dde5e9] bg-surface-muted p-4 text-xs text-ink-muted">
         <div className="mb-2 border-b border-[#dde5e9] pb-1 text-sm font-semibold text-ink">
-          Demo Login Credentials
+          Demo Quick Login Credentials
         </div>
         <div className="flex items-center justify-between rounded-button border border-[#dde5e9] bg-white p-2">
           <div>
-            <span className="font-medium text-brand-800">Admin:</span>{' '}
+            <span className="font-medium text-brand-600">Patient Phone OTP:</span>{' '}
             <code className="rounded bg-surface-soft px-1 py-0.5 font-mono text-ink">
-              admin@hospital.com
+              +91 91234 56789
             </code>
           </div>
-          <span className="font-mono text-ink-soft">test123</span>
+          <span className="font-mono text-emerald-700 font-bold">OTP: 123456</span>
         </div>
         <div className="flex items-center justify-between rounded-button border border-[#dde5e9] bg-white p-2">
           <div>
-            <span className="font-medium text-accent-700">Doctor:</span>{' '}
+            <span className="font-medium text-accent-700">Doctor Email:</span>{' '}
             <code className="rounded bg-surface-soft px-1 py-0.5 font-mono text-ink">
               dr.smith@hospital.com
             </code>
@@ -147,9 +351,9 @@ export default function LoginForm() {
         </div>
         <div className="flex items-center justify-between rounded-button border border-[#dde5e9] bg-white p-2">
           <div>
-            <span className="font-medium text-brand-600">Patient:</span>{' '}
+            <span className="font-medium text-brand-800">Admin Email:</span>{' '}
             <code className="rounded bg-surface-soft px-1 py-0.5 font-mono text-ink">
-              patient.alice@example.com
+              admin@hospital.com
             </code>
           </div>
           <span className="font-mono text-ink-soft">test123</span>
@@ -158,3 +362,4 @@ export default function LoginForm() {
     </div>
   );
 }
+
