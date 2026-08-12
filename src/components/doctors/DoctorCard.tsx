@@ -24,7 +24,7 @@ export default function DoctorCard({
   bookHref,
   className,
 }: DoctorCardProps) {
-  const profileHref = href || `/patient/doctors/${doctor.id}`;
+  const profileHref = href || `/doctors/${doctor.id}`;
   const bookLink = bookHref || `/patient/doctors/${doctor.id}`;
 
   const displayName = doctor.fullName.startsWith('Dr') ? doctor.fullName : `Dr ${doctor.fullName}`;
