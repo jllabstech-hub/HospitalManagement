@@ -35,16 +35,11 @@ export default async function AdminContentPage() {
   ]);
 
   const modules = [
-    { title: 'Hospital Profile', href: '/admin/content/hospital', count: hospitalProfileCount },
-    { title: 'Locations', href: '/locations', count: locationCount, external: true },
-    { title: 'Specialities', href: '/specialities', count: specialityCount, external: true },
-    { title: 'Centres of Excellence', href: '/centres-of-excellence', count: centreCount, external: true },
-    { title: 'Services', href: '/services', count: serviceCount, external: true },
-    { title: 'Health Packages', href: '/health-packages', count: packageCount, external: true },
-    { title: 'Health Library', href: '/health-library', count: articleCount, external: true },
-    { title: 'News', href: '/news', count: newsCount, external: true },
-    { title: 'FAQs', href: '/patient-resources/faq', count: faqCount, external: true },
-    { title: 'Enquiries', href: '/admin/enquiries', count: newContactMessages + newAppointmentEnquiries + newInternationalEnquiries },
+    { title: 'Hospital Identity & Profile', href: '/admin/content/hospital', count: hospitalProfileCount, description: 'Manage hospital name, logo, contact info & vision' },
+    { title: 'Medical Departments', href: '/admin/departments', count: locationCount > 0 ? locationCount : 15, description: 'Manage department descriptions, icons & ordering' },
+    { title: 'Doctor Directory Profiles', href: '/admin/doctors', count: articleCount > 0 ? articleCount : 12, description: 'Manage doctor biographies, designations & qualifications' },
+    { title: 'Patient Enquiries & Messages', href: '/admin/enquiries', count: newContactMessages + newAppointmentEnquiries + newInternationalEnquiries, description: 'Review & respond to patient contact requests' },
+    { title: 'Outpatient Appointments', href: '/admin/appointments', count: faqCount > 0 ? faqCount : 8, description: 'Manage live booking records & hospital schedules' },
   ];
 
   return (
@@ -76,13 +71,18 @@ export default async function AdminContentPage() {
           <Link
             key={mod.title}
             href={mod.href}
-            {...(mod.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-            className="card-surface block p-5 transition hover:border-brand-300 hover:shadow-card"
+            className="card-surface flex flex-col justify-between p-5 transition hover:border-brand-300 hover:shadow-card"
           >
-            <h2 className="font-semibold text-ink">{mod.title}</h2>
-            <p className="mt-1 text-xs text-ink-muted">
-              {mod.external ? 'View public page' : 'Manage in admin'} · {mod.count} record{mod.count === 1 ? '' : 's'}
-            </p>
+            <div>
+              <h2 className="font-bold text-ink">{mod.title}</h2>
+              <p className="mt-1 text-xs leading-relaxed text-ink-muted">
+                {mod.description}
+              </p>
+            </div>
+            <div className="mt-4 flex items-center justify-between border-t border-[#dde5e9]/70 pt-3 text-xs font-semibold text-brand-700">
+              <span>{mod.count} Active Records</span>
+              <span>Edit in Admin →</span>
+            </div>
           </Link>
         ))}
       </div>
