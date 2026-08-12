@@ -3,6 +3,7 @@ import Link from 'next/link';
 import Breadcrumbs from '@/components/public/Breadcrumbs';
 import PageHero from '@/components/public/PageHero';
 import DoctorCard from '@/components/doctors/DoctorCard';
+import DoctorDirectoryFilters from '@/components/doctors/DoctorDirectoryFilters';
 import EmptyState from '@/components/ui/EmptyState';
 import { searchPublicDoctors } from '@/features/cms/queries/doctors-public';
 import {
@@ -69,52 +70,10 @@ export default async function DoctorsPage({ searchParams }: PageProps) {
             className="mb-8"
           />
 
-          <form method="get" className="card-surface mb-8 grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-4">
-            <label className="block text-sm sm:col-span-2 lg:col-span-1">
-              <span className="font-medium text-ink">Search</span>
-              <input
-                name="search"
-                defaultValue={search}
-                placeholder="Name or keyword"
-                className="mt-1 w-full rounded-button border border-[#dde5e9] px-3 py-2.5 text-sm"
-              />
-            </label>
-            <label className="block text-sm">
-              <span className="font-medium text-ink">Department</span>
-              <select
-                name="department"
-                defaultValue={departmentId}
-                className="mt-1 w-full rounded-button border border-[#dde5e9] px-3 py-2.5 text-sm"
-              >
-                <option value="">All departments</option>
-                {departments.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="block text-sm">
-              <span className="font-medium text-ink">Speciality</span>
-              <select
-                name="speciality"
-                defaultValue={specialityId}
-                className="mt-1 w-full rounded-button border border-[#dde5e9] px-3 py-2.5 text-sm"
-              >
-                <option value="">All specialities</option>
-                {specialities.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <div className="flex items-end">
-              <button type="submit" className="btn-primary w-full">
-                Search
-              </button>
-            </div>
-          </form>
+          <DoctorDirectoryFilters
+            departments={departments}
+            specialities={specialities}
+          />
 
           <p className="mb-6 text-sm text-ink-muted">
             {result.totalCount} specialist{result.totalCount === 1 ? '' : 's'} found
