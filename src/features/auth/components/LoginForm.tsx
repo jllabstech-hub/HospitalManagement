@@ -64,7 +64,11 @@ export default function LoginForm() {
 
       setActivePhone(data.phoneNumber);
       setOtpSent(true);
-      setInfoMsg(`OTP code sent successfully to ${data.phoneNumber}. Use demo OTP: 123456`);
+      if (res.data?.isRealSmsSent) {
+        setInfoMsg(`📲 SMS verification OTP code sent to ${data.phoneNumber} via Telephony Gateway!`);
+      } else {
+        setInfoMsg(`OTP code sent to ${data.phoneNumber}. (Sandbox mode: Use OTP 123456)`);
+      }
     } catch (err) {
       console.error('Send OTP error:', err);
       setServerError('Failed to dispatch OTP. Please try again.');
