@@ -46,16 +46,6 @@ export const metadata: Metadata = {
 export default async function HomePage() {
   const session = await auth();
 
-  if (session?.user) {
-    if (session.user.role === Role.ADMIN) {
-      redirect('/admin/dashboard');
-    }
-    if (session.user.role === Role.DOCTOR) {
-      redirect('/doctor/dashboard');
-    }
-    redirect('/patient/dashboard');
-  }
-
   const [profile, departments, centres, specialities, testimonials, doctorResult] =
     await Promise.all([
       getActiveHospitalProfile(),

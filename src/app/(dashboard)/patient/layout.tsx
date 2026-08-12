@@ -12,7 +12,7 @@ export default async function PatientLayout({ children }: { children: ReactNode 
       <header className="sticky top-0 z-40 border-b border-[#dde5e9]/90 bg-white/95 shadow-header backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-wide items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
           <div className="flex min-w-0 items-center gap-3">
-            <BrandLogo href="/patient/dashboard" size="sm" />
+            <BrandLogo href="/" size="sm" />
             <span className="hidden border-l border-[#dde5e9] pl-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-600 sm:block">
               Patient Self-Service
             </span>
