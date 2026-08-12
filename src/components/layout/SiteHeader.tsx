@@ -136,6 +136,21 @@ export default function SiteHeader() {
       desktopActions={
         <div className="flex items-center gap-2.5">
           <Link
+            href="/search"
+            aria-label="Search website"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-button border border-[#dde5e9] bg-white text-ink transition duration-brand hover:border-brand-300 hover:bg-brand-50 hover:text-brand-800"
+          >
+            <svg viewBox="0 0 20 20" className="h-4 w-4 fill-current opacity-80" aria-hidden>
+              <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+            </svg>
+          </Link>
+          <Link
+            href="/contact"
+            className="hidden sm:inline-flex items-center justify-center rounded-button border border-[#dde5e9] bg-white px-3.5 py-2 text-xs font-bold text-ink transition duration-brand hover:border-brand-300 hover:bg-brand-50 hover:text-brand-800"
+          >
+            Contact Us
+          </Link>
+          <Link
             href="/login"
             className="inline-flex items-center justify-center rounded-button border border-brand-200/80 bg-brand-50/50 px-4 py-2 text-xs font-bold text-brand-800 transition duration-brand hover:border-brand-300 hover:bg-brand-100/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-600"
           >
