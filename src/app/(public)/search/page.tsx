@@ -3,6 +3,7 @@ import Link from 'next/link';
 import Breadcrumbs from '@/components/public/Breadcrumbs';
 import PageHero from '@/components/public/PageHero';
 import DoctorCard from '@/components/doctors/DoctorCard';
+import GlobalSearchInput from '@/components/shared/GlobalSearchInput';
 import Card from '@/components/ui/Card';
 import EmptyState from '@/components/ui/EmptyState';
 import { globalPublicSearch } from '@/features/cms/queries/search';
@@ -45,18 +46,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
             className="mb-8"
           />
 
-          <form method="get" className="card-surface mb-8 flex flex-col gap-3 p-4 sm:flex-row">
-            <input
-              name="q"
-              defaultValue={q}
-              placeholder="Search the hospital website"
-              className="flex-1 rounded-button border border-[#dde5e9] px-3 py-2.5 text-sm"
-              autoFocus
-            />
-            <button type="submit" className="btn-primary">
-              Search
-            </button>
-          </form>
+          <GlobalSearchInput />
 
           {!q && (
             <EmptyState
