@@ -6,12 +6,16 @@ A streamlined, concurrent-safe outpatient appointment management web application
 
 ## 🛠️ Technology Stack
 
-- **Framework:** Next.js 15 (App Router, React 19)
-- **Language:** TypeScript
-- **Styling:** Tailwind CSS + shadcn/ui primitives
-- **Database & ORM:** PostgreSQL + Prisma ORM
-- **Authentication:** NextAuth.js v5 (Auth.js) with Credentials Provider & bcryptjs
-- **Testing:** Vitest (Unit/Integration) & Playwright (E2E)
+- **Framework & Core:** Next.js 15 (App Router, Server Components & Actions), React 19, TypeScript 5, Node.js (>=20.0.0)
+- **Database & Data Layer:** PostgreSQL + Prisma ORM (v6) with Type-Safe Schema & Migrations
+- **Authentication & RBAC:** NextAuth.js v5 (Auth.js) with Dual-Mode Auth:
+  - **Phone + SMS OTP:** Patient authentication with auto-provisioning
+  - **Email & Password:** Patient, Doctor, and Administrator role-based access with `bcryptjs` hashing
+- **Telephony & SMS Gateway:** Twilio REST API Integration for real-time 6-digit OTP delivery
+- **UI Design & Styling:** Custom Vanilla Tailwind CSS v3, Outfit & Inter Google Typography, Glassmorphism Headers, Medicover-inspired Doctor Cards
+- **Form & Validation:** React Hook Form + Zod Schema Validation
+- **Testing & Verification:** Vitest (Unit/Integration Tests) & Playwright (E2E Browser Testing)
+- **Deployment:** Vercel Edge Cloud Platform with Automated Build Postinstall Scripts
 
 ---
 
