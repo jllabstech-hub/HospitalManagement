@@ -12,6 +12,7 @@ interface Props {
   doctorName: string;
   departmentName: string;
   todayDate: string;
+  isGuestMode?: boolean;
 }
 
 function addDays(isoDate: string, days: number) {
