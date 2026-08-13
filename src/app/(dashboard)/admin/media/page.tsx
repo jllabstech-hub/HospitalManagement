@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { requireAdmin } from '@/server/security/auth-helpers';
 import { prisma } from '@/server/db/client';
-import ImageUploadPicker from '@/components/shared/ImageUploadPicker';
+import MediaUploadWrapper from './MediaUploadWrapper';
 
 interface PageProps {
   searchParams: Promise<{
@@ -44,12 +44,7 @@ export default async function AdminMediaLibraryPage({ searchParams }: PageProps)
       {/* Upload Component Container */}
       <div className="card-surface p-5 sm:p-6">
         <h2 className="font-bold text-ink mb-2">Upload New Media Asset</h2>
-        <ImageUploadPicker
-          label="Select File"
-          description="Upload JPG, PNG, WebP, or SVG assets up to 5MB."
-          value=""
-          onChange={() => {}}
-        />
+        <MediaUploadWrapper />
       </div>
 
       {/* Search Filter Bar */}
