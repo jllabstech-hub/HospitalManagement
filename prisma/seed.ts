@@ -84,7 +84,7 @@ async function seedHospital(prefix: string, domain: string, defaultPasswordHash:
   // Admin
   await prisma.user.create({
     data: {
-      email: `admin@${domain}`,
+      email: prefix === 'Alpha' ? 'admin@hospital.com' : `admin@${domain}`,
       passwordHash: defaultPasswordHash,
       role: Role.ADMIN,
       isActive: true,
