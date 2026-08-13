@@ -110,9 +110,15 @@ async function seedHospital(prefix: string, domain: string, defaultPasswordHash:
   // Doctors (5)
   const doctors = [];
   for (let i = 1; i <= 5; i++) {
+    let email = `doctor${i}@${domain}`;
+    if (prefix === 'Alpha') {
+      if (i === 1) email = 'dr.smith@hospital.com';
+      if (i === 2) email = 'dr.johnson@hospital.com';
+    }
+
     const user = await prisma.user.create({
       data: {
-        email: `doctor${i}@${domain}`,
+        email,
         passwordHash: defaultPasswordHash,
         role: Role.DOCTOR,
         isActive: true,
@@ -153,9 +159,15 @@ async function seedHospital(prefix: string, domain: string, defaultPasswordHash:
   // Patients (10)
   const patients = [];
   for (let i = 1; i <= 10; i++) {
+    let email = `patient${i}@${domain}`;
+    if (prefix === 'Alpha') {
+      if (i === 1) email = 'patient.alice@example.com';
+      if (i === 2) email = 'patient.bob@example.com';
+    }
+
     const user = await prisma.user.create({
       data: {
-        email: `patient${i}@${domain}`,
+        email,
         passwordHash: defaultPasswordHash,
         role: Role.PATIENT,
         isActive: true,
