@@ -356,10 +356,19 @@ export default function LoginForm() {
           <div>
             <span className="font-medium text-brand-600">Patient Phone OTP:</span>{' '}
             <code className="rounded bg-surface-soft px-1 py-0.5 font-mono text-ink">
-              +91 91234 56789
+              +91 99999 11111
             </code>
           </div>
           <span className="font-mono text-emerald-700 font-bold">OTP: 123456</span>
+        </div>
+        <div className="flex items-center justify-between rounded-button border border-[#dde5e9] bg-white p-2">
+          <div>
+            <span className="font-medium text-brand-600">Patient Email:</span>{' '}
+            <code className="rounded bg-surface-soft px-1 py-0.5 font-mono text-ink">
+              patient.alice@example.com
+            </code>
+          </div>
+          <span className="font-mono text-ink-soft">test123</span>
         </div>
         <div className="flex items-center justify-between rounded-button border border-[#dde5e9] bg-white p-2">
           <div>
