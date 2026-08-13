@@ -201,6 +201,12 @@ async function seedHospital(prefix: string, domain: string, defaultPasswordHash:
 }
 
 async function main() {
+  const alreadySeeded = await prisma.user.findFirst({ where: { email: 'admin@hospital.com' } });
+  if (alreadySeeded) {
+    console.log('Database already seeded. Skipping to preserve data.');
+    return;
+  }
+
   console.log('Starting full UAT seed...');
   await cleanDatabase();
 
