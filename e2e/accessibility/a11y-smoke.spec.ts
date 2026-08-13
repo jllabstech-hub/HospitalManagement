@@ -4,6 +4,7 @@ import { loginPatientA, loginDoctorA, SEED } from '../fixtures/auth';
 test.describe('Accessibility smoke', () => {
   test('Login form has labels and focusable controls', async ({ page }) => {
     await page.goto('/login');
+    await page.click('button:has-text("Email & Password")');
     await expect(page.locator('label[for="email"], label:has-text("Email")').first()).toBeVisible();
     await expect(page.locator('label[for="password"], label:has-text("Password")').first()).toBeVisible();
     await page.locator('input[id="email"]').focus();
@@ -17,7 +18,7 @@ test.describe('Accessibility smoke', () => {
     await page.goto('/patient/doctors');
     await page.fill('input[id="searchInput"]', 'Jane Smith');
     await page.click('button[type="submit"]:has-text("Search")');
-    await page.click('a:has-text("View Profile & Book")');
+    await page.click('a:has-text("Book Appointment")');
     await page.waitForURL('**/patient/doctors/*');
     await page.waitForSelector('button:has-text("AM"), button:has-text("PM")', { timeout: 15000 });
     const slot = page.locator('button').filter({ hasText: /\d{1,2}:\d{2}\s*(AM|PM)/ }).first();
@@ -37,10 +38,10 @@ test.describe('Accessibility smoke', () => {
 
   test('Public contact form fields are labelled', async ({ page }) => {
     await page.goto('/contact');
-    await expect(page.getByRole('heading', { name: 'Send a message' })).toBeVisible();
-    const contactSection = page.getByRole('heading', { name: 'Send a message' }).locator('..');
-    await expect(contactSection.getByLabel('Full name')).toBeVisible();
-    await expect(contactSection.getByLabel('Email')).toBeVisible();
-    await expect(contactSection.getByLabel('Message')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Send Us a Message' })).toBeVisible();
+    const contactForm = page.locator('form').first();
+    await expect(contactForm.getByLabel('Full name')).toBeVisible();
+    await expect(contactForm.getByLabel('Email')).toBeVisible();
+    await expect(contactForm.getByLabel('Message')).toBeVisible();
   });
 });

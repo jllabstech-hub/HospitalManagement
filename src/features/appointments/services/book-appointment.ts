@@ -7,6 +7,7 @@ import {
   BookAppointmentResult,
   BookAppointmentSchema,
 } from '../schemas/booking-schema';
+import { notificationService } from '@/services/notifications/NotificationService';
 
 /**
  * Calculates end time for a 30-minute slot (e.g., '10:30' -> '11:00').
@@ -43,7 +44,12 @@ export async function bookAppointmentTransaction(
 
     const patient = await prisma.patientProfile.findUnique({
       where: { id: patientProfileId },
-      select: { id: true, user: { select: { isActive: true } } },
+      select: { 
+        id: true, 
+        fullName: true,
+        phoneNumber: true,
+        user: { select: { isActive: true, email: true } } 
+      },
     });
 
     if (!patient || !patient.user.isActive) {
@@ -178,6 +184,20 @@ export async function bookAppointmentTransaction(
           status: true,
         },
       });
+
+      // Fire notification in background (don't await to avoid slowing down request)
+      const dateTimeString = `${appointmentDate} at ${startTime}`;
+      // Note: tenantId is null here until fully migrated
+      notificationService.notifyAppointmentBooked(
+        null,
+        patientProfileId,
+        createdAppt.id,
+        patient.fullName,
+        doctor.fullName,
+        dateTimeString,
+        patient.user.email,
+        patient.phoneNumber
+      ).catch(err => console.error('Notification dispatch failed:', err));
 
       return {
         success: true,

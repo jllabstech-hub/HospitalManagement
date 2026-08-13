@@ -40,4 +40,10 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+import { withSentryConfig } from '@sentry/nextjs';
+
+export default withSentryConfig(nextConfig, {
+  silent: true,
+  org: process.env.SENTRY_ORG || 'hospital-system',
+  project: process.env.SENTRY_PROJECT || 'hospital-frontend',
+});

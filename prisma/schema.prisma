@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  previewFeatures = ["metrics"]
 }
 
 datasource db {
@@ -40,6 +41,28 @@ enum ContactMessageStatus {
   RESOLVED
 }
 
+enum NotificationType {
+  APPOINTMENT_BOOKED
+  APPOINTMENT_CONFIRMED
+  APPOINTMENT_CANCELLED
+  APPOINTMENT_RESCHEDULED
+  APPOINTMENT_REMINDER
+  DOCTOR_SCHEDULE_CHANGE
+}
+
+enum NotificationChannel {
+  EMAIL
+  SMS
+  WHATSAPP
+  PUSH
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
 enum HomepageSectionType {
   HERO
   ABOUT
@@ -65,88 +88,100 @@ enum MediaType {
 }
 
 model User {
-  id             String          @id @default(uuid()) @db.Uuid
-  email          String          @unique
-  passwordHash   String
-  role           Role
-  isActive       Boolean         @default(true)
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique
+  passwordHash String
+  role         Role
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   patientProfile PatientProfile?
   doctorProfile  DoctorProfile?
+  notifications  Notification[]
+
+  tenantId String          @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant   HospitalProfile @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
 model PatientProfile {
-  id               String        @id @default(uuid()) @db.Uuid
-  userId           String        @unique @db.Uuid
-  user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id               String   @id @default(uuid()) @db.Uuid
+  userId           String   @unique @db.Uuid
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   fullName         String
   phoneNumber      String
-  dateOfBirth      DateTime      @db.Date
+  dateOfBirth      DateTime @db.Date
   gender           String
   emergencyContact String?
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
+  abhaNumber       String?  @unique // ABDM Integration
+  abhaAddress      String?  @unique // ABDM Integration
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
-  appointments     Appointment[]
+  appointments Appointment[]
+  tenantId     String          @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant       HospitalProfile @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
 
 model Department {
-  id               String          @id @default(uuid()) @db.Uuid
-  name             String          @unique
-  slug             String          @unique
+  id               String        @id @default(uuid()) @db.Uuid
+  name             String
+  slug             String
   description      String?
   shortDescription String?
   fullDescription  String?
   imageUrl         String?
   icon             String?
-  displayOrder     Int             @default(0)
-  isFeatured       Boolean         @default(false)
+  displayOrder     Int           @default(0)
+  isFeatured       Boolean       @default(false)
   seoTitle         String?
   seoDescription   String?
-  contentStatus    ContentStatus   @default(PUBLISHED)
-  isActive         Boolean         @default(true)
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
+  contentStatus    ContentStatus @default(PUBLISHED)
+  isActive         Boolean       @default(true)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 
-  doctors          DoctorProfile[]
-  specialities     Speciality[]
+  doctors              DoctorProfile[]
+  specialities         Speciality[]
   appointmentEnquiries AppointmentEnquiry[]
+  tenantId             String               @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant               HospitalProfile      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
+  @@unique([tenantId, name])
+  @@unique([tenantId, slug])
   @@index([isActive, contentStatus, displayOrder])
 }
 
 model DoctorProfile {
-  id                   String               @id @default(uuid()) @db.Uuid
-  userId               String               @unique @db.Uuid
-  user                 User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  departmentId         String               @db.Uuid
-  department           Department           @relation(fields: [departmentId], references: [id])
-  fullName             String
-  slug                 String               @unique
-  phoneNumber          String
-  qualification        String
-  experienceYears      Int                  @default(0)
-  bio                  String?
-  profileImageUrl      String?
-  publicDisplayName    String?
-  designation          String?
-  languages            String?
-  publicBio            String?
-  education            String?
-  certifications       String?
-  memberships          String?
-  areasOfInterest      String?
-  displayOrder         Int                  @default(0)
-  isFeatured           Boolean              @default(false)
-  seoTitle             String?
-  seoDescription       String?
-  contentStatus        ContentStatus        @default(PUBLISHED)
-  createdAt            DateTime             @default(now())
-  updatedAt            DateTime             @updatedAt
+  id                String        @id @default(uuid()) @db.Uuid
+  userId            String        @unique @db.Uuid
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  departmentId      String        @db.Uuid
+  department        Department    @relation(fields: [departmentId], references: [id])
+  fullName          String
+  slug              String        @unique
+  phoneNumber       String
+  qualification     String
+  experienceYears   Int           @default(0)
+  bio               String?
+  profileImageUrl   String?
+  publicDisplayName String?
+  designation       String?
+  languages         String?
+  publicBio         String?
+  education         String?
+  certifications    String?
+  memberships       String?
+  areasOfInterest   String?
+  displayOrder      Int           @default(0)
+  isFeatured        Boolean       @default(false)
+  seoTitle          String?
+  seoDescription    String?
+  contentStatus     ContentStatus @default(PUBLISHED)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
 
   weeklyAvailabilities WeeklyAvailability[]
   blockedDates         BlockedDate[]
@@ -155,6 +190,8 @@ model DoctorProfile {
   centres              DoctorCentre[]
   successStories       SuccessStory[]
   appointmentEnquiries AppointmentEnquiry[]
+  tenantId             String               @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant               HospitalProfile      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([departmentId])
@@ -162,30 +199,34 @@ model DoctorProfile {
 }
 
 model WeeklyAvailability {
-  id                  String        @id @default(uuid()) @db.Uuid
-  doctorId            String        @db.Uuid
-  doctor              DoctorProfile @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  id                  String          @id @default(uuid()) @db.Uuid
+  doctorId            String          @db.Uuid
+  doctor              DoctorProfile   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
   dayOfWeek           Int
   startTime           String
   endTime             String
-  slotDurationMinutes Int           @default(30)
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
+  slotDurationMinutes Int             @default(30)
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  tenantId            String          @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant              HospitalProfile @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([doctorId, dayOfWeek])
 }
 
 model BlockedDate {
-  id        String        @id @default(uuid()) @db.Uuid
-  doctorId  String        @db.Uuid
-  doctor    DoctorProfile @relation(fields: [doctorId], references: [id], onDelete: Cascade)
-  startDate DateTime      @db.Date
-  endDate   DateTime      @db.Date
+  id        String          @id @default(uuid()) @db.Uuid
+  doctorId  String          @db.Uuid
+  doctor    DoctorProfile   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  startDate DateTime        @db.Date
+  endDate   DateTime        @db.Date
   startTime String?
   endTime   String?
   reason    String?
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  tenantId  String          @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant    HospitalProfile @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([doctorId, startDate, endDate])
 }
@@ -206,6 +247,10 @@ model Appointment {
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @updatedAt
 
+  notifications Notification[]
+  tenantId      String          @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant        HospitalProfile @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   @@index([patientId, appointmentDate])
   @@index([doctorId, appointmentDate])
   @@index([doctorId, appointmentDate, status])
@@ -214,40 +259,87 @@ model Appointment {
 // ─── Public hospital CMS ───────────────────────────────────────────────
 
 model HospitalProfile {
-  id               String   @id @default(uuid()) @db.Uuid
-  hospitalName     String
-  legalName        String?
-  shortDescription String?
-  fullDescription  String?
-  tagline          String?
-  phone            String?
-  emergencyPhone   String?
-  email            String?
-  addressLine1     String?
-  addressLine2     String?
-  city             String?
-  state            String?
-  postalCode       String?
-  country          String?  @default("India")
-  latitude         Float?
-  longitude        Float?
-  timezone         String?  @default("Asia/Kolkata")
-  websiteUrl       String?
-  logoUrl          String?
-  heroImageUrl     String?
-  mission          String?
-  vision           String?
-  values           String?
-  workingHours     String?
-  isActive         Boolean  @default(true)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id                            String                        @id @default(uuid()) @db.Uuid
+  hospitalName                  String
+  legalName                     String?
+  shortDescription              String?
+  fullDescription               String?
+  tagline                       String?
+  phone                         String?
+  emergencyPhone                String?
+  email                         String?
+  addressLine1                  String?
+  addressLine2                  String?
+  city                          String?
+  state                         String?
+  postalCode                    String?
+  country                       String?                       @default("India")
+  latitude                      Float?
+  longitude                     Float?
+  timezone                      String?                       @default("Asia/Kolkata")
+  websiteUrl                    String?
+  hfrId                         String?                       @unique // ABDM Integration
+  logoUrl                       String?
+  heroImageUrl                  String?
+
+  // Domain Mapping
+  customDomain                  String?                       @unique // e.g. "hospital-a.com"
+  subdomain                     String?                       @unique // e.g. "tenant-a.platform.com"
+
+  // Branding Colors
+  primaryColor                  String?                       @default("#0ea5e9") // Brand Blue
+  secondaryColor                String?                       @default("#f43f5e") // Rose/Red
+
+  // Fonts
+  fontFamily                    String?                       @default("Inter, sans-serif")
+
+  // Social Links
+  facebookUrl                   String?
+  twitterUrl                    String?
+  instagramUrl                  String?
+  linkedinUrl                   String?
+
+  mission                       String?
+  vision                        String?
+  values                        String?
+  workingHours                  String?
+  isActive                      Boolean                       @default(true)
+  createdAt                     DateTime                      @default(now())
+  updatedAt                     DateTime                      @updatedAt
+  users                         User[]
+  patientProfiles               PatientProfile[]
+  departments                   Department[]
+  doctorProfiles                DoctorProfile[]
+  hospitalLocations             HospitalLocation[]
+  leadershipMembers             LeadershipMember[]
+  facilities                    Facility[]
+  centreOfExcellences           CentreOfExcellence[]
+  hospitalServices              HospitalService[]
+  healthPackages                HealthPackage[]
+  healthArticles                HealthArticle[]
+  newsArticles                  NewsArticle[]
+  faqItems                      FaqItem[]
+  patientResources              PatientResource[]
+  insurancePartners             InsurancePartner[]
+  internationalPageContents     InternationalPageContent[]
+  homepageSections              HomepageSection[]
+  mediaAssets                   MediaAsset[]
+  contactMessages               ContactMessage[]
+  internationalPatientEnquiries InternationalPatientEnquiry[]
+  packageInformationRequests    PackageInformationRequest[]
+  weeklyAvailabilities          WeeklyAvailability[]
+  blockedDates                  BlockedDate[]
+  appointments                  Appointment[]
+  specialities                  Speciality[]
+  successStories                SuccessStory[]
+  testimonials                  Testimonial[]
+  appointmentEnquiries          AppointmentEnquiry[]
 }
 
 model HospitalLocation {
-  id             String        @id @default(uuid()) @db.Uuid
+  id             String          @id @default(uuid()) @db.Uuid
   name           String
-  slug           String        @unique
+  slug           String          @unique
   address        String
   city           String
   state          String
@@ -261,72 +353,80 @@ model HospitalLocation {
   directionsUrl  String?
   seoTitle       String?
   seoDescription String?
-  contentStatus  ContentStatus @default(PUBLISHED)
-  isPrimary      Boolean       @default(false)
-  isActive       Boolean       @default(true)
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  contentStatus  ContentStatus   @default(PUBLISHED)
+  isPrimary      Boolean         @default(false)
+  isActive       Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  tenantId       String          @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant         HospitalProfile @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([isActive, contentStatus])
 }
 
 model LeadershipMember {
-  id            String        @id @default(uuid()) @db.Uuid
+  id            String          @id @default(uuid()) @db.Uuid
   name          String
-  slug          String        @unique
+  slug          String          @unique
   designation   String
   shortBio      String?
   fullBio       String?
   imageUrl      String?
-  displayOrder  Int           @default(0)
-  contentStatus ContentStatus @default(PUBLISHED)
-  isActive      Boolean       @default(true)
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  displayOrder  Int             @default(0)
+  contentStatus ContentStatus   @default(PUBLISHED)
+  isActive      Boolean         @default(true)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  tenantId      String          @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant        HospitalProfile @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([isActive, contentStatus, displayOrder])
 }
 
 model Facility {
-  id            String        @id @default(uuid()) @db.Uuid
+  id            String          @id @default(uuid()) @db.Uuid
   name          String
-  slug          String        @unique
+  slug          String          @unique
   description   String?
   imageUrl      String?
   category      String?
-  displayOrder  Int           @default(0)
-  contentStatus ContentStatus @default(PUBLISHED)
-  isActive      Boolean       @default(true)
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  displayOrder  Int             @default(0)
+  contentStatus ContentStatus   @default(PUBLISHED)
+  isActive      Boolean         @default(true)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  tenantId      String          @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant        HospitalProfile @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([isActive, contentStatus, displayOrder])
 }
 
 model Speciality {
-  id               String          @id @default(uuid()) @db.Uuid
-  name             String          @unique
-  slug             String          @unique
+  id               String        @id @default(uuid()) @db.Uuid
+  name             String        @unique
+  slug             String        @unique
   shortDescription String?
   fullDescription  String?
   imageUrl         String?
   icon             String?
-  departmentId     String?         @db.Uuid
-  department       Department?     @relation(fields: [departmentId], references: [id])
-  displayOrder     Int             @default(0)
-  isFeatured       Boolean         @default(false)
+  departmentId     String?       @db.Uuid
+  department       Department?   @relation(fields: [departmentId], references: [id])
+  displayOrder     Int           @default(0)
+  isFeatured       Boolean       @default(false)
   seoTitle         String?
   seoDescription   String?
-  contentStatus    ContentStatus   @default(PUBLISHED)
-  isActive         Boolean         @default(true)
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
+  contentStatus    ContentStatus @default(PUBLISHED)
+  isActive         Boolean       @default(true)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 
-  doctors          DoctorSpeciality[]
-  centres          CentreSpeciality[]
-  articles         HealthArticle[]
-  successStories   SuccessStory[]
-  testimonials     Testimonial[]
+  doctors        DoctorSpeciality[]
+  centres        CentreSpeciality[]
+  articles       HealthArticle[]
+  successStories SuccessStory[]
+  testimonials   Testimonial[]
+  tenantId       String             @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant         HospitalProfile    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([isActive, contentStatus, displayOrder])
   @@index([departmentId])
@@ -350,9 +450,11 @@ model CentreOfExcellence {
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
 
-  specialities     CentreSpeciality[]
-  doctors          DoctorCentre[]
-  services         CentreService[]
+  specialities CentreSpeciality[]
+  doctors      DoctorCentre[]
+  services     CentreService[]
+  tenantId     String             @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant       HospitalProfile    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([isActive, contentStatus, displayOrder])
 }
@@ -385,22 +487,24 @@ model CentreSpeciality {
 }
 
 model HospitalService {
-  id               String          @id @default(uuid()) @db.Uuid
-  name             String          @unique
-  slug             String          @unique
+  id               String        @id @default(uuid()) @db.Uuid
+  name             String        @unique
+  slug             String        @unique
   shortDescription String?
   fullDescription  String?
   imageUrl         String?
   icon             String?
-  displayOrder     Int             @default(0)
+  displayOrder     Int           @default(0)
   seoTitle         String?
   seoDescription   String?
-  contentStatus    ContentStatus   @default(PUBLISHED)
-  isActive         Boolean         @default(true)
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
+  contentStatus    ContentStatus @default(PUBLISHED)
+  isActive         Boolean       @default(true)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 
-  centres          CentreService[]
+  centres  CentreService[]
+  tenantId String          @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant   HospitalProfile @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([isActive, contentStatus, displayOrder])
 }
@@ -415,56 +519,60 @@ model CentreService {
 }
 
 model HealthPackage {
-  id                      String        @id @default(uuid()) @db.Uuid
+  id                      String          @id @default(uuid()) @db.Uuid
   name                    String
-  slug                    String        @unique
+  slug                    String          @unique
   description             String?
   detailedDescription     String?
   imageUrl                String?
-  price                   Decimal?      @db.Decimal(10, 2)
-  currency                String?       @default("INR")
+  price                   Decimal?        @db.Decimal(10, 2)
+  currency                String?         @default("INR")
   duration                String?
   eligibility             String?
   includedItems           String?
   preparationInstructions String?
-  isDemoPricing           Boolean       @default(true)
-  displayOrder            Int           @default(0)
+  isDemoPricing           Boolean         @default(true)
+  displayOrder            Int             @default(0)
   seoTitle                String?
   seoDescription          String?
-  contentStatus           ContentStatus @default(PUBLISHED)
-  isActive                Boolean       @default(true)
-  createdAt               DateTime      @default(now())
-  updatedAt               DateTime      @updatedAt
+  contentStatus           ContentStatus   @default(PUBLISHED)
+  isActive                Boolean         @default(true)
+  createdAt               DateTime        @default(now())
+  updatedAt               DateTime        @updatedAt
+  tenantId                String          @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant                  HospitalProfile @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([isActive, contentStatus, displayOrder])
 }
 
 model HealthArticle {
-  id             String        @id @default(uuid()) @db.Uuid
+  id             String          @id @default(uuid()) @db.Uuid
   title          String
-  slug           String        @unique
+  slug           String          @unique
   excerpt        String?
   content        String
   coverImageUrl  String?
   author         String?
-  specialityId   String?       @db.Uuid
-  speciality     Speciality?   @relation(fields: [specialityId], references: [id])
+  specialityId   String?         @db.Uuid
+  speciality     Speciality?     @relation(fields: [specialityId], references: [id])
   tags           String?
   publishedAt    DateTime?
   seoTitle       String?
   seoDescription String?
-  contentStatus  ContentStatus @default(DRAFT)
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  contentStatus  ContentStatus   @default(DRAFT)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  tenantId       String          @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant         HospitalProfile @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([contentStatus, publishedAt])
   @@index([specialityId])
 }
 
 model NewsArticle {
-  id             String        @id @default(uuid()) @db.Uuid
+  id             String          @id @default(uuid()) @db.Uuid
   title          String
-  slug           String        @unique
+  slug           String          @unique
   excerpt        String?
   content        String
   coverImageUrl  String?
@@ -473,112 +581,127 @@ model NewsArticle {
   publishedAt    DateTime?
   seoTitle       String?
   seoDescription String?
-  contentStatus  ContentStatus @default(DRAFT)
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  contentStatus  ContentStatus   @default(DRAFT)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  tenantId       String          @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant         HospitalProfile @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([contentStatus, publishedAt])
 }
 
 model SuccessStory {
-  id                 String         @id @default(uuid()) @db.Uuid
+  id                 String          @id @default(uuid()) @db.Uuid
   title              String
-  slug               String         @unique
+  slug               String          @unique
   summary            String?
   content            String
   patientDisplayName String
   ageGroup           String?
-  specialityId       String?        @db.Uuid
-  speciality         Speciality?    @relation(fields: [specialityId], references: [id])
-  doctorId           String?        @db.Uuid
-  doctor             DoctorProfile? @relation(fields: [doctorId], references: [id])
+  specialityId       String?         @db.Uuid
+  speciality         Speciality?     @relation(fields: [specialityId], references: [id])
+  doctorId           String?         @db.Uuid
+  doctor             DoctorProfile?  @relation(fields: [doctorId], references: [id])
   imageUrl           String?
   videoUrl           String?
-  isAnonymizedDemo   Boolean        @default(true)
+  isAnonymizedDemo   Boolean         @default(true)
   publishedAt        DateTime?
   seoTitle           String?
   seoDescription     String?
-  contentStatus      ContentStatus  @default(DRAFT)
-  createdAt          DateTime       @default(now())
-  updatedAt          DateTime       @updatedAt
+  contentStatus      ContentStatus   @default(DRAFT)
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  tenantId           String          @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant             HospitalProfile @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([contentStatus, publishedAt])
 }
 
 model Testimonial {
-  id            String        @id @default(uuid()) @db.Uuid
+  id            String          @id @default(uuid()) @db.Uuid
   displayName   String
   text          String
-  rating        Int           @default(5)
-  specialityId  String?       @db.Uuid
-  speciality    Speciality?   @relation(fields: [specialityId], references: [id])
+  rating        Int             @default(5)
+  specialityId  String?         @db.Uuid
+  speciality    Speciality?     @relation(fields: [specialityId], references: [id])
   imageUrl      String?
   publishedAt   DateTime?
-  isDemoContent Boolean       @default(true)
-  displayOrder  Int           @default(0)
-  contentStatus ContentStatus @default(DRAFT)
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  isDemoContent Boolean         @default(true)
+  displayOrder  Int             @default(0)
+  contentStatus ContentStatus   @default(DRAFT)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  tenantId      String          @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant        HospitalProfile @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([contentStatus, displayOrder])
 }
 
 model FaqItem {
-  id            String        @id @default(uuid()) @db.Uuid
+  id            String          @id @default(uuid()) @db.Uuid
   question      String
   answer        String
   category      String?
-  displayOrder  Int           @default(0)
-  contentStatus ContentStatus @default(PUBLISHED)
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  displayOrder  Int             @default(0)
+  contentStatus ContentStatus   @default(PUBLISHED)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  tenantId      String          @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant        HospitalProfile @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([contentStatus, displayOrder])
 }
 
 model PatientResource {
-  id            String        @id @default(uuid()) @db.Uuid
+  id            String          @id @default(uuid()) @db.Uuid
   title         String
-  slug          String        @unique
+  slug          String          @unique
   description   String?
   fileUrl       String?
   category      String?
-  displayOrder  Int           @default(0)
-  contentStatus ContentStatus @default(PUBLISHED)
-  isActive      Boolean       @default(true)
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  displayOrder  Int             @default(0)
+  contentStatus ContentStatus   @default(PUBLISHED)
+  isActive      Boolean         @default(true)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  tenantId      String          @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant        HospitalProfile @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([isActive, contentStatus, displayOrder])
 }
 
 model InsurancePartner {
-  id            String        @id @default(uuid()) @db.Uuid
+  id            String          @id @default(uuid()) @db.Uuid
   name          String
-  slug          String        @unique
+  slug          String          @unique
   logoUrl       String?
   description   String?
-  displayOrder  Int           @default(0)
-  contentStatus ContentStatus @default(PUBLISHED)
-  isActive      Boolean       @default(true)
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  displayOrder  Int             @default(0)
+  contentStatus ContentStatus   @default(PUBLISHED)
+  isActive      Boolean         @default(true)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  tenantId      String          @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant        HospitalProfile @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([isActive, contentStatus, displayOrder])
 }
 
 model InternationalPageContent {
-  id                   String   @id @default(uuid()) @db.Uuid
-  title                String
-  introduction         String?
-  howToRequest         String?
-  secondOpinion        String?
-  requiredDocuments    String?
-  travelInformation    String?
-  accommodationInfo    String?
-  coordinatorContact   String?
-  updatedAt            DateTime @updatedAt
-  createdAt            DateTime @default(now())
+  id                 String   @id @default(uuid()) @db.Uuid
+  title              String
+  introduction       String?
+  howToRequest       String?
+  secondOpinion      String?
+  requiredDocuments  String?
+  travelInformation  String?
+  accommodationInfo  String?
+  coordinatorContact String?
+  updatedAt          DateTime @updatedAt
+  createdAt          DateTime @default(now())
+
+  tenantId String          @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant   HospitalProfile @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
 model HomepageSection {
@@ -592,6 +715,8 @@ model HomepageSection {
   isEnabled    Boolean             @default(true)
   createdAt    DateTime            @default(now())
   updatedAt    DateTime            @updatedAt
+  tenantId     String              @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant       HospitalProfile     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([isEnabled, displayOrder])
 }
@@ -604,24 +729,31 @@ model MediaAsset {
   type      MediaType @default(IMAGE)
   width     Int?
   height    Int?
+  fileSize  Int?      // Size in bytes
+  mimeType  String?   // e.g., 'image/jpeg', 'application/pdf'
   createdAt DateTime  @default(now())
+
+  tenantId String          @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant   HospitalProfile @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
 model AppointmentEnquiry {
-  id                String         @id @default(uuid()) @db.Uuid
+  id                String          @id @default(uuid()) @db.Uuid
   name              String
   email             String
   phone             String
-  departmentId      String?        @db.Uuid
-  department        Department?    @relation(fields: [departmentId], references: [id])
-  preferredDoctorId String?        @db.Uuid
-  preferredDoctor   DoctorProfile? @relation(fields: [preferredDoctorId], references: [id])
-  preferredDate     DateTime?      @db.Date
+  departmentId      String?         @db.Uuid
+  department        Department?     @relation(fields: [departmentId], references: [id])
+  preferredDoctorId String?         @db.Uuid
+  preferredDoctor   DoctorProfile?  @relation(fields: [preferredDoctorId], references: [id])
+  preferredDate     DateTime?       @db.Date
   message           String?
-  status            EnquiryStatus  @default(NEW)
+  status            EnquiryStatus   @default(NEW)
   internalNotes     String?
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  tenantId          String          @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant            HospitalProfile @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([status, createdAt])
 }
@@ -636,12 +768,14 @@ model ContactMessage {
   status    ContactMessageStatus @default(NEW)
   createdAt DateTime             @default(now())
   updatedAt DateTime             @updatedAt
+  tenantId  String               @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant    HospitalProfile      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([status, createdAt])
 }
 
 model InternationalPatientEnquiry {
-  id                  String        @id @default(uuid()) @db.Uuid
+  id                  String          @id @default(uuid()) @db.Uuid
   name                String
   email               String
   phone               String?
@@ -649,25 +783,50 @@ model InternationalPatientEnquiry {
   treatmentInterest   String?
   preferredDepartment String?
   message             String?
-  status              EnquiryStatus @default(NEW)
+  status              EnquiryStatus   @default(NEW)
   internalNotes       String?
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  tenantId            String          @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant              HospitalProfile @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([status, createdAt])
 }
 
 model PackageInformationRequest {
-  id               String        @id @default(uuid()) @db.Uuid
-  name             String
-  email            String
-  phone            String?
-  packageSlug      String?
-  packageName      String?
-  message          String?
-  status           EnquiryStatus @default(NEW)
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
+  id          String          @id @default(uuid()) @db.Uuid
+  name        String
+  email       String
+  phone       String?
+  packageSlug String?
+  packageName String?
+  message     String?
+  status      EnquiryStatus   @default(NEW)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  tenantId    String          @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant      HospitalProfile @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([status, createdAt])
+}
+
+model Notification {
+  id              String              @id @default(uuid()) @db.Uuid
+  tenantId        String?             @db.Uuid
+  recipientUserId String              @db.Uuid
+  user            User                @relation(fields: [recipientUserId], references: [id], onDelete: Cascade)
+  appointmentId   String?             @db.Uuid
+  appointment     Appointment?        @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  type            NotificationType
+  channel         NotificationChannel
+  status          NotificationStatus  @default(PENDING)
+  payload         Json?
+  scheduledAt     DateTime?
+  sentAt          DateTime?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  @@index([tenantId])
+  @@index([recipientUserId])
+  @@index([status, scheduledAt])
 }

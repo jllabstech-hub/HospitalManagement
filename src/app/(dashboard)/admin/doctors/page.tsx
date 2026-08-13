@@ -53,6 +53,7 @@ export default async function AdminDoctorsPage({ searchParams }: PageProps) {
         qualification: true,
         experienceYears: true,
         bio: true,
+        profileImageUrl: true,
         department: {
           select: { id: true, name: true, isActive: true },
         },

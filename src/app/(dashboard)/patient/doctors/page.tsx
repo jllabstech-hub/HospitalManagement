@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { requirePatient } from '@/server/security/auth-helpers';
 import { getPublicDepartments, searchDoctors } from '@/features/doctors/queries';
-import InteractiveSearchInput from '@/components/shared/InteractiveSearchInput';
+import PatientDoctorSearchFilters from '@/components/shared/PatientDoctorSearchFilters';
 import DoctorCard from '@/components/doctors/DoctorCard';
 import EmptyState from '@/components/ui/EmptyState';
 import { APP_CONFIG } from '@/config';
@@ -38,7 +38,7 @@ export default async function FindDoctorPage({ searchParams }: PageProps) {
     }),
   ]);
 
-  const { doctors, totalCount, currentPage, totalPages } = doctorSearchResult;
+  const { doctors, currentPage, totalPages } = doctorSearchResult;
 
   return (
     <div className="space-y-8">
@@ -53,60 +53,11 @@ export default async function FindDoctorPage({ searchParams }: PageProps) {
         </p>
       </div>
 
-      <form
-        method="GET"
-        action="/patient/doctors"
-        className="card-surface space-y-4 p-5 sm:p-6"
-      >
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
-          <div className="md:col-span-6">
-            <label className="mb-1 block text-xs font-semibold text-ink">
-              Interactive Search (Doctor / Specialization / Keyword)
-            </label>
-            <InteractiveSearchInput
-              placeholder="Type doctor name, specialty, qualification..."
-              defaultValue={search}
-            />
-          </div>
-
-          <div className="md:col-span-4">
-            <label htmlFor="deptFilter" className="mb-1 block text-xs font-semibold text-ink">
-              Medical Department
-            </label>
-            <select
-              id="deptFilter"
-              name="department"
-              defaultValue={departmentId}
-              className="input-field"
-            >
-              <option value="">All Departments</option>
-              {departments.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex items-end md:col-span-2">
-            <button type="submit" className="btn-primary w-full">
-              Search
-            </button>
-          </div>
-        </div>
-
-        {(search || departmentId) && (
-          <div className="flex items-center justify-between pt-1 text-xs">
-            <span className="text-ink-muted">
-              Found <strong className="text-ink">{totalCount}</strong> matching{' '}
-              {totalCount === 1 ? 'doctor' : 'doctors'}
-            </span>
-            <Link href="/patient/doctors" className="font-semibold text-brand-700 hover:underline">
-              Reset Filters
-            </Link>
-          </div>
-        )}
-      </form>
+      <PatientDoctorSearchFilters
+        departments={departments}
+        currentSearch={search}
+        currentDepartment={departmentId}
+      />
 
       {doctors.length === 0 ? (
         <EmptyState

@@ -4,6 +4,7 @@ test.describe('Admin Appointments Overview & Filtering E2E Suite', () => {
   test('TEST 1: Admin Login, View Appointments Master List & Filter by Status', async ({ page }) => {
     // 1. Admin Login
     await page.goto('/login');
+    await page.click('button:has-text("Email & Password")');
     await page.fill('input[id="email"]', 'admin@hospital.com');
     await page.fill('input[id="password"]', 'test123');
     await page.click('button[type="submit"]');

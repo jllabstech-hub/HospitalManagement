@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { upsertHospitalProfileAction } from '@/features/cms/actions/admin-cms';
+import ImageUploadPicker from '@/components/shared/ImageUploadPicker';
 
 export interface HospitalProfileFormData {
   id?: string;
@@ -25,6 +26,17 @@ export interface HospitalProfileFormData {
   mission: string;
   vision: string;
   values: string;
+  heroImageUrl?: string;
+  logoUrl?: string;
+  customDomain?: string;
+  subdomain?: string;
+  primaryColor?: string;
+  secondaryColor?: string;
+  fontFamily?: string;
+  facebookUrl?: string;
+  twitterUrl?: string;
+  instagramUrl?: string;
+  linkedinUrl?: string;
 }
 
 interface Props {
@@ -54,6 +66,17 @@ export default function HospitalProfileForm({ profile }: Props) {
     mission: profile?.mission ?? '',
     vision: profile?.vision ?? '',
     values: profile?.values ?? '',
+    heroImageUrl: profile?.heroImageUrl ?? '',
+    logoUrl: profile?.logoUrl ?? '',
+    customDomain: profile?.customDomain ?? '',
+    subdomain: profile?.subdomain ?? '',
+    primaryColor: profile?.primaryColor ?? '#0ea5e9',
+    secondaryColor: profile?.secondaryColor ?? '#f43f5e',
+    fontFamily: profile?.fontFamily ?? 'var(--font-inter)',
+    facebookUrl: profile?.facebookUrl ?? '',
+    twitterUrl: profile?.twitterUrl ?? '',
+    instagramUrl: profile?.instagramUrl ?? '',
+    linkedinUrl: profile?.linkedinUrl ?? '',
   });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -241,6 +264,132 @@ export default function HospitalProfileForm({ profile }: Props) {
             onChange={(e) => updateField('values', e.target.value)}
           />
         </label>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 pt-6 border-t border-[#dde5e9]">
+        <div className="md:col-span-2">
+          <h3 className="font-semibold text-ink">Domain & White-Label Hosting</h3>
+          <p className="text-xs text-ink-muted">Configure the custom domain and tenant subdomain.</p>
+        </div>
+        <label className="block text-sm">
+          <span className="font-medium text-ink">Custom Domain</span>
+          <input
+            className="input-field mt-1"
+            placeholder="e.g. hospital-a.com"
+            value={form.customDomain}
+            onChange={(e) => updateField('customDomain', e.target.value)}
+          />
+        </label>
+        <label className="block text-sm">
+          <span className="font-medium text-ink">Tenant Subdomain</span>
+          <input
+            className="input-field mt-1"
+            placeholder="e.g. tenant-a.platform.com"
+            value={form.subdomain}
+            onChange={(e) => updateField('subdomain', e.target.value)}
+          />
+        </label>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-3 pt-6 border-t border-[#dde5e9]">
+        <div className="md:col-span-3">
+          <h3 className="font-semibold text-ink">Branding & Colors</h3>
+          <p className="text-xs text-ink-muted">Set the primary and secondary colors for your hospital.</p>
+        </div>
+        <label className="block text-sm">
+          <span className="font-medium text-ink">Primary Color</span>
+          <div className="mt-1 flex items-center gap-2">
+            <input
+              type="color"
+              className="h-10 w-12 rounded border border-gray-300 p-1"
+              value={form.primaryColor}
+              onChange={(e) => updateField('primaryColor', e.target.value)}
+            />
+            <input
+              className="input-field flex-1 uppercase"
+              value={form.primaryColor}
+              onChange={(e) => updateField('primaryColor', e.target.value)}
+            />
+          </div>
+        </label>
+        <label className="block text-sm">
+          <span className="font-medium text-ink">Secondary Color</span>
+          <div className="mt-1 flex items-center gap-2">
+            <input
+              type="color"
+              className="h-10 w-12 rounded border border-gray-300 p-1"
+              value={form.secondaryColor}
+              onChange={(e) => updateField('secondaryColor', e.target.value)}
+            />
+            <input
+              className="input-field flex-1 uppercase"
+              value={form.secondaryColor}
+              onChange={(e) => updateField('secondaryColor', e.target.value)}
+            />
+          </div>
+        </label>
+        <label className="block text-sm">
+          <span className="font-medium text-ink">Font Family</span>
+          <input
+            className="input-field mt-1"
+            placeholder="e.g. var(--font-inter)"
+            value={form.fontFamily}
+            onChange={(e) => updateField('fontFamily', e.target.value)}
+          />
+        </label>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 pt-6 border-t border-[#dde5e9]">
+        <div className="md:col-span-2">
+          <h3 className="font-semibold text-ink">Social Links</h3>
+        </div>
+        <label className="block text-sm">
+          <span className="font-medium text-ink">Facebook URL</span>
+          <input
+            className="input-field mt-1"
+            value={form.facebookUrl}
+            onChange={(e) => updateField('facebookUrl', e.target.value)}
+          />
+        </label>
+        <label className="block text-sm">
+          <span className="font-medium text-ink">Twitter URL</span>
+          <input
+            className="input-field mt-1"
+            value={form.twitterUrl}
+            onChange={(e) => updateField('twitterUrl', e.target.value)}
+          />
+        </label>
+        <label className="block text-sm">
+          <span className="font-medium text-ink">Instagram URL</span>
+          <input
+            className="input-field mt-1"
+            value={form.instagramUrl}
+            onChange={(e) => updateField('instagramUrl', e.target.value)}
+          />
+        </label>
+        <label className="block text-sm">
+          <span className="font-medium text-ink">LinkedIn URL</span>
+          <input
+            className="input-field mt-1"
+            value={form.linkedinUrl}
+            onChange={(e) => updateField('linkedinUrl', e.target.value)}
+          />
+        </label>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2 pt-6 border-t border-[#dde5e9]">
+        <ImageUploadPicker
+          label="Homepage Hero Image"
+          description="Upload or select the main image for the public homepage hero banner."
+          value={form.heroImageUrl}
+          onChange={(url) => updateField('heroImageUrl', url)}
+        />
+        <ImageUploadPicker
+          label="Hospital Logo"
+          description="Upload or select the primary hospital logo asset."
+          value={form.logoUrl}
+          onChange={(url) => updateField('logoUrl', url)}
+        />
       </div>
 
       <button type="submit" className="btn-primary" disabled={saving}>

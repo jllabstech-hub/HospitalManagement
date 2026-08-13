@@ -142,4 +142,73 @@ describe('Department Management Server Actions & Security', () => {
     const dbReact = await prisma.department.findUnique({ where: { id: deptId } });
     expect(dbReact?.isActive).toBe(true);
   });
+  it('8: Should isolate departments by tenant (Hospital A and Hospital B can both have Cardiology)', async () => {
+    // 1. Create two distinct tenants (hospitals)
+    const tenantA = await prisma.hospitalProfile.create({
+      data: {
+        hospitalName: 'Hospital A',
+        legalName: 'Hospital A LLC',
+        phone: '123',
+        email: 'a@a.com',
+        addressLine1: '1',
+        city: 'A',
+        state: 'A',
+        country: 'A',
+      }
+    });
+
+    const tenantB = await prisma.hospitalProfile.create({
+      data: {
+        hospitalName: 'Hospital B',
+        legalName: 'Hospital B LLC',
+        phone: '123',
+        email: 'b@b.com',
+        addressLine1: '1',
+        city: 'B',
+        state: 'B',
+        country: 'B',
+      }
+    });
+
+    // 2. Admin A creates Cardiology
+    mockAuth.mockResolvedValue({
+      user: { id: 'admin-a', email: 'adminA@hospital.com', role: Role.ADMIN, isActive: true, tenantId: tenantA.id },
+    });
+
+    const resA = await createDepartmentAction({
+      name: 'Cardiology',
+      description: 'Heart',
+    });
+    expect(resA.success).toBe(true);
+
+    // 3. Admin B creates Cardiology (same name, should succeed because it's tenant-scoped)
+    mockAuth.mockResolvedValue({
+      user: { id: 'admin-b', email: 'adminB@hospital.com', role: Role.ADMIN, isActive: true, tenantId: tenantB.id },
+    });
+
+    const resB = await createDepartmentAction({
+      name: 'Cardiology',
+      description: 'Heart B',
+    });
+    expect(resB.success).toBe(true); // Fails if unique constraint is global
+
+    if (!resB.success || !resB.data) return;
+    const deptBId = resB.data.id;
+
+    // 4. Verify Admin A cannot modify Admin B's Cardiology department
+    mockAuth.mockResolvedValue({
+      user: { id: 'admin-a', email: 'adminA@hospital.com', role: Role.ADMIN, isActive: true, tenantId: tenantA.id },
+    });
+
+    const editRes = await updateDepartmentAction({
+      id: deptBId, // Admin A trying to edit Admin B's dept
+      name: 'Cardiology Hacked',
+      description: 'Hacked',
+    });
+
+    expect(editRes.success).toBe(false);
+    if (!editRes.success) {
+      expect(editRes.error).toBe('Department not found.'); // Because tenantId doesn't match in findFirst
+    }
+  });
 });

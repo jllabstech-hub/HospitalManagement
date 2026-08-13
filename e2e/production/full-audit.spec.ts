@@ -168,8 +168,6 @@ test.describe('Production audit — portals', () => {
     await loginAdmin(page);
     await page.goto('/admin/content');
     await expect(page.getByRole('heading', { name: 'Content Management' })).toBeVisible();
-    const faqCard = page.getByRole('link', { name: /FAQs/i });
-    await expect(faqCard).toHaveAttribute('href', '/patient-resources/faq');
     await page.goto('/admin/content/hospital');
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     await page.goto('/admin/enquiries');
@@ -180,6 +178,7 @@ test.describe('Production audit — portals', () => {
 test.describe('Production audit — a11y smoke', () => {
   test('Login keyboard focus and labels', async ({ page }) => {
     await page.goto('/login');
+    await page.click('button:has-text("Email & Password")');
     await expect(page.getByLabel(/email/i)).toBeVisible();
     await expect(page.getByLabel(/password/i)).toBeVisible();
     await page.getByLabel(/email/i).focus();

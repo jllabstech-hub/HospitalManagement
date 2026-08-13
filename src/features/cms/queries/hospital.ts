@@ -1,3 +1,4 @@
+import { unstable_cache } from 'next/cache';
 import { prisma } from '@/server/db/client';
 import { ACTIVE_PUBLISHED_FILTER } from '@/features/cms/constants';
 
@@ -71,18 +72,45 @@ const facilitySelect = {
 } as const;
 
 export async function getActiveHospitalProfile() {
-  return prisma.hospitalProfile.findFirst({
-    where: { isActive: true },
-    select: hospitalProfileSelect,
-  });
+  try {
+    return await unstable_cache(
+      async () => {
+        return prisma.hospitalProfile.findFirst({
+          where: { isActive: true },
+          select: hospitalProfileSelect,
+        });
+      },
+      ['active-hospital-profile'],
+      { revalidate: 600, tags: ['hospital-profile'] }
+    )();
+  } catch {
+    return prisma.hospitalProfile.findFirst({
+      where: { isActive: true },
+      select: hospitalProfileSelect,
+    });
+  }
 }
 
 export async function getPublishedLocations() {
-  return prisma.hospitalLocation.findMany({
-    where: ACTIVE_PUBLISHED_FILTER,
-    select: locationSelect,
-    orderBy: [{ isPrimary: 'desc' }, { name: 'asc' }],
-  });
+  try {
+    return await unstable_cache(
+      async () => {
+        return prisma.hospitalLocation.findMany({
+          where: ACTIVE_PUBLISHED_FILTER,
+          select: locationSelect,
+          orderBy: [{ isPrimary: 'desc' }, { name: 'asc' }],
+        });
+      },
+      ['published-locations-list'],
+      { revalidate: 600, tags: ['hospital-locations'] }
+    )();
+  } catch {
+    return prisma.hospitalLocation.findMany({
+      where: ACTIVE_PUBLISHED_FILTER,
+      select: locationSelect,
+      orderBy: [{ isPrimary: 'desc' }, { name: 'asc' }],
+    });
+  }
 }
 
 export async function getLocationBySlug(slug: string) {

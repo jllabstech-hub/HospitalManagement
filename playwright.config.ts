@@ -27,7 +27,7 @@ export default defineConfig({
   webServer: {
     command: 'npx prisma db seed && npx next dev -p 5001',
     url: 'http://localhost:5001',
-    reuseExistingServer: false,
+    reuseExistingServer: true,
     timeout: 180 * 1000,
   },
 });

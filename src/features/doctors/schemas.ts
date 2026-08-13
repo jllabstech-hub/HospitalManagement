@@ -36,6 +36,7 @@ export const CreateDoctorSchema = z.object({
     .max(1000, { message: 'Bio must not exceed 1000 characters.' })
     .optional()
     .or(z.literal('')),
+  profileImageUrl: z.string().trim().optional().or(z.literal('')),
 });
 
 export type CreateDoctorInput = z.infer<typeof CreateDoctorSchema>;
@@ -69,6 +70,7 @@ export const UpdateDoctorSchema = z.object({
     .max(1000, { message: 'Bio must not exceed 1000 characters.' })
     .optional()
     .or(z.literal('')),
+  profileImageUrl: z.string().trim().optional().or(z.literal('')),
 });
 
 export type UpdateDoctorInput = z.infer<typeof UpdateDoctorSchema>;

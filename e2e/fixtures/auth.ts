@@ -1,4 +1,4 @@
-﻿import { Page, expect } from '@playwright/test';
+import { Page, expect } from '@playwright/test';
 
 /** Seeded development fixtures used by Playwright (see prisma/seed.ts). */
 export const SEED = {
@@ -15,6 +15,10 @@ export async function loginAs(
 ): Promise<void> {
   const creds = SEED[role];
   await page.goto('/login');
+  const emailTab = page.locator('button:has-text("Email & Password")');
+  if (await emailTab.isVisible()) {
+    await emailTab.click();
+  }
   await page.fill('input[id="email"]', creds.email);
   await page.fill('input[id="password"]', creds.password);
   await page.click('button[type="submit"]');

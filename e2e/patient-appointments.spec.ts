@@ -4,6 +4,7 @@ test.describe('Patient Appointment Management E2E Suite', () => {
   test('TEST 1: View Patient Appointments, Detail Page, and Cancel Upcoming Appointment', async ({ page }) => {
     // 1. Patient Login
     await page.goto('/login');
+    await page.click('button:has-text("Email & Password")');
     await page.fill('input[id="email"]', 'patient.alice@example.com');
     await page.fill('input[id="password"]', 'test123');
     await page.click('button[type="submit"]');
@@ -13,7 +14,7 @@ test.describe('Patient Appointment Management E2E Suite', () => {
     await page.goto('/patient/doctors');
     await page.fill('input[id="searchInput"]', 'Jane Smith');
     await page.click('button[type="submit"]:has-text("Search")');
-    await page.click('a:has-text("View Profile & Book")');
+    await page.click('a:has-text("Book Appointment")');
     await page.waitForSelector('button:has-text("11:30 AM")', { timeout: 10000 });
     await page.locator('button:has-text("11:30 AM")').first().click();
     await page.click('button:has-text("Proceed to Confirmation")');

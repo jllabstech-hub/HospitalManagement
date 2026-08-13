@@ -27,6 +27,7 @@ test.describe('Authentication & Role-Based Authorization E2E Suite', () => {
 
   test('TEST 3: Doctor Login with Seeded Account', async ({ page }) => {
     await page.goto('/login');
+    await page.click('button:has-text("Email & Password")');
     await page.fill('input[id="email"]', 'dr.smith@hospital.com');
     await page.fill('input[id="password"]', 'test123');
     await page.click('button[type="submit"]');
@@ -39,6 +40,7 @@ test.describe('Authentication & Role-Based Authorization E2E Suite', () => {
 
   test('TEST 4: Admin Login with Seeded Account', async ({ page }) => {
     await page.goto('/login');
+    await page.click('button:has-text("Email & Password")');
     await page.fill('input[id="email"]', 'admin@hospital.com');
     await page.fill('input[id="password"]', 'test123');
     await page.click('button[type="submit"]');
@@ -52,12 +54,13 @@ test.describe('Authentication & Role-Based Authorization E2E Suite', () => {
   test('TEST 5: Unauthenticated User Redirected from Protected Route', async ({ page }) => {
     await page.goto('/patient/dashboard');
     await page.waitForURL('**/login?callbackUrl=%2Fpatient%2Fdashboard');
-    await expect(page.getByRole('heading', { name: 'Welcome Back' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Welcome to CarePulse' })).toBeVisible();
   });
 
   test('TEST 6: Patient Denied Access to Admin Area', async ({ page }) => {
     // Log in as patient
     await page.goto('/login');
+    await page.click('button:has-text("Email & Password")');
     await page.fill('input[id="email"]', 'patient.alice@example.com');
     await page.fill('input[id="password"]', 'test123');
     await page.click('button[type="submit"]');
@@ -72,6 +75,7 @@ test.describe('Authentication & Role-Based Authorization E2E Suite', () => {
   test('TEST 7: Doctor Denied Access to Admin Area', async ({ page }) => {
     // Log in as doctor
     await page.goto('/login');
+    await page.click('button:has-text("Email & Password")');
     await page.fill('input[id="email"]', 'dr.smith@hospital.com');
     await page.fill('input[id="password"]', 'test123');
     await page.click('button[type="submit"]');
@@ -86,6 +90,7 @@ test.describe('Authentication & Role-Based Authorization E2E Suite', () => {
   test('TEST 8: Logout Invalidates Session', async ({ page }) => {
     // Log in as admin
     await page.goto('/login');
+    await page.click('button:has-text("Email & Password")');
     await page.fill('input[id="email"]', 'admin@hospital.com');
     await page.fill('input[id="password"]', 'test123');
     await page.click('button[type="submit"]');

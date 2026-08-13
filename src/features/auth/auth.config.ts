@@ -10,6 +10,7 @@ export const authConfig: NextAuthConfig = {
         if (user.id) token.userId = user.id;
         token.role = user.role;
         token.isActive = user.isActive;
+        token.tenantId = user.tenantId;
         token.patientProfileId = user.patientProfileId;
         token.doctorProfileId = user.doctorProfileId;
       }
@@ -20,6 +21,7 @@ export const authConfig: NextAuthConfig = {
         if (token.userId) session.user.id = token.userId;
         session.user.role = token.role;
         session.user.isActive = token.isActive;
+        session.user.tenantId = token.tenantId;
         session.user.patientProfileId = token.patientProfileId;
         session.user.doctorProfileId = token.doctorProfileId;
       }

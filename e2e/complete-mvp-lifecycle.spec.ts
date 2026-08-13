@@ -17,8 +17,7 @@ test.describe('Complete System End-to-End MVP Lifecycles', () => {
     // 2. Find Doctor & Book 12:00 PM Slot
     await page.goto('/patient/doctors');
     await page.fill('input[id="searchInput"]', 'Jane Smith');
-    await page.click('button[type="submit"]:has-text("Search")');
-    await page.click('a:has-text("View Profile & Book")');
+    await page.click('a:has-text("Book Appointment")');
     await page.waitForSelector('button:has-text("12:00 PM")', { timeout: 10000 });
     await page.locator('button:has-text("12:00 PM")').first().click();
     await page.click('button:has-text("Proceed to Confirmation")');
@@ -30,6 +29,7 @@ test.describe('Complete System End-to-End MVP Lifecycles', () => {
     await page.waitForURL('**/login');
 
     // 3. Doctor Login (Dr. Jane Smith: dr.smith@hospital.com)
+    await page.click('button:has-text("Email & Password")');
     await page.fill('input[id="email"]', 'dr.smith@hospital.com');
     await page.fill('input[id="password"]', 'test123');
     await page.click('button[type="submit"]');
@@ -65,6 +65,7 @@ test.describe('Complete System End-to-End MVP Lifecycles', () => {
   test('LIFECYCLE 2: Patient A Books -> Patient A Cancels -> Patient B Re-books Same Slot (SUCCESS)', async ({ page, browser }) => {
     // 1. Patient A Books 02:00 PM Slot
     await page.goto('/login');
+    await page.click('button:has-text("Email & Password")');
     await page.fill('input[id="email"]', 'patient.alice@example.com');
     await page.fill('input[id="password"]', 'test123');
     await page.click('button[type="submit"]');
@@ -72,8 +73,7 @@ test.describe('Complete System End-to-End MVP Lifecycles', () => {
 
     await page.goto('/patient/doctors');
     await page.fill('input[id="searchInput"]', 'Robert Johnson');
-    await page.click('button[type="submit"]:has-text("Search")');
-    await page.click('a:has-text("View Profile & Book")');
+    await page.click('a:has-text("Book Appointment")');
     await page.waitForSelector('button:has-text("02:00 PM")', { timeout: 10000 });
     await page.locator('button:has-text("02:00 PM")').first().click();
     await page.click('button:has-text("Proceed to Confirmation")');
@@ -91,6 +91,7 @@ test.describe('Complete System End-to-End MVP Lifecycles', () => {
     const contextB = await browser.newContext();
     const pageB = await contextB.newPage();
     await pageB.goto('/login');
+    await pageB.click('button:has-text("Email & Password")');
     await pageB.fill('input[id="email"]', 'patient.bob@example.com');
     await pageB.fill('input[id="password"]', 'test123');
     await pageB.click('button[type="submit"]');
@@ -98,8 +99,7 @@ test.describe('Complete System End-to-End MVP Lifecycles', () => {
 
     await pageB.goto('/patient/doctors');
     await pageB.fill('input[id="searchInput"]', 'Robert Johnson');
-    await pageB.click('button[type="submit"]:has-text("Search")');
-    await pageB.click('a:has-text("View Profile & Book")');
+    await pageB.click('a:has-text("Book Appointment")');
     await pageB.waitForSelector('button:has-text("02:00 PM")', { timeout: 10000 });
     await pageB.locator('button:has-text("02:00 PM")').first().click();
     await pageB.click('button:has-text("Proceed to Confirmation")');

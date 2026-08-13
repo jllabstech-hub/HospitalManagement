@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import SearchOverlay from '@/components/shared/SearchOverlay';
 
 export interface DropdownSubItem {
   href: string;
@@ -44,6 +45,7 @@ export default function SiteHeaderClient({
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [openMobile, setOpenMobile] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [activeHoverIndex, setActiveHoverIndex] = useState<number | null>(null);
   const [mobileExpandedIndex, setMobileExpandedIndex] = useState<number | null>(null);
 
@@ -90,15 +92,16 @@ export default function SiteHeaderClient({
             <span>{utilityLeft}</span>
           </p>
           <div className="flex items-center gap-4 text-[11px] sm:text-xs">
-            <Link
-              href="/search"
+            <button
+              type="button"
+              onClick={() => setIsSearchOpen(true)}
               className="inline-flex items-center gap-1.5 font-medium text-brand-100/90 transition hover:text-white"
             >
               <svg viewBox="0 0 20 20" className="h-3.5 w-3.5 fill-current opacity-80" aria-hidden>
                 <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
               </svg>
               <span>Search</span>
-            </Link>
+            </button>
             <span className="h-3 w-px bg-brand-800" aria-hidden />
             <Link
               href="/contact"
@@ -357,6 +360,9 @@ export default function SiteHeaderClient({
           </nav>
         </div>
       )}
+
+      {/* Global Interactive Search Overlay */}
+      <SearchOverlay isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </header>
   );
 }

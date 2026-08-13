@@ -1,4 +1,5 @@
 import { Prisma } from '@prisma/client';
+import { unstable_cache } from 'next/cache';
 import { prisma } from '@/server/db/client';
 import { ACTIVE_PUBLISHED_FILTER, PUBLISHED_FILTER } from '@/features/cms/constants';
 import { publicDoctorListSelect, publicDoctorWhere } from '@/features/cms/queries/doctors-public';
@@ -122,11 +123,25 @@ const insurancePartnerSelect = {
 } as const;
 
 export async function getPublishedDepartments() {
-  return prisma.department.findMany({
-    where: ACTIVE_PUBLISHED_FILTER,
-    select: departmentListSelect,
-    orderBy: [{ isFeatured: 'desc' }, { displayOrder: 'asc' }, { name: 'asc' }],
-  });
+  try {
+    return await unstable_cache(
+      async () => {
+        return prisma.department.findMany({
+          where: ACTIVE_PUBLISHED_FILTER,
+          select: departmentListSelect,
+          orderBy: [{ isFeatured: 'desc' }, { displayOrder: 'asc' }, { name: 'asc' }],
+        });
+      },
+      ['published-departments-list'],
+      { revalidate: 300, tags: ['public-departments'] }
+    )();
+  } catch {
+    return prisma.department.findMany({
+      where: ACTIVE_PUBLISHED_FILTER,
+      select: departmentListSelect,
+      orderBy: [{ isFeatured: 'desc' }, { displayOrder: 'asc' }, { name: 'asc' }],
+    });
+  }
 }
 
 export async function getDepartmentBySlug(slug: string) {

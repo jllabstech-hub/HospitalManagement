@@ -33,6 +33,9 @@ export default async function AdminDepartmentsPage({ searchParams }: PageProps) 
         id: true,
         name: true,
         description: true,
+        imageUrl: true,
+        seoTitle: true,
+        seoDescription: true,
         isActive: true,
         createdAt: true,
         _count: {

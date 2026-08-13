@@ -3,6 +3,7 @@ import { prisma } from '@/server/db/client';
 import { getHospitalTodayDateString } from '@/lib/date-utils';
 import { getHospitalCurrentTimeHHMM } from '../domain/time-utils';
 import { buildFuzzyAppointmentWhere } from '@/lib/fuzzy-search';
+import { notificationService } from '@/services/notifications/NotificationService';
 
 
 export interface TransitionStatusInput {
@@ -87,7 +88,13 @@ export async function transitionAppointmentStatus({
       where: { id: appointmentId },
       include: {
         doctor: { select: { fullName: true } },
-        patient: { select: { fullName: true } },
+        patient: { 
+          select: { 
+            fullName: true,
+            phoneNumber: true,
+            user: { select: { email: true } }
+          } 
+        },
       },
     });
 
@@ -140,8 +147,37 @@ export async function transitionAppointmentStatus({
       select: {
         id: true,
         status: true,
+        appointmentDate: true,
+        startTime: true,
       },
     });
+
+    // Fire notifications asynchronously
+    const dateTimeString = `${updatedAppt.appointmentDate.toISOString().split('T')[0]} at ${updatedAppt.startTime}`;
+    if (targetStatus === AppointmentStatus.CONFIRMED) {
+      notificationService.notifyAppointmentConfirmed(
+        null, // tenantId
+        appointment.patientId,
+        appointment.id,
+        appointment.patient.fullName,
+        appointment.doctor.fullName,
+        dateTimeString,
+        appointment.patient.user.email,
+        appointment.patient.phoneNumber
+      ).catch(err => console.error('Notification error:', err));
+    } else if (targetStatus === AppointmentStatus.CANCELLED) {
+      notificationService.notifyAppointmentCancelled(
+        null,
+        appointment.patientId,
+        appointment.id,
+        appointment.patient.fullName,
+        appointment.doctor.fullName,
+        dateTimeString,
+        cancellationReason || 'No reason provided',
+        appointment.patient.user.email,
+        appointment.patient.phoneNumber
+      ).catch(err => console.error('Notification error:', err));
+    }
 
     return { success: true, data: updatedAppt };
   } catch (error: unknown) {

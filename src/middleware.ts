@@ -48,7 +48,16 @@ export default auth((req) => {
     }
   }
 
-  return NextResponse.next();
+  // Clone headers to pass down to server components
+  const requestHeaders = new Headers(req.headers);
+  const host = requestHeaders.get('host') || '';
+  requestHeaders.set('x-tenant-host', host);
+
+  return NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
 });
 
 export const config = {

@@ -12,6 +12,9 @@ export const CreateDepartmentSchema = z.object({
     .max(500, { message: 'Description must not exceed 500 characters.' })
     .optional()
     .or(z.literal('')),
+  imageUrl: z.string().trim().optional().or(z.literal('')),
+  seoTitle: z.string().trim().max(70).optional().or(z.literal('')),
+  seoDescription: z.string().trim().max(160).optional().or(z.literal('')),
 });
 
 export type CreateDepartmentInput = z.infer<typeof CreateDepartmentSchema>;
@@ -29,6 +32,9 @@ export const UpdateDepartmentSchema = z.object({
     .max(500, { message: 'Description must not exceed 500 characters.' })
     .optional()
     .or(z.literal('')),
+  imageUrl: z.string().trim().optional().or(z.literal('')),
+  seoTitle: z.string().trim().max(70).optional().or(z.literal('')),
+  seoDescription: z.string().trim().max(160).optional().or(z.literal('')),
 });
 
 export type UpdateDepartmentInput = z.infer<typeof UpdateDepartmentSchema>;

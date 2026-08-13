@@ -125,7 +125,20 @@ export default function LoginForm() {
         return;
       }
 
-      window.location.href = '/';
+      const searchParams = new URLSearchParams(window.location.search);
+      const callbackUrl = searchParams.get('callbackUrl');
+      if (callbackUrl) {
+        window.location.href = callbackUrl;
+      } else {
+        // Fetch session to determine role dashboard
+        const sessionRes = await fetch('/api/auth/session');
+        const sessionData = await sessionRes.json();
+        const role = sessionData?.user?.role;
+        if (role === 'DOCTOR') window.location.href = '/doctor/dashboard';
+        else if (role === 'ADMIN') window.location.href = '/admin/dashboard';
+        else if (role === 'PATIENT') window.location.href = '/patient/dashboard';
+        else window.location.href = '/';
+      }
     } catch (err) {
       console.error('Email login error:', err);
       setServerError('An unexpected error occurred. Please try again.');

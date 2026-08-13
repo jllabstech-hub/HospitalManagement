@@ -55,6 +55,7 @@ test.describe('Security & RBAC matrix', () => {
 
   test('Invalid login credentials show friendly error', async ({ page }) => {
     await page.goto('/login');
+    await page.click('button:has-text("Email & Password")');
     await page.fill('input[id="email"]', SEED.patientA.email);
     await page.fill('input[id="password"]', 'WrongPassword999!');
     await page.click('button[type="submit"]');

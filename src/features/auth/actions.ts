@@ -39,6 +39,15 @@ export async function registerPatientAction(
     // 3. Hash password
     const passwordHash = await hashPassword(password);
 
+    // Fetch active tenant context
+    const { getActiveHospitalProfile } = await import('@/features/cms/queries/hospital');
+    const profile = await getActiveHospitalProfile();
+    const tenantId = profile?.id;
+
+    if (!tenantId) {
+      return { success: false, error: 'System configuration error. No active hospital found.' };
+    }
+
     // 4. Atomic Transaction: Create User + PatientProfile
     // Role is strictly hardcoded to PATIENT to prevent role manipulation attacks
     await prisma.$transaction(async (tx) => {
@@ -48,6 +57,7 @@ export async function registerPatientAction(
           passwordHash,
           role: Role.PATIENT,
           isActive: true,
+          tenantId,
         },
       });
 

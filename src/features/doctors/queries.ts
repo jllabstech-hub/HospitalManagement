@@ -26,6 +26,7 @@ export interface DoctorPublicProfile {
   qualification: string;
   experienceYears: number;
   bio: string | null;
+  profileImageUrl?: string | null;
   department: {
     id: string;
     name: string;
@@ -99,6 +100,7 @@ export async function searchDoctors(params: SearchDoctorsParams): Promise<Search
     qualification: true,
     experienceYears: true,
     bio: true,
+    profileImageUrl: true,
     department: {
       select: {
         id: true,

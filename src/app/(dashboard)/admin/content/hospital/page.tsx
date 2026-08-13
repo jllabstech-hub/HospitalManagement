@@ -46,6 +46,8 @@ export default async function AdminHospitalProfilePage() {
                 mission: profile.mission ?? '',
                 vision: profile.vision ?? '',
                 values: profile.values ?? '',
+                heroImageUrl: profile.heroImageUrl ?? '',
+                logoUrl: profile.logoUrl ?? '',
               }
             : null
         }

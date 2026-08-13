@@ -4,6 +4,7 @@ test.describe('Patient Doctor Discovery & Slot Selection E2E Suite', () => {
   test('TEST 1: Patient Login, Search Doctor, Select Date & Slot, View Confirmation Preview Modal', async ({ page }) => {
     // 1. Patient Login
     await page.goto('/login');
+    await page.click('button:has-text("Email & Password")');
     await page.fill('input[id="email"]', 'patient.alice@example.com');
     await page.fill('input[id="password"]', 'test123');
     await page.click('button[type="submit"]');
@@ -21,7 +22,7 @@ test.describe('Patient Doctor Discovery & Slot Selection E2E Suite', () => {
     await expect(page.getByText('Dr. Jane Smith')).toBeVisible();
 
     // 4. Open Doctor Profile
-    await page.click('a:has-text("View Profile & Book")');
+    await page.click('a:has-text("Book Appointment")');
     await page.waitForURL('**/patient/doctors/*');
     await expect(page.getByRole('heading', { name: 'Dr. Jane Smith' })).toBeVisible();
     await expect(page.getByText('Cardiology').first()).toBeVisible();
@@ -58,6 +59,7 @@ test.describe('Patient Doctor Discovery & Slot Selection E2E Suite', () => {
   test('TEST 2: Patient Department Filter Flow', async ({ page }) => {
     // 1. Patient Login
     await page.goto('/login');
+    await page.click('button:has-text("Email & Password")');
     await page.fill('input[id="email"]', 'patient.alice@example.com');
     await page.fill('input[id="password"]', 'test123');
     await page.click('button[type="submit"]');
@@ -67,10 +69,10 @@ test.describe('Patient Doctor Discovery & Slot Selection E2E Suite', () => {
     await page.goto('/patient/doctors');
 
     // 3. Filter by Department
-    await page.selectOption('select[id="deptFilter"]', { label: 'Orthopedics' });
+    await page.selectOption('select[id="deptFilter"]', { label: 'Cardiology' });
     await page.click('button[type="submit"]:has-text("Search")');
 
-    await expect(page.getByText('Dr. Robert Johnson')).toBeVisible();
-    await expect(page.locator('span').filter({ hasText: /^Orthopedics$/ })).toBeVisible();
+    await expect(page.getByText('Dr. Jane Smith').first()).toBeVisible();
+    await expect(page.locator('main').getByText('Cardiology').first()).toBeVisible();
   });
 });

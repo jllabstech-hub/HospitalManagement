@@ -18,10 +18,15 @@ import {
 import { useRouter, useSearchParams } from 'next/navigation';
 import InteractiveSearchInput from '@/components/shared/InteractiveSearchInput';
 
+import ImageUploadPicker from '@/components/shared/ImageUploadPicker';
+
 interface DepartmentItem {
   id: string;
   name: string;
   description: string | null;
+  imageUrl?: string | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
   isActive: boolean;
   createdAt: Date;
   _count: {
@@ -133,12 +138,15 @@ export default function DepartmentManagement({
     }
   };
 
-  const openEditModal = (dept: DepartmentItem) => {
-    setEditingDept(dept);
+  const openEditModal = (dept: DepartmentItem & { seoTitle?: string | null, seoDescription?: string | null }) => {
+    setEditingDept(dept as DepartmentItem);
     editForm.reset({
       id: dept.id,
       name: dept.name,
       description: dept.description || '',
+      imageUrl: dept.imageUrl || '',
+      seoTitle: dept.seoTitle || '',
+      seoDescription: dept.seoDescription || '',
     });
   };
 
@@ -348,6 +356,26 @@ export default function DepartmentManagement({
                 )}
               </div>
 
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-ink">SEO Title (Optional)</label>
+                <input
+                  type="text"
+                  {...createForm.register('seoTitle')}
+                  className="input-field"
+                  placeholder="e.g. Best Cardiology Hospital in City"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-ink">SEO Description (Optional)</label>
+                <textarea
+                  rows={2}
+                  {...createForm.register('seoDescription')}
+                  className="input-field"
+                  placeholder="Meta description for search engines..."
+                />
+              </div>
+
               <div className="flex justify-end space-x-3 pt-2">
                 <button type="button" onClick={() => setIsCreateOpen(false)} className="btn-secondary">
                   Cancel
@@ -385,6 +413,33 @@ export default function DepartmentManagement({
                 {editForm.formState.errors.description && (
                   <p className="mt-1 text-xs text-rose-600">{editForm.formState.errors.description.message}</p>
                 )}
+              </div>
+
+              <ImageUploadPicker
+                label="Department Cover Image"
+                description="Upload or select an asset for public department banners."
+                value={editForm.watch('imageUrl')}
+                onChange={(url) => editForm.setValue('imageUrl', url)}
+              />
+
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-ink">SEO Title (Optional)</label>
+                <input
+                  type="text"
+                  {...editForm.register('seoTitle')}
+                  className="input-field"
+                  placeholder="e.g. Best Cardiology Hospital in City"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-ink">SEO Description (Optional)</label>
+                <textarea
+                  rows={2}
+                  {...editForm.register('seoDescription')}
+                  className="input-field"
+                  placeholder="Meta description for search engines..."
+                />
               </div>
 
               <div className="flex justify-end space-x-3 pt-2">

@@ -1,9 +1,10 @@
-﻿import { test, expect } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
 test.describe('Doctor Appointment Management & Status Transitions E2E Suite', () => {
   test('TEST 1: Doctor Login, View Today Appointments, Confirm, and Complete Consultation', async ({ page }) => {
     // 1. Doctor Login (Dr. Jane Smith)
     await page.goto('/login');
+    await page.click('button:has-text("Email & Password")');
     await page.fill('input[id="email"]', 'dr.smith@hospital.com');
     await page.fill('input[id="password"]', 'test123');
     await page.click('button[type="submit"]');
@@ -33,6 +34,7 @@ test.describe('Doctor Appointment Management & Status Transitions E2E Suite', ()
 
   test('TEST 2: Doctor Mark Patient No-Show', async ({ page }) => {
     await page.goto('/login');
+    await page.click('button:has-text("Email & Password")');
     await page.fill('input[id="email"]', 'dr.smith@hospital.com');
     await page.fill('input[id="password"]', 'test123');
     await page.click('button[type="submit"]');

@@ -22,8 +22,7 @@ export default function Hero({ profile }: HeroProps) {
       <div
         className="absolute inset-0 opacity-30 mix-blend-overlay"
         style={{
-          backgroundImage:
-            'url(https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=2000&q=60)',
+          backgroundImage: `url(${profile?.heroImageUrl || 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=2000&q=60'})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
         }}
@@ -79,8 +78,8 @@ export default function Hero({ profile }: HeroProps) {
         <div className="relative hidden animate-fade-in lg:col-span-5 lg:block">
           <div className="relative aspect-[4/5] overflow-hidden rounded-card shadow-elevated ring-1 ring-white/20">
             <Image
-              src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=1200&q=75"
-              alt="Physician consulting with a patient in a modern clinic"
+              src={profile?.heroImageUrl || "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=1200&q=75"}
+              alt={`${name} medical consultation`}
               fill
               className="object-cover"
               sizes="(max-width: 1024px) 0px, 420px"

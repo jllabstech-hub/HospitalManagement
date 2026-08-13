@@ -25,9 +25,9 @@ test.describe('SSR HTML smoke checks', () => {
     expect(res.ok()).toBeTruthy();
     const html = await res.text();
 
-    expect(html).toContain('Welcome Back');
-    expect(html).toContain('Email Address');
-    expect(html).toContain('Sign In');
+    expect(html).toContain('Welcome to CarePulse');
+    expect(html).toContain('Patient Phone OTP');
+    expect(html).toContain('Email &amp; Password');
   });
 
   test('Unauthenticated doctor directory redirects with login HTML (not empty shell)', async ({

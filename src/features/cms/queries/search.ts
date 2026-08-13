@@ -4,7 +4,7 @@ import { ACTIVE_PUBLISHED_FILTER, PUBLISHED_FILTER } from '@/features/cms/consta
 import { publicDoctorListSelect, publicDoctorWhere } from '@/features/cms/queries/doctors-public';
 import { buildFuzzyDoctorWhere } from '@/lib/fuzzy-search';
 
-const SEARCH_TAKE = 8;
+const SEARCH_TAKE = 5;
 
 function tokenizeQuery(q: string): string[] {
   return q.trim().split(/\s+/).filter(Boolean);
@@ -59,7 +59,6 @@ async function searchDepartments(q: string) {
           { name: { contains: token, mode: 'insensitive' as const } },
           { slug: { contains: token, mode: 'insensitive' as const } },
           { shortDescription: { contains: token, mode: 'insensitive' as const } },
-          { description: { contains: token, mode: 'insensitive' as const } },
         ],
       })),
     },

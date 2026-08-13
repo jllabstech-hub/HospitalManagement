@@ -1,9 +1,10 @@
-﻿import { test, expect } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
 test.describe('Admin Portal E2E Suite', () => {
   test('TEST 1: Admin Login, Dashboard Stats & Department CRUD', async ({ page }) => {
     // 1. Admin Login
     await page.goto('/login');
+    await page.click('button:has-text("Email & Password")');
     await page.fill('input[id="email"]', 'admin@hospital.com');
     await page.fill('input[id="password"]', 'test123');
     await page.click('button[type="submit"]');
@@ -52,6 +53,7 @@ test.describe('Admin Portal E2E Suite', () => {
 
     // 1. Admin Login
     await page.goto('/login');
+    await page.click('button:has-text("Email & Password")');
     await page.fill('input[id="email"]', 'admin@hospital.com');
     await page.fill('input[id="password"]', 'test123');
     await page.click('button[type="submit"]');
@@ -95,6 +97,7 @@ test.describe('Admin Portal E2E Suite', () => {
   test('TEST 3: Non-Admin Role Authorization Boundary', async ({ page }) => {
     // 1. Patient Login
     await page.goto('/login');
+    await page.click('button:has-text("Email & Password")');
     await page.fill('input[id="email"]', 'patient.alice@example.com');
     await page.fill('input[id="password"]', 'test123');
     await page.click('button[type="submit"]');

@@ -42,7 +42,7 @@ export async function createDepartmentAction(
   rawInput: CreateDepartmentInput
 ): Promise<ActionResult<{ id: string }>> {
   try {
-    await requireAdmin();
+    const admin = await requireAdmin();
 
     const parsed = CreateDepartmentSchema.safeParse(rawInput);
     if (!parsed.success) {
@@ -54,16 +54,18 @@ export async function createDepartmentAction(
     const normalizedName = name.trim();
     const baseSlug = slugify(normalizedName) || 'department';
     let slug = baseSlug;
+
     let suffix = 0;
-    while (await prisma.department.findUnique({ where: { slug } })) {
+    while (await prisma.department.findFirst({ where: { slug, tenantId: admin.tenantId } })) {
       suffix += 1;
       slug = `${baseSlug}-${suffix}`;
     }
 
-    // Check case-insensitive duplicate department name
+    // Check case-insensitive duplicate department name for the active tenant
     const existing = await prisma.department.findFirst({
       where: {
         name: { equals: normalizedName, mode: 'insensitive' },
+        tenantId: admin.tenantId,
       },
     });
 
@@ -77,7 +79,11 @@ export async function createDepartmentAction(
         slug,
         description: description || null,
         shortDescription: description || null,
+        imageUrl: parsed.data.imageUrl?.trim() || null,
+        seoTitle: parsed.data.seoTitle?.trim() || null,
+        seoDescription: parsed.data.seoDescription?.trim() || null,
         isActive: true,
+        tenantId: admin.tenantId,
       },
     });
 
@@ -102,7 +108,7 @@ export async function updateDepartmentAction(
   rawInput: UpdateDepartmentInput
 ): Promise<ActionResult> {
   try {
-    await requireAdmin();
+    const admin = await requireAdmin();
 
     const parsed = UpdateDepartmentSchema.safeParse(rawInput);
     if (!parsed.success) {
@@ -113,16 +119,18 @@ export async function updateDepartmentAction(
     const { id, name, description } = parsed.data;
     const normalizedName = name.trim();
 
-    const existingDept = await prisma.department.findUnique({ where: { id } });
-    if (!existingDept) {
+
+    const dept = await prisma.department.findFirst({ where: { id, tenantId: admin.tenantId } });
+    if (!dept) {
       return { success: false, error: 'Department not found.' };
     }
 
-    // Check if another department uses this name
+    // Check if another department uses this name in the same tenant
     const duplicate = await prisma.department.findFirst({
       where: {
         name: { equals: normalizedName, mode: 'insensitive' },
         id: { not: id },
+        tenantId: admin.tenantId,
       },
     });
 
@@ -135,6 +143,9 @@ export async function updateDepartmentAction(
       data: {
         name: normalizedName,
         description: description || null,
+        imageUrl: parsed.data.imageUrl?.trim() || null,
+        seoTitle: parsed.data.seoTitle?.trim() || null,
+        seoDescription: parsed.data.seoDescription?.trim() || null,
       },
     });
 
@@ -157,13 +168,13 @@ export async function updateDepartmentAction(
  */
 export async function toggleDepartmentStatusAction(id: string): Promise<ActionResult> {
   try {
-    await requireAdmin();
+    const admin = await requireAdmin();
 
     if (!id || typeof id !== 'string') {
       return { success: false, error: 'Invalid department ID.' };
     }
 
-    const existing = await prisma.department.findUnique({ where: { id } });
+    const existing = await prisma.department.findFirst({ where: { id, tenantId: admin.tenantId } });
     if (!existing) {
       return { success: false, error: 'Department not found.' };
     }

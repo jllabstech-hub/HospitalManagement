@@ -105,6 +105,7 @@ export async function createDoctorAction(
           passwordHash,
           role: Role.DOCTOR,
           isActive: true,
+          tenantId: admin.tenantId,
         },
       });
 
@@ -128,6 +129,7 @@ export async function createDoctorAction(
           qualification: qualification.trim(),
           experienceYears,
           bio: bio || null,
+          profileImageUrl: parsed.data.profileImageUrl?.trim() || null,
         },
       });
 
@@ -219,6 +221,8 @@ export async function updateDoctorAction(
         experienceYears,
         phoneNumber: phoneNumber.trim(),
         bio: bio || null,
+        publicBio: bio || null,
+        profileImageUrl: parsed.data.profileImageUrl?.trim() || null,
       },
     });
 

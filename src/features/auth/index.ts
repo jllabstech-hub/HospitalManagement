@@ -78,6 +78,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             email: patientProfile.user.email,
             role: patientProfile.user.role,
             isActive: patientProfile.user.isActive,
+            tenantId: patientProfile.user.tenantId ?? '',
             patientProfileId: patientProfile.id,
             doctorProfileId: null,
           };
@@ -123,6 +124,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           email: user.email,
           role: user.role,
           isActive: user.isActive,
+          tenantId: user.tenantId ?? '',
           patientProfileId: user.patientProfile?.id ?? null,
           doctorProfileId: user.doctorProfile?.id ?? null,
         };

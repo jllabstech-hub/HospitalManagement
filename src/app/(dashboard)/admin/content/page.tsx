@@ -13,6 +13,7 @@ export default async function AdminContentPage() {
     newContactMessages,
     newAppointmentEnquiries,
     newInternationalEnquiries,
+    mediaAssetCount,
   ] = await Promise.all([
     prisma.hospitalProfile.count(),
     prisma.department.count(),
@@ -20,12 +21,14 @@ export default async function AdminContentPage() {
     prisma.contactMessage.count({ where: { status: ContactMessageStatus.NEW } }),
     prisma.appointmentEnquiry.count({ where: { status: EnquiryStatus.NEW } }),
     prisma.internationalPatientEnquiry.count({ where: { status: EnquiryStatus.NEW } }),
+    prisma.mediaAsset.count(),
   ]);
 
   const modules = [
-    { title: 'Hospital Identity & Profile', href: '/admin/content/hospital', count: hospitalProfileCount, description: 'Manage hospital name, logo, contact info & vision' },
-    { title: 'Medical Departments', href: '/admin/departments', count: departmentCount, description: 'Manage department descriptions, icons & ordering' },
-    { title: 'Doctor Directory Profiles', href: '/admin/doctors', count: doctorCount, description: 'Manage doctor biographies, designations & qualifications' },
+    { title: 'Hospital Identity & Profile', href: '/admin/content/hospital', count: hospitalProfileCount, description: 'Manage hospital name, logo, hero banner & vision' },
+    { title: 'Medical Departments', href: '/admin/departments', count: departmentCount, description: 'Manage department descriptions, cover images & ordering' },
+    { title: 'Doctor Directory Profiles', href: '/admin/doctors', count: doctorCount, description: 'Manage doctor photos, biographies, designations & qualifications' },
+    { title: 'Media Asset Library', href: '/admin/media', count: mediaAssetCount, description: 'Upload, search, preview and manage authoritative media assets' },
     { title: 'Patient Enquiries & Messages', href: '/admin/enquiries', count: newContactMessages + newAppointmentEnquiries + newInternationalEnquiries, description: 'Review & respond to patient contact requests' },
     { title: 'Outpatient Appointments', href: '/admin/appointments', count: 8, description: 'Manage live booking records & hospital schedules' },
   ];

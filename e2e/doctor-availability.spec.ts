@@ -1,9 +1,10 @@
-﻿import { test, expect } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
 test.describe('Doctor Schedule Manager E2E Suite', () => {
   test('TEST 1: Doctor Login, Weekly Availability & Blocked Date CRUD', async ({ page }) => {
     // 1. Doctor Login
     await page.goto('/login');
+    await page.click('button:has-text("Email & Password")');
     await page.fill('input[id="email"]', 'dr.smith@hospital.com');
     await page.fill('input[id="password"]', 'test123');
     await page.click('button[type="submit"]');
@@ -55,6 +56,7 @@ test.describe('Doctor Schedule Manager E2E Suite', () => {
   test('TEST 2A: Patient Role Denied Access to Doctor Availability', async ({ page }) => {
     // 1. Patient Login
     await page.goto('/login');
+    await page.click('button:has-text("Email & Password")');
     await page.fill('input[id="email"]', 'patient.alice@example.com');
     await page.fill('input[id="password"]', 'test123');
     await page.click('button[type="submit"]');
@@ -68,6 +70,7 @@ test.describe('Doctor Schedule Manager E2E Suite', () => {
   test('TEST 2B: Admin Role Denied Access to Doctor Availability', async ({ page }) => {
     // 1. Admin Login
     await page.goto('/login');
+    await page.click('button:has-text("Email & Password")');
     await page.fill('input[id="email"]', 'admin@hospital.com');
     await page.fill('input[id="password"]', 'test123');
     await page.click('button[type="submit"]');

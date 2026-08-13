@@ -4,6 +4,7 @@ test.describe('Patient Transactional Booking E2E Suite (Phase 5C)', () => {
   test('TEST 1: Successful Patient Booking Flow (Status BOOKED & Success Card)', async ({ page }) => {
     // 1. Patient Login
     await page.goto('/login');
+    await page.click('button:has-text("Email & Password")');
     await page.fill('input[id="email"]', 'patient.alice@example.com');
     await page.fill('input[id="password"]', 'test123');
     await page.click('button[type="submit"]');
@@ -15,8 +16,7 @@ test.describe('Patient Transactional Booking E2E Suite (Phase 5C)', () => {
 
     // 3. Search and View Doctor Profile
     await page.fill('input[id="searchInput"]', 'Jane Smith');
-    await page.click('button[type="submit"]:has-text("Search")');
-    await page.click('a:has-text("View Profile & Book")');
+    await page.click('a:has-text("Book Appointment")');
     await page.waitForURL('**/patient/doctors/*');
 
     // 4. Select Slot
@@ -44,6 +44,7 @@ test.describe('Patient Transactional Booking E2E Suite (Phase 5C)', () => {
   test('TEST 2: Slot Conflict Flow (Duplicate Slot Attempt Returns Friendly Notice & Refreshes Grid)', async ({ page, browser }) => {
     // Patient A Login in Page A
     await page.goto('/login');
+    await page.click('button:has-text("Email & Password")');
     await page.fill('input[id="email"]', 'patient.alice@example.com');
     await page.fill('input[id="password"]', 'test123');
     await page.click('button[type="submit"]');
@@ -52,14 +53,14 @@ test.describe('Patient Transactional Booking E2E Suite (Phase 5C)', () => {
     // Open Doctor Profile in Page A
     await page.goto('/patient/doctors');
     await page.fill('input[id="searchInput"]', 'Robert Johnson');
-    await page.click('button[type="submit"]:has-text("Search")');
-    await page.click('a:has-text("View Profile & Book")');
+    await page.click('a:has-text("Book Appointment")');
     await page.waitForSelector('button:has-text("11:00 AM")', { timeout: 10000 });
 
     // Open Patient B in an ISOLATED browser context
     const contextB = await browser.newContext();
     const pageB = await contextB.newPage();
     await pageB.goto('/login');
+    await pageB.click('button:has-text("Email & Password")');
     await pageB.fill('input[id="email"]', 'patient.bob@example.com');
     await pageB.fill('input[id="password"]', 'test123');
     await pageB.click('button[type="submit"]');
@@ -67,8 +68,7 @@ test.describe('Patient Transactional Booking E2E Suite (Phase 5C)', () => {
 
     await pageB.goto('/patient/doctors');
     await pageB.fill('input[id="searchInput"]', 'Robert Johnson');
-    await pageB.click('button[type="submit"]:has-text("Search")');
-    await pageB.click('a:has-text("View Profile & Book")');
+    await pageB.click('a:has-text("Book Appointment")');
     await pageB.waitForSelector('button:has-text("11:00 AM")', { timeout: 10000 });
 
     // Patient A selects 11:00 AM and confirms booking

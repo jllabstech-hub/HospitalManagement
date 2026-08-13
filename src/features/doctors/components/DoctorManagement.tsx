@@ -17,6 +17,8 @@ import {
 import { useRouter, useSearchParams } from 'next/navigation';
 import InteractiveSearchInput from '@/components/shared/InteractiveSearchInput';
 
+import ImageUploadPicker from '@/components/shared/ImageUploadPicker';
+
 interface ActiveDepartment {
   id: string;
   name: string;
@@ -29,6 +31,7 @@ interface DoctorItem {
   qualification: string;
   experienceYears: number;
   bio: string | null;
+  profileImageUrl?: string | null;
   department: {
     id: string;
     name: string;
@@ -190,6 +193,7 @@ export default function DoctorManagement({
       experienceYears: doc.experienceYears,
       phoneNumber: doc.phoneNumber,
       bio: doc.bio || '',
+      profileImageUrl: doc.profileImageUrl || '',
     });
   };
 
@@ -599,6 +603,13 @@ export default function DoctorManagement({
                 <label className="mb-1 block font-semibold text-ink">Biography (Optional)</label>
                 <textarea rows={2} {...editForm.register('bio')} className="input-field !py-2" />
               </div>
+
+              <ImageUploadPicker
+                label="Doctor Profile Photo"
+                description="Upload a photo or select an existing asset for doctor cards and profiles."
+                value={editForm.watch('profileImageUrl')}
+                onChange={(url) => editForm.setValue('profileImageUrl', url)}
+              />
 
               <div className="flex justify-end space-x-3 border-t border-[#dde5e9] pt-3">
                 <button type="button" onClick={() => setEditingDoctor(null)} className="btn-secondary !text-xs">

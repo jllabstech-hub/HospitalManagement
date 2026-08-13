@@ -33,6 +33,17 @@ const HospitalProfileSchema = z.object({
   mission: z.string().trim().optional(),
   vision: z.string().trim().optional(),
   values: z.string().trim().optional(),
+  heroImageUrl: z.string().trim().optional().or(z.literal('')),
+  logoUrl: z.string().trim().optional().or(z.literal('')),
+  customDomain: z.string().trim().optional().or(z.literal('')),
+  subdomain: z.string().trim().optional().or(z.literal('')),
+  primaryColor: z.string().trim().optional(),
+  secondaryColor: z.string().trim().optional(),
+  fontFamily: z.string().trim().optional(),
+  facebookUrl: z.string().trim().optional().or(z.literal('')),
+  twitterUrl: z.string().trim().optional().or(z.literal('')),
+  instagramUrl: z.string().trim().optional().or(z.literal('')),
+  linkedinUrl: z.string().trim().optional().or(z.literal('')),
 });
 
 const EnquiryTypeSchema = z.enum([
@@ -84,6 +95,17 @@ export async function upsertHospitalProfileAction(
       mission: parsed.data.mission || null,
       vision: parsed.data.vision || null,
       values: parsed.data.values || null,
+      heroImageUrl: parsed.data.heroImageUrl || null,
+      logoUrl: parsed.data.logoUrl || null,
+      customDomain: parsed.data.customDomain || null,
+      subdomain: parsed.data.subdomain || null,
+      primaryColor: parsed.data.primaryColor || null,
+      secondaryColor: parsed.data.secondaryColor || null,
+      fontFamily: parsed.data.fontFamily || null,
+      facebookUrl: parsed.data.facebookUrl || null,
+      twitterUrl: parsed.data.twitterUrl || null,
+      instagramUrl: parsed.data.instagramUrl || null,
+      linkedinUrl: parsed.data.linkedinUrl || null,
       isActive: true,
     };
 

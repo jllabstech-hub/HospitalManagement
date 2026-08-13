@@ -9,6 +9,7 @@ declare module 'next-auth' {
       email: string;
       role: Role;
       isActive: boolean;
+      tenantId: string;
       patientProfileId?: string | null;
       doctorProfileId?: string | null;
     } & DefaultSession['user'];
@@ -19,6 +20,7 @@ declare module 'next-auth' {
     email: string;
     role: Role;
     isActive: boolean;
+    tenantId: string;
     patientProfileId?: string | null;
     doctorProfileId?: string | null;
   }
@@ -29,6 +31,7 @@ declare module 'next-auth/jwt' {
     userId: string;
     role: Role;
     isActive: boolean;
+    tenantId: string;
     patientProfileId?: string | null;
     doctorProfileId?: string | null;
   }
