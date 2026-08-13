@@ -45,7 +45,7 @@ export async function createDoctorAction(
   rawInput: CreateDoctorInput
 ): Promise<ActionResult<{ id: string }>> {
   try {
-    await requireAdmin();
+    const admin = await requireAdmin();
 
     const parsed = CreateDoctorSchema.safeParse(rawInput);
     if (!parsed.success) {
