@@ -35,6 +35,8 @@ const FOOTER_COLS = [
 interface SiteFooterProps {
   profile?: {
     hospitalName?: string | null;
+    legalName?: string | null;
+    shortDescription?: string | null;
     phone?: string | null;
     email?: string | null;
     addressLine1?: string | null;
@@ -44,6 +46,10 @@ interface SiteFooterProps {
     postalCode?: string | null;
     emergencyPhone?: string | null;
     workingHours?: string | null;
+    facebookUrl?: string | null;
+    twitterUrl?: string | null;
+    instagramUrl?: string | null;
+    linkedinUrl?: string | null;
   } | null;
 }
 
@@ -58,6 +64,8 @@ export default function SiteFooter({ profile }: SiteFooterProps) {
     : APP_CONFIG.contact.address;
   const phoneHref = profile?.phone ? `tel:${profile.phone.replace(/[^0-9+]/g, '')}` : APP_CONFIG.contact.phoneHref;
 
+  const copyrightName = profile?.legalName || profile?.hospitalName || APP_CONFIG.appName;
+
   return (
     <footer className="border-t border-[#dde5e9] bg-brand-950 text-brand-50">
       <div className="container-page section-pad-sm">
@@ -65,8 +73,8 @@ export default function SiteFooter({ profile }: SiteFooterProps) {
           <div className="lg:col-span-4">
             <BrandLogo href="/" variant="light" showTagline />
             <p className="mt-5 max-w-sm text-sm leading-relaxed text-brand-200">
-              A modern outpatient hospital experience—find specialists, book 30-minute
-              consultations, and manage your care with clarity and confidence.
+              {profile?.shortDescription ||
+                'A modern outpatient hospital experience—find specialists, book consultations, and manage your care with clarity and confidence.'}
             </p>
             <div className="mt-6 space-y-2 text-sm text-brand-100">
               <p>
@@ -75,15 +83,38 @@ export default function SiteFooter({ profile }: SiteFooterProps) {
                 </a>
               </p>
               <p>
-                <a
-                  href={`mailto:${email}`}
-                  className="hover:text-white"
-                >
+                <a href={`mailto:${email}`} className="hover:text-white">
                   {email}
                 </a>
               </p>
               <p className="text-brand-300">{address}</p>
             </div>
+
+            {/* Social Links */}
+            {(profile?.facebookUrl || profile?.twitterUrl || profile?.instagramUrl || profile?.linkedinUrl) && (
+              <div className="mt-5 flex items-center gap-3 text-brand-300">
+                {profile.facebookUrl && (
+                  <a href={profile.facebookUrl} target="_blank" rel="noopener noreferrer" className="hover:text-white text-xs font-semibold">
+                    Facebook ↗
+                  </a>
+                )}
+                {profile.twitterUrl && (
+                  <a href={profile.twitterUrl} target="_blank" rel="noopener noreferrer" className="hover:text-white text-xs font-semibold">
+                    Twitter ↗
+                  </a>
+                )}
+                {profile.instagramUrl && (
+                  <a href={profile.instagramUrl} target="_blank" rel="noopener noreferrer" className="hover:text-white text-xs font-semibold">
+                    Instagram ↗
+                  </a>
+                )}
+                {profile.linkedinUrl && (
+                  <a href={profile.linkedinUrl} target="_blank" rel="noopener noreferrer" className="hover:text-white text-xs font-semibold">
+                    LinkedIn ↗
+                  </a>
+                )}
+              </div>
+            )}
           </div>
 
           {FOOTER_COLS.map((col) => (
@@ -94,10 +125,7 @@ export default function SiteFooter({ profile }: SiteFooterProps) {
               <ul className="mt-4 space-y-2.5">
                 {col.links.map((link) => (
                   <li key={link.href + link.label}>
-                    <Link
-                      href={link.href}
-                      className="text-sm text-brand-100 transition hover:text-white"
-                    >
+                    <Link href={link.href} className="text-sm text-brand-100 transition hover:text-white">
                       {link.label}
                     </Link>
                   </li>
@@ -124,7 +152,7 @@ export default function SiteFooter({ profile }: SiteFooterProps) {
 
         <div className="mt-12 flex flex-col gap-3 border-t border-white/10 pt-6 text-xs text-brand-300 sm:flex-row sm:items-center sm:justify-between">
           <p>
-            © {year} {APP_CONFIG.appName}. All rights reserved.
+            © {year} {copyrightName}. All rights reserved.
           </p>
           <div className="flex flex-wrap gap-4">
             <Link href="/privacy" className="hover:text-white">

@@ -43,7 +43,7 @@ export default async function AboutOverviewPage() {
           <div className="grid gap-10 lg:grid-cols-3">
             <div className="lg:col-span-2 space-y-6">
               <div className="card-surface p-6 sm:p-8">
-                <h2 className="font-display text-xl font-semibold text-ink">Our story</h2>
+                <h2 className="font-display text-xl font-semibold text-ink">Our Story & Medical Heritage</h2>
                 <p className="mt-4 text-sm leading-relaxed text-ink-muted">
                   {profile?.fullDescription ??
                     profile?.shortDescription ??
@@ -51,18 +51,24 @@ export default async function AboutOverviewPage() {
                 </p>
               </div>
 
-              {(profile?.mission || profile?.vision) && (
-                <div className="grid gap-4 sm:grid-cols-2">
+              {(profile?.mission || profile?.vision || profile?.values) && (
+                <div className="grid gap-4 sm:grid-cols-3">
                   {profile.mission && (
                     <div className="card-surface p-6">
                       <h3 className="font-semibold text-ink">Mission</h3>
-                      <p className="mt-2 text-sm text-ink-muted">{profile.mission}</p>
+                      <p className="mt-2 text-sm leading-relaxed text-ink-muted">{profile.mission}</p>
                     </div>
                   )}
                   {profile.vision && (
                     <div className="card-surface p-6">
                       <h3 className="font-semibold text-ink">Vision</h3>
-                      <p className="mt-2 text-sm text-ink-muted">{profile.vision}</p>
+                      <p className="mt-2 text-sm leading-relaxed text-ink-muted">{profile.vision}</p>
+                    </div>
+                  )}
+                  {profile.values && (
+                    <div className="card-surface p-6">
+                      <h3 className="font-semibold text-ink">Core Values</h3>
+                      <p className="mt-2 text-sm leading-relaxed text-ink-muted">{profile.values}</p>
                     </div>
                   )}
                 </div>

@@ -176,7 +176,7 @@ export default async function ContactPage() {
                     <span className="mt-0.5 text-base">⏰</span>
                     <div>
                       <p className="font-semibold text-ink">Outpatient OPD Hours</p>
-                      <p className="mt-0.5 text-ink-muted">{APP_CONFIG.contact.hours}</p>
+                      <p className="mt-0.5 text-ink-muted">{profile?.workingHours || APP_CONFIG.contact.hours}</p>
                       <p className="mt-1 text-xs font-semibold text-emerald-700">
                         * 24/7 Emergency & Casualty Services Open Always
                       </p>
