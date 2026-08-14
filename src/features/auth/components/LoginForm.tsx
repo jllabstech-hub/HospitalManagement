@@ -98,7 +98,13 @@ export default function LoginForm() {
         return;
       }
 
-      window.location.href = '/patient/dashboard';
+      const searchParams = new URLSearchParams(window.location.search);
+      const callbackUrl = searchParams.get('callbackUrl');
+      if (callbackUrl) {
+        window.location.href = callbackUrl;
+      } else {
+        window.location.href = '/patient/dashboard';
+      }
     } catch (err) {
       console.error('OTP login error:', err);
       setServerError('An unexpected error occurred during OTP verification.');
