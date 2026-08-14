@@ -122,15 +122,26 @@ const NAV_ITEMS: NavItemData[] = [
   },
 ];
 
+interface SiteHeaderProps {
+  profile?: {
+    phone?: string | null;
+    emergencyPhone?: string | null;
+  } | null;
+}
+
 /**
  * Public site header — Server Component shell with Aster-inspired streamlined nav.
  */
-export default function SiteHeader() {
+export default function SiteHeader({ profile }: SiteHeaderProps) {
+  const phone = profile?.phone ?? APP_CONFIG.contact.phone;
+  const emergencyPhone = profile?.emergencyPhone ?? APP_CONFIG.contact.emergency;
+  const phoneHref = profile?.phone ? `tel:${profile.phone.replace(/[^0-9+]/g, '')}` : APP_CONFIG.contact.phoneHref;
+
   return (
     <SiteHeaderClient
-      utilityLeft={`${APP_CONFIG.contact.emergency} · Outpatient bookings online`}
-      utilityPhone={APP_CONFIG.contact.phone}
-      utilityPhoneHref={APP_CONFIG.contact.phoneHref}
+      utilityLeft={`${emergencyPhone} · Outpatient bookings online`}
+      utilityPhone={phone}
+      utilityPhoneHref={phoneHref}
       navItems={NAV_ITEMS}
       brand={<BrandLogo showTagline={false} size="md" className="min-w-0" />}
       desktopActions={

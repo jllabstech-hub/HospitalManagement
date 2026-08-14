@@ -9,7 +9,18 @@ const STATS_COUNTER = [
   { value: '99.8%', label: 'Clinical Accuracy', icon: '⭐' },
 ];
 
-export default function AboutSection() {
+interface AboutSectionProps {
+  profile?: {
+    hospitalName?: string | null;
+    shortDescription?: string | null;
+    city?: string | null;
+  } | null;
+}
+
+export default function AboutSection({ profile }: AboutSectionProps) {
+  const hospitalName = profile?.hospitalName ?? 'CarePulse Hospital';
+  const city = profile?.city ?? 'Bengaluru';
+
   return (
     <section id="about" className="section-pad relative overflow-hidden bg-gradient-to-b from-white via-surface-warm/40 to-white scroll-mt-28">
       {/* Background Decorative Mesh Pattern */}
@@ -21,7 +32,7 @@ export default function AboutSection() {
           <div className="group relative aspect-[4/3] sm:aspect-[16/11] overflow-hidden rounded-card border border-[#dde5e9]/90 shadow-card transition-all duration-500 hover:shadow-elevated">
             <Image
               src="https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&w=1400&q=75"
-              alt="CarePulse Hospital Bangalore state-of-the-art facility"
+              alt={`${hospitalName} facility`}
               fill
               className="object-cover transition-transform duration-700 group-hover:scale-105"
               sizes="(max-width: 1024px) 100vw, 600px"
@@ -32,10 +43,10 @@ export default function AboutSection() {
             {/* Bottom Overlay Info Tag */}
             <div className="absolute bottom-4 left-4 right-4 rounded-button border border-white/20 bg-brand-950/70 p-3.5 backdrop-blur-md text-white">
               <p className="text-xs font-bold uppercase tracking-wider text-brand-200">
-                CarePulse Main Campus · Bengaluru
+                {hospitalName} · {city}
               </p>
               <p className="mt-0.5 text-xs text-brand-100/90">
-                24/7 Emergency Care · NABH Accredited Multi-Specialty Hospital
+                24/7 Emergency Care · Multi-Specialty Hospital
               </p>
             </div>
           </div>
@@ -55,9 +66,12 @@ export default function AboutSection() {
         {/* Right Side: Apollo Inspired Content + Live Counter Metrics */}
         <div className="space-y-6 lg:col-span-6 animate-fade-up">
           <SectionHeader
-            eyebrow="About CarePulse Hospital"
+            eyebrow={`About ${hospitalName}`}
             title="Pioneering Outpatient & Specialized Healthcare Excellence"
-            description="CarePulse Hospital in Bengaluru combines world-class medical expertise, advanced diagnostic technologies, and a patient-first digital ecosystem—ensuring every consultation is seamless from booking to recovery."
+            description={
+              profile?.shortDescription ??
+              `${hospitalName} in ${city} combines world-class medical expertise, advanced diagnostic technologies, and a patient-first digital ecosystem—ensuring every consultation is seamless from booking to recovery.`
+            }
           />
 
           {/* Apollo-Style 4-Grid Live Counter Cards */}

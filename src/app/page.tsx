@@ -18,6 +18,7 @@ import {
   getPublishedDepartments,
   getPublishedCentres,
   getPublishedSpecialities,
+  getPublishedServices,
 } from '@/features/cms/queries/catalog';
 import { getPublishedTestimonials } from '@/features/cms/queries/content';
 import { searchPublicDoctors } from '@/features/cms/queries/doctors-public';
@@ -41,12 +42,13 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const [profile, departments, centres, specialities, testimonials, doctorResult] =
+  const [profile, departments, centres, specialities, services, testimonials, doctorResult] =
     await Promise.all([
       getActiveHospitalProfile(),
       getPublishedDepartments(),
       getPublishedCentres(),
       getPublishedSpecialities(),
+      getPublishedServices(),
       getPublishedTestimonials(),
       searchPublicDoctors({ page: 1, limit: 3, sort: 'featured' }),
     ]);
@@ -69,7 +71,7 @@ export default async function HomePage() {
       postalCode: profile?.postalCode ?? '560001',
       addressCountry: profile?.country ?? 'IN',
     },
-    openingHours: 'Mo-Sa 08:00-20:00',
+    openingHours: profile?.workingHours ?? 'Mo-Sa 08:00-20:00',
     medicalSpecialty: departments.map((d) => d.name),
   };
 
@@ -96,21 +98,21 @@ export default async function HomePage() {
   return (
     <div className="flex min-h-screen flex-col">
       <JsonLd data={[medicalOrganizationLd, breadcrumbLd]} />
-      <SiteHeader />
+      <SiteHeader profile={profile} />
       <main className="flex-1">
         <Hero profile={profile} />
         <TrustStats />
-        <AboutSection />
+        <AboutSection profile={profile} />
         <ExcellenceSection centres={centres} departments={deptForHome} />
         <FeaturedDoctors doctors={doctorResult.doctors} />
         <Specialities specialities={specialities} departments={deptForHome} />
-        <Services />
+        <Services services={services} />
         <AppointmentCTA />
         <Testimonials testimonials={testimonials} />
         <TrustSection />
-        <ContactSection />
+        <ContactSection profile={profile} />
       </main>
-      <SiteFooter />
+      <SiteFooter profile={profile} />
     </div>
   );
 }

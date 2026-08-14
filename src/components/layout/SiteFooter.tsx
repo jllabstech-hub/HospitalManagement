@@ -32,8 +32,31 @@ const FOOTER_COLS = [
   },
 ];
 
-export default function SiteFooter() {
+interface SiteFooterProps {
+  profile?: {
+    hospitalName?: string | null;
+    phone?: string | null;
+    email?: string | null;
+    addressLine1?: string | null;
+    addressLine2?: string | null;
+    city?: string | null;
+    state?: string | null;
+    postalCode?: string | null;
+    emergencyPhone?: string | null;
+    workingHours?: string | null;
+  } | null;
+}
+
+export default function SiteFooter({ profile }: SiteFooterProps) {
   const year = new Date().getUTCFullYear();
+  const phone = profile?.phone ?? APP_CONFIG.contact.phone;
+  const email = profile?.email ?? APP_CONFIG.contact.email;
+  const emergency = profile?.emergencyPhone ? `Emergency: ${profile.emergencyPhone}` : APP_CONFIG.contact.emergency;
+  const hours = profile?.workingHours ?? APP_CONFIG.contact.hours;
+  const address = profile
+    ? [profile.addressLine1, profile.addressLine2, profile.city, profile.state, profile.postalCode].filter(Boolean).join(', ')
+    : APP_CONFIG.contact.address;
+  const phoneHref = profile?.phone ? `tel:${profile.phone.replace(/[^0-9+]/g, '')}` : APP_CONFIG.contact.phoneHref;
 
   return (
     <footer className="border-t border-[#dde5e9] bg-brand-950 text-brand-50">
@@ -47,19 +70,19 @@ export default function SiteFooter() {
             </p>
             <div className="mt-6 space-y-2 text-sm text-brand-100">
               <p>
-                <a href={APP_CONFIG.contact.phoneHref} className="font-semibold hover:text-white">
-                  {APP_CONFIG.contact.phone}
+                <a href={phoneHref} className="font-semibold hover:text-white">
+                  {phone}
                 </a>
               </p>
               <p>
                 <a
-                  href={`mailto:${APP_CONFIG.contact.email}`}
+                  href={`mailto:${email}`}
                   className="hover:text-white"
                 >
-                  {APP_CONFIG.contact.email}
+                  {email}
                 </a>
               </p>
-              <p className="text-brand-300">{APP_CONFIG.contact.address}</p>
+              <p className="text-brand-300">{address}</p>
             </div>
           </div>
 
@@ -88,8 +111,8 @@ export default function SiteFooter() {
               Contact
             </h3>
             <ul className="mt-4 space-y-2.5 text-sm text-brand-100">
-              <li>{APP_CONFIG.contact.hours}</li>
-              <li>{APP_CONFIG.contact.emergency}</li>
+              <li>{hours}</li>
+              <li>{emergency}</li>
               <li>
                 <Link href="/login" className="font-semibold text-white hover:underline">
                   Login
