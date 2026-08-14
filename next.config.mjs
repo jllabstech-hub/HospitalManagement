@@ -21,8 +21,10 @@ const nextConfig = {
 
   webpack: (config, { dev }) => {
     if (dev) {
-      // Disable Webpack cache in development mode to prevent stale chunk ID mismatches on Windows
-      config.cache = false;
+      // Use named module and chunk IDs in dev mode to prevent stale integer module ID desync on Windows
+      config.optimization = config.optimization || {};
+      config.optimization.moduleIds = 'named';
+      config.optimization.chunkIds = 'named';
     }
     return config;
   },
