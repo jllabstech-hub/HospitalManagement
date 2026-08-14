@@ -55,6 +55,44 @@ export default function EnquiriesManager({
 }: Props) {
   const [tab, setTab] = useState<Tab>('contact');
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const q = searchQuery.toLowerCase().trim();
+
+  const filteredContactMessages = contactMessages.filter(
+    (row) =>
+      !q ||
+      row.name.toLowerCase().includes(q) ||
+      row.email.toLowerCase().includes(q) ||
+      row.subject.toLowerCase().includes(q) ||
+      row.message.toLowerCase().includes(q)
+  );
+
+  const filteredAppointmentEnquiries = appointmentEnquiries.filter(
+    (row) =>
+      !q ||
+      row.name.toLowerCase().includes(q) ||
+      row.email.toLowerCase().includes(q) ||
+      (row.phone && row.phone.toLowerCase().includes(q)) ||
+      (row.detail && row.detail.toLowerCase().includes(q))
+  );
+
+  const filteredInternationalEnquiries = internationalEnquiries.filter(
+    (row) =>
+      !q ||
+      row.name.toLowerCase().includes(q) ||
+      row.email.toLowerCase().includes(q) ||
+      (row.phone && row.phone.toLowerCase().includes(q)) ||
+      (row.detail && row.detail.toLowerCase().includes(q))
+  );
+
+  const filteredPackageRequests = packageRequests.filter(
+    (row) =>
+      !q ||
+      row.name.toLowerCase().includes(q) ||
+      row.email.toLowerCase().includes(q) ||
+      (row.packageName && row.packageName.toLowerCase().includes(q))
+  );
 
   const handleContactStatus = async (id: string, status: ContactMessageStatus) => {
     setFeedback(null);
@@ -73,10 +111,10 @@ export default function EnquiriesManager({
   };
 
   const tabs: { key: Tab; label: string; count: number }[] = [
-    { key: 'contact', label: 'Contact Messages', count: contactMessages.length },
-    { key: 'appointment', label: 'Appointment Enquiries', count: appointmentEnquiries.length },
-    { key: 'international', label: 'International', count: internationalEnquiries.length },
-    { key: 'package', label: 'Package Requests', count: packageRequests.length },
+    { key: 'contact', label: 'Contact Messages', count: filteredContactMessages.length },
+    { key: 'appointment', label: 'Appointment Enquiries', count: filteredAppointmentEnquiries.length },
+    { key: 'international', label: 'International', count: filteredInternationalEnquiries.length },
+    { key: 'package', label: 'Package Requests', count: filteredPackageRequests.length },
   ];
 
   return (
@@ -86,6 +124,39 @@ export default function EnquiriesManager({
           {feedback}
         </p>
       )}
+
+      {/* Live Search Bar */}
+      <div className="relative flex items-center">
+        <svg
+          className="pointer-events-none absolute left-3 h-4 w-4 text-ink-muted"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+          aria-hidden="true"
+        >
+          <path
+            fillRule="evenodd"
+            d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z"
+            clipRule="evenodd"
+          />
+        </svg>
+        <input
+          type="text"
+          placeholder="Search enquiries by name, email, subject, or keywords as you type..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="input-field pl-9 pr-8 text-xs font-medium sm:text-sm"
+        />
+        {searchQuery && (
+          <button
+            type="button"
+            onClick={() => setSearchQuery('')}
+            className="absolute right-2.5 rounded-full p-1 text-xs font-bold text-ink-soft transition hover:bg-brand-50 hover:text-ink"
+            title="Clear search"
+          >
+            ✕
+          </button>
+        )}
+      </div>
 
       <div className="flex flex-wrap gap-2">
         {tabs.map((t) => (
@@ -116,7 +187,7 @@ export default function EnquiriesManager({
               </tr>
             </thead>
             <tbody className="divide-y divide-[#eef2f4]">
-              {contactMessages.map((row) => (
+              {filteredContactMessages.map((row) => (
                 <tr key={row.id}>
                   <td className="px-2 py-3">
                     <div className="font-semibold text-ink">{row.name}</div>
@@ -150,14 +221,14 @@ export default function EnquiriesManager({
 
         {tab === 'appointment' && (
           <EnquiryTable
-            rows={appointmentEnquiries}
+            rows={filteredAppointmentEnquiries}
             onStatusChange={(id, status) => handleEnquiryStatus('appointment', id, status)}
           />
         )}
 
         {tab === 'international' && (
           <EnquiryTable
-            rows={internationalEnquiries}
+            rows={filteredInternationalEnquiries}
             onStatusChange={(id, status) => handleEnquiryStatus('international', id, status)}
           />
         )}
@@ -173,7 +244,7 @@ export default function EnquiriesManager({
               </tr>
             </thead>
             <tbody className="divide-y divide-[#eef2f4]">
-              {packageRequests.map((row) => (
+              {filteredPackageRequests.map((row) => (
                 <tr key={row.id}>
                   <td className="px-2 py-3">
                     <div className="font-semibold text-ink">{row.name}</div>
@@ -202,11 +273,11 @@ export default function EnquiriesManager({
           </table>
         )}
 
-        {((tab === 'contact' && contactMessages.length === 0) ||
-          (tab === 'appointment' && appointmentEnquiries.length === 0) ||
-          (tab === 'international' && internationalEnquiries.length === 0) ||
-          (tab === 'package' && packageRequests.length === 0)) && (
-          <p className="py-8 text-center text-sm text-ink-muted">No records in this section.</p>
+        {((tab === 'contact' && filteredContactMessages.length === 0) ||
+          (tab === 'appointment' && filteredAppointmentEnquiries.length === 0) ||
+          (tab === 'international' && filteredInternationalEnquiries.length === 0) ||
+          (tab === 'package' && filteredPackageRequests.length === 0)) && (
+          <p className="py-8 text-center text-sm text-ink-muted">No records matching your search query.</p>
         )}
       </div>
     </div>

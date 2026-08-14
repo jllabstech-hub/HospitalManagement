@@ -1,6 +1,7 @@
 import { requireAdmin } from '@/server/security/auth-helpers';
 import { prisma } from '@/server/db/client';
 import EnquiriesManager from '@/features/cms/components/EnquiriesManager';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
 
 export default async function AdminEnquiriesPage() {
   await requireAdmin();
@@ -31,12 +32,11 @@ export default async function AdminEnquiriesPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-2xl font-semibold text-ink">Enquiries</h1>
-        <p className="mt-1 text-sm text-ink-muted">
-          Review contact messages, appointment requests, international patient enquiries, and package information requests.
-        </p>
-      </div>
+      <AdminPageHeader
+        title="Enquiries & Contact Supervision"
+        description="Review contact messages, appointment requests, international patient enquiries, and package information requests."
+        frontendPath="/contact"
+      />
 
       <EnquiriesManager
         contactMessages={contactMessages}

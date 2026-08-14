@@ -4,7 +4,8 @@ import { prisma } from '@/server/db/client';
 import { getAdminAppointments } from '@/features/appointments/services/manage-appointments';
 import StatusBadge from '@/components/shared/StatusBadge';
 import { formatTimeTo12Hour } from '@/lib/date-utils';
-import InteractiveSearchInput from '@/components/shared/InteractiveSearchInput';
+import AdminAppointmentFilters from './AdminAppointmentFilters';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
 
 interface PageProps {
   searchParams: Promise<{
@@ -48,128 +49,22 @@ export default async function AdminAppointmentsMasterPage({ searchParams }: Page
 
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <h1 className="font-display text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
-          Admin Appointments Master Directory
-        </h1>
-        <p className="mt-2 text-sm text-ink-muted">
-          System-wide appointment supervision, filtering, and audit log.
-        </p>
-      </div>
+      <AdminPageHeader
+        title="Admin Appointments Master Directory"
+        description="System-wide appointment supervision, filtering, and audit log."
+        frontendPath="/book-appointment"
+      />
 
-      {/* Filter Form */}
-      <form method="GET" action="/admin/appointments" className="card-surface space-y-4 p-6">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
-          {/* Interactive Search Input */}
-          <div className="md:col-span-4">
-            <label className="mb-1 block text-xs font-semibold text-ink">
-              Interactive Search (Patient / Doctor / Reason)
-            </label>
-            <InteractiveSearchInput
-              placeholder="Type patient, doctor name or reason..."
-              defaultValue={search}
-            />
-          </div>
-
-          {/* Department Filter */}
-          <div className="md:col-span-3">
-            <label htmlFor="adminDeptFilter" className="mb-1 block text-xs font-semibold text-ink">
-              Department
-            </label>
-            <select
-              id="adminDeptFilter"
-              name="department"
-              defaultValue={departmentId}
-              className="input-field !py-2 text-xs sm:text-sm"
-            >
-              <option value="">All Departments</option>
-              {departments.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Doctor Filter */}
-          <div className="md:col-span-3">
-            <label htmlFor="adminDoctorFilter" className="mb-1 block text-xs font-semibold text-ink">
-              Doctor
-            </label>
-            <select
-              id="adminDoctorFilter"
-              name="doctor"
-              defaultValue={doctorId}
-              className="input-field !py-2 text-xs sm:text-sm"
-            >
-              <option value="">All Doctors</option>
-              {doctors.map((doc) => (
-                <option key={doc.id} value={doc.id}>
-                  {doc.fullName}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Status Filter */}
-          <div className="md:col-span-2">
-            <label htmlFor="adminStatusFilter" className="mb-1 block text-xs font-semibold text-ink">
-              Status
-            </label>
-            <select
-              id="adminStatusFilter"
-              name="status"
-              defaultValue={statusFilter}
-              className="input-field !py-2 text-xs sm:text-sm"
-            >
-              <option value="">All Statuses</option>
-              <option value="BOOKED">BOOKED</option>
-              <option value="CONFIRMED">CONFIRMED</option>
-              <option value="COMPLETED">COMPLETED</option>
-              <option value="CANCELLED">CANCELLED</option>
-              <option value="NO_SHOW">NO_SHOW</option>
-            </select>
-          </div>
-
-          {/* Entries per page */}
-          <div className="md:col-span-2">
-            <label htmlFor="adminLimitFilter" className="mb-1 block text-xs font-semibold text-ink">
-              Entries per page
-            </label>
-            <select
-              id="adminLimitFilter"
-              name="limit"
-              defaultValue={limit}
-              className="input-field !py-2 text-xs font-medium sm:text-sm"
-            >
-              <option value="5">5 entries</option>
-              <option value="10">10 entries</option>
-              <option value="15">15 entries</option>
-              <option value="20">20 entries</option>
-              <option value="50">50 entries</option>
-            </select>
-          </div>
-
-          {/* Submit */}
-          <div className="flex items-end md:col-span-2">
-            <button type="submit" className="btn-primary w-full !py-2 !text-xs sm:!text-sm">
-              Filter
-            </button>
-          </div>
-        </div>
-
-        {(search || departmentId || doctorId || statusFilter || dateStr) && (
-          <div className="flex items-center justify-between pt-2 text-xs">
-            <span className="text-ink-muted">
-              Found <strong className="text-ink">{totalCount}</strong> matching appointments
-            </span>
-            <Link href="/admin/appointments" className="font-semibold text-brand-700 hover:underline">
-              Reset Filters
-            </Link>
-          </div>
-        )}
-      </form>
+      {/* Live Search & Filter Bar */}
+      <AdminAppointmentFilters
+        departments={departments}
+        doctors={doctors}
+        currentSearch={search}
+        currentDepartment={departmentId}
+        currentDoctor={doctorId}
+        currentStatus={statusFilter}
+        totalCount={totalCount}
+      />
 
       {/* Appointments Table */}
       {appointments.length === 0 ? (

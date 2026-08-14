@@ -28,6 +28,15 @@ const hospitalProfileSelect = {
   vision: true,
   values: true,
   workingHours: true,
+  customDomain: true,
+  subdomain: true,
+  primaryColor: true,
+  secondaryColor: true,
+  fontFamily: true,
+  facebookUrl: true,
+  twitterUrl: true,
+  instagramUrl: true,
+  linkedinUrl: true,
 } as const;
 
 const locationSelect = {

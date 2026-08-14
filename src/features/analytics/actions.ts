@@ -5,13 +5,37 @@ import { prisma } from '@/server/db/client';
 
 export async function getDashboardAnalytics() {
   const authUser = await requireAdmin();
-  const user = await prisma.user.findUnique({ where: { id: authUser.id } });
-  if (!user) throw new Error("User not found");
+
+  let tenantId: string | null = authUser.tenantId || null;
+
+  if (authUser.id || authUser.email) {
+    const dbUser = await prisma.user.findFirst({
+      where: {
+        OR: [
+          ...(authUser.id ? [{ id: authUser.id }] : []),
+          ...(authUser.email ? [{ email: authUser.email }] : []),
+        ],
+      },
+      select: { tenantId: true },
+    });
+    if (dbUser?.tenantId) {
+      tenantId = dbUser.tenantId;
+    }
+  }
+
+  if (!tenantId) {
+    const firstHospital = await prisma.hospitalProfile.findFirst({ select: { id: true } });
+    if (firstHospital) {
+      tenantId = firstHospital.id;
+    }
+  }
 
   const now = new Date();
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const endOfToday = new Date(startOfToday.getTime() + 24 * 60 * 60 * 1000 - 1);
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+  const tenantWhere = tenantId ? { tenantId } : {};
 
   // 1. Fetch Top-Level KPIs
   const [
@@ -25,32 +49,32 @@ export async function getDashboardAnalytics() {
     newPatientsCount,
   ] = await Promise.all([
     prisma.appointment.count({
-      where: { tenantId: user.tenantId, appointmentDate: { gte: startOfToday, lte: endOfToday } },
+      where: { ...tenantWhere, appointmentDate: { gte: startOfToday, lte: endOfToday } },
     }),
     prisma.appointment.count({
       where: {
-        tenantId: user.tenantId,
+        ...tenantWhere,
         appointmentDate: { gt: endOfToday },
         status: { in: ['BOOKED', 'CONFIRMED'] },
       },
     }),
     prisma.appointment.count({
-      where: { tenantId: user.tenantId, status: 'COMPLETED' },
+      where: { ...tenantWhere, status: 'COMPLETED' },
     }),
     prisma.appointment.count({
-      where: { tenantId: user.tenantId, status: 'CANCELLED' },
+      where: { ...tenantWhere, status: 'CANCELLED' },
     }),
     prisma.appointment.count({
-      where: { tenantId: user.tenantId, status: 'NO_SHOW' },
+      where: { ...tenantWhere, status: 'NO_SHOW' },
     }),
     prisma.appointment.count({
-      where: { tenantId: user.tenantId, status: { in: ['COMPLETED', 'CANCELLED', 'NO_SHOW'] } },
+      where: { ...tenantWhere, status: { in: ['COMPLETED', 'CANCELLED', 'NO_SHOW'] } },
     }),
     prisma.doctorProfile.count({
-      where: { tenantId: user.tenantId, user: { is: { isActive: true } } },
+      where: { ...tenantWhere, user: { is: { isActive: true } } },
     }),
     prisma.patientProfile.count({
-      where: { tenantId: user.tenantId, createdAt: { gte: thirtyDaysAgo } },
+      where: { ...tenantWhere, createdAt: { gte: thirtyDaysAgo } },
     }),
   ]);
 
@@ -62,7 +86,7 @@ export async function getDashboardAnalytics() {
   // 2. Fetch Recent Data for Charts (Last 30 days)
   const recentAppointments = await prisma.appointment.findMany({
     where: {
-      tenantId: user.tenantId,
+      ...tenantWhere,
       appointmentDate: { gte: thirtyDaysAgo },
     },
     include: {

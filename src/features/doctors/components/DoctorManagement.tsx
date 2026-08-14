@@ -16,6 +16,7 @@ import {
 } from '../actions';
 import { useRouter, useSearchParams } from 'next/navigation';
 import InteractiveSearchInput from '@/components/shared/InteractiveSearchInput';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
 
 import ImageUploadPicker from '@/components/shared/ImageUploadPicker';
 
@@ -199,14 +200,12 @@ export default function DoctorManagement({
 
   return (
     <div className="space-y-6">
-      {/* Header Bar */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="font-display text-2xl font-semibold tracking-tight text-ink">Doctors</h1>
-          <p className="mt-2 text-sm text-ink-muted">
-            Manage hospital doctor profiles, credentials, and account statuses.
-          </p>
-        </div>
+      {/* Header Bar with Frontend URL hint & Live Preview */}
+      <AdminPageHeader
+        title="Doctors"
+        description="Manage hospital doctor profiles, credentials, and account statuses."
+        frontendPath="/doctors"
+      >
         <button
           onClick={() => {
             setServerError(null);
@@ -216,7 +215,7 @@ export default function DoctorManagement({
         >
           <span>+ Add Doctor</span>
         </button>
-      </div>
+      </AdminPageHeader>
 
       {/* Notifications */}
       {successMessage && (
@@ -407,57 +406,33 @@ export default function DoctorManagement({
 
       {/* Create Doctor Modal */}
       {isCreateOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/50 p-4 backdrop-blur-[2px]">
-          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-card border border-[#dde5e9] bg-white p-6 shadow-elevated">
-            <h2 className="font-display text-xl font-semibold text-ink">Add Doctor Account</h2>
-            <p className="mb-4 mt-1 text-xs text-ink-muted">Onboard a new medical specialist.</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-gray-100 bg-white p-6 sm:p-7 shadow-2xl">
+            <h2 className="text-xl font-extrabold tracking-tight text-[#111927]">Add Doctor Account</h2>
+            <p className="mt-1 mb-5 text-xs font-medium text-[#6c737f]">Onboard a new medical specialist and set department assignment.</p>
 
-            <form onSubmit={createForm.handleSubmit(handleCreateSubmit)} className="space-y-3 text-xs">
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <form onSubmit={createForm.handleSubmit(handleCreateSubmit)} className="space-y-4 text-xs">
+              {/* Full Name & Department */}
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="mb-1 block font-semibold text-ink">Full Name *</label>
+                  <label className="mb-1.5 block font-bold text-[#111927]">Full Name *</label>
                   <input
                     type="text"
                     {...createForm.register('fullName')}
-                    className="input-field !py-2"
+                    className="w-full rounded-xl border border-[#d2d6dc] bg-white px-3.5 py-2.5 text-xs sm:text-sm text-[#111927] placeholder:text-[#9da4ae] focus:border-[#0f4c5c] focus:ring-2 focus:ring-[#0f4c5c]/20 outline-none transition"
                     placeholder="Dr. Jane Smith"
                   />
                   {createForm.formState.errors.fullName && (
-                    <p className="mt-0.5 text-rose-600">{createForm.formState.errors.fullName.message}</p>
+                    <p className="mt-1 text-[11px] font-medium text-rose-600">{createForm.formState.errors.fullName.message}</p>
                   )}
                 </div>
 
                 <div>
-                  <label className="mb-1 block font-semibold text-ink">Email Address *</label>
-                  <input
-                    type="email"
-                    {...createForm.register('email')}
-                    className="input-field !py-2"
-                    placeholder="dr.smith@hospital.com"
-                  />
-                  {createForm.formState.errors.email && (
-                    <p className="mt-0.5 text-rose-600">{createForm.formState.errors.email.message}</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div>
-                  <label className="mb-1 block font-semibold text-ink">Temporary Password *</label>
-                  <input
-                    type="password"
-                    {...createForm.register('password')}
-                    className="input-field !py-2"
-                    placeholder="Minimum 8 characters"
-                  />
-                  {createForm.formState.errors.password && (
-                    <p className="mt-0.5 text-rose-600">{createForm.formState.errors.password.message}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="mb-1 block font-semibold text-ink">Medical Department *</label>
-                  <select {...createForm.register('departmentId')} className="input-field !py-2">
+                  <label className="mb-1.5 block font-bold text-[#111927]">Department *</label>
+                  <select
+                    {...createForm.register('departmentId')}
+                    className="w-full rounded-xl border border-[#d2d6dc] bg-white px-3.5 py-2.5 text-xs sm:text-sm text-[#111927] focus:border-[#0f4c5c] focus:ring-2 focus:ring-[#0f4c5c]/20 outline-none transition"
+                  >
                     {departments.map((d) => (
                       <option key={d.id} value={d.id}>
                         {d.name}
@@ -465,67 +440,117 @@ export default function DoctorManagement({
                     ))}
                   </select>
                   {createForm.formState.errors.departmentId && (
-                    <p className="mt-0.5 text-rose-600">{createForm.formState.errors.departmentId.message}</p>
+                    <p className="mt-1 text-[11px] font-medium text-rose-600">{createForm.formState.errors.departmentId.message}</p>
                   )}
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                <div className="sm:col-span-2">
-                  <label className="mb-1 block font-semibold text-ink">Qualification *</label>
+              {/* Email & Password */}
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1.5 block font-bold text-[#111927]">Email Address *</label>
                   <input
-                    type="text"
-                    {...createForm.register('qualification')}
-                    className="input-field !py-2"
-                    placeholder="MBBS, MD Cardiology"
+                    type="email"
+                    {...createForm.register('email')}
+                    className="w-full rounded-xl border border-[#d2d6dc] bg-white px-3.5 py-2.5 text-xs sm:text-sm text-[#111927] placeholder:text-[#9da4ae] focus:border-[#0f4c5c] focus:ring-2 focus:ring-[#0f4c5c]/20 outline-none transition"
+                    placeholder="dr.smith@hospital.com"
                   />
-                  {createForm.formState.errors.qualification && (
-                    <p className="mt-0.5 text-rose-600">{createForm.formState.errors.qualification.message}</p>
+                  {createForm.formState.errors.email && (
+                    <p className="mt-1 text-[11px] font-medium text-rose-600">{createForm.formState.errors.email.message}</p>
                   )}
                 </div>
 
                 <div>
-                  <label className="mb-1 block font-semibold text-ink">Exp. Years *</label>
+                  <label className="mb-1.5 block font-bold text-[#111927]">Temporary Password *</label>
                   <input
-                    type="number"
-                    min="0"
-                    {...createForm.register('experienceYears')}
-                    className="input-field !py-2"
+                    type="password"
+                    {...createForm.register('password')}
+                    className="w-full rounded-xl border border-[#d2d6dc] bg-white px-3.5 py-2.5 text-xs sm:text-sm text-[#111927] placeholder:text-[#9da4ae] focus:border-[#0f4c5c] focus:ring-2 focus:ring-[#0f4c5c]/20 outline-none transition"
+                    placeholder="Minimum 8 characters"
                   />
-                  {createForm.formState.errors.experienceYears && (
-                    <p className="mt-0.5 text-rose-600">{createForm.formState.errors.experienceYears.message}</p>
+                  {createForm.formState.errors.password && (
+                    <p className="mt-1 text-[11px] font-medium text-rose-600">{createForm.formState.errors.password.message}</p>
                   )}
                 </div>
               </div>
 
+              {/* Qualification & Experience Years */}
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1.5 block font-bold text-[#111927]">Qualification *</label>
+                  <input
+                    type="text"
+                    {...createForm.register('qualification')}
+                    className="w-full rounded-xl border border-[#d2d6dc] bg-white px-3.5 py-2.5 text-xs sm:text-sm text-[#111927] placeholder:text-[#9da4ae] focus:border-[#0f4c5c] focus:ring-2 focus:ring-[#0f4c5c]/20 outline-none transition"
+                    placeholder="MBBS, MD"
+                  />
+                  {createForm.formState.errors.qualification && (
+                    <p className="mt-1 text-[11px] font-medium text-rose-600">{createForm.formState.errors.qualification.message}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block font-bold text-[#111927]">Exp. Years *</label>
+                  <input
+                    type="number"
+                    min="0"
+                    {...createForm.register('experienceYears')}
+                    className="w-full rounded-xl border border-[#d2d6dc] bg-white px-3.5 py-2.5 text-xs sm:text-sm text-[#111927] focus:border-[#0f4c5c] focus:ring-2 focus:ring-[#0f4c5c]/20 outline-none transition"
+                  />
+                  {createForm.formState.errors.experienceYears && (
+                    <p className="mt-1 text-[11px] font-medium text-rose-600">{createForm.formState.errors.experienceYears.message}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Phone Number */}
               <div>
-                <label className="mb-1 block font-semibold text-ink">Contact Phone Number *</label>
+                <label className="mb-1.5 block font-bold text-[#111927]">Phone Number *</label>
                 <input
                   type="text"
                   {...createForm.register('phoneNumber')}
-                  className="input-field !py-2"
-                  placeholder="+91 98765 43210"
+                  className="w-full rounded-xl border border-[#d2d6dc] bg-white px-3.5 py-2.5 text-xs sm:text-sm text-[#111927] placeholder:text-[#9da4ae] focus:border-[#0f4c5c] focus:ring-2 focus:ring-[#0f4c5c]/20 outline-none transition"
+                  placeholder="+91 90000 00001"
                 />
                 {createForm.formState.errors.phoneNumber && (
-                  <p className="mt-0.5 text-rose-600">{createForm.formState.errors.phoneNumber.message}</p>
+                  <p className="mt-1 text-[11px] font-medium text-rose-600">{createForm.formState.errors.phoneNumber.message}</p>
                 )}
               </div>
 
+              {/* Biography */}
               <div>
-                <label className="mb-1 block font-semibold text-ink">Biography (Optional)</label>
+                <label className="mb-1.5 block font-bold text-[#111927]">Biography (Optional)</label>
                 <textarea
-                  rows={2}
+                  rows={3}
                   {...createForm.register('bio')}
-                  className="input-field !py-2"
-                  placeholder="Professional background and clinical focus..."
+                  className="w-full rounded-xl border border-[#d2d6dc] bg-white px-3.5 py-2.5 text-xs sm:text-sm text-[#111927] placeholder:text-[#9da4ae] focus:border-[#0f4c5c] focus:ring-2 focus:ring-[#0f4c5c]/20 outline-none transition resize-y"
+                  placeholder="Professional background and clinical specialization..."
                 />
               </div>
 
-              <div className="flex justify-end space-x-3 border-t border-[#dde5e9] pt-3">
-                <button type="button" onClick={() => setIsCreateOpen(false)} className="btn-secondary !text-xs">
+              {/* Doctor Profile Photo */}
+              <ImageUploadPicker
+                variant="doctor"
+                label="Doctor Profile Photo"
+                description="Upload a photo or select an existing asset for doctor cards and profiles."
+                value={createForm.watch('profileImageUrl')}
+                onChange={(url) => createForm.setValue('profileImageUrl', url)}
+              />
+
+              {/* Modal Footer */}
+              <div className="mt-6 flex items-center justify-end space-x-3 border-t border-[#e2e8f0] pt-4">
+                <button
+                  type="button"
+                  onClick={() => setIsCreateOpen(false)}
+                  className="rounded-xl border border-[#d2d6dc] bg-white px-5 py-2.5 text-xs font-semibold text-[#374151] transition hover:bg-gray-50"
+                >
                   Cancel
                 </button>
-                <button type="submit" disabled={createForm.formState.isSubmitting} className="btn-primary !text-xs">
+                <button
+                  type="submit"
+                  disabled={createForm.formState.isSubmitting}
+                  className="rounded-xl bg-[#0f4c5c] px-6 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-[#0c3d4a] disabled:opacity-50"
+                >
                   {createForm.formState.isSubmitting ? 'Creating...' : 'Create Doctor Account'}
                 </button>
               </div>
@@ -536,26 +561,34 @@ export default function DoctorManagement({
 
       {/* Edit Doctor Modal */}
       {editingDoctor && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/50 p-4 backdrop-blur-[2px]">
-          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-card border border-[#dde5e9] bg-white p-6 shadow-elevated">
-            <h2 className="font-display text-xl font-semibold text-ink">Edit Doctor Details</h2>
-            <p className="mb-4 mt-1 text-xs text-ink-muted">Update credentials and department assignment.</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-gray-100 bg-white p-6 sm:p-7 shadow-2xl">
+            <h2 className="text-xl font-extrabold tracking-tight text-[#111927]">Edit Doctor Details</h2>
+            <p className="mt-1 mb-5 text-xs font-medium text-[#6c737f]">Update credentials and department assignment.</p>
 
-            <form onSubmit={editForm.handleSubmit(handleEditSubmit)} className="space-y-3 text-xs">
+            <form onSubmit={editForm.handleSubmit(handleEditSubmit)} className="space-y-4 text-xs">
               <input type="hidden" {...editForm.register('id')} />
 
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {/* Full Name & Department */}
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="mb-1 block font-semibold text-ink">Full Name *</label>
-                  <input type="text" {...editForm.register('fullName')} className="input-field !py-2" />
+                  <label className="mb-1.5 block font-bold text-[#111927]">Full Name *</label>
+                  <input
+                    type="text"
+                    {...editForm.register('fullName')}
+                    className="w-full rounded-xl border border-[#d2d6dc] bg-white px-3.5 py-2.5 text-xs sm:text-sm text-[#111927] focus:border-[#0f4c5c] focus:ring-2 focus:ring-[#0f4c5c]/20 outline-none transition"
+                  />
                   {editForm.formState.errors.fullName && (
-                    <p className="mt-0.5 text-rose-600">{editForm.formState.errors.fullName.message}</p>
+                    <p className="mt-1 text-[11px] font-medium text-rose-600">{editForm.formState.errors.fullName.message}</p>
                   )}
                 </div>
 
                 <div>
-                  <label className="mb-1 block font-semibold text-ink">Department *</label>
-                  <select {...editForm.register('departmentId')} className="input-field !py-2">
+                  <label className="mb-1.5 block font-bold text-[#111927]">Department *</label>
+                  <select
+                    {...editForm.register('departmentId')}
+                    className="w-full rounded-xl border border-[#d2d6dc] bg-white px-3.5 py-2.5 text-xs sm:text-sm text-[#111927] focus:border-[#0f4c5c] focus:ring-2 focus:ring-[#0f4c5c]/20 outline-none transition"
+                  >
                     {departments.map((d) => (
                       <option key={d.id} value={d.id}>
                         {d.name}
@@ -563,59 +596,85 @@ export default function DoctorManagement({
                     ))}
                   </select>
                   {editForm.formState.errors.departmentId && (
-                    <p className="mt-0.5 text-rose-600">{editForm.formState.errors.departmentId.message}</p>
+                    <p className="mt-1 text-[11px] font-medium text-rose-600">{editForm.formState.errors.departmentId.message}</p>
                   )}
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                <div className="sm:col-span-2">
-                  <label className="mb-1 block font-semibold text-ink">Qualification *</label>
-                  <input type="text" {...editForm.register('qualification')} className="input-field !py-2" />
+              {/* Qualification & Experience Years */}
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1.5 block font-bold text-[#111927]">Qualification *</label>
+                  <input
+                    type="text"
+                    {...editForm.register('qualification')}
+                    className="w-full rounded-xl border border-[#d2d6dc] bg-white px-3.5 py-2.5 text-xs sm:text-sm text-[#111927] focus:border-[#0f4c5c] focus:ring-2 focus:ring-[#0f4c5c]/20 outline-none transition"
+                  />
                   {editForm.formState.errors.qualification && (
-                    <p className="mt-0.5 text-rose-600">{editForm.formState.errors.qualification.message}</p>
+                    <p className="mt-1 text-[11px] font-medium text-rose-600">{editForm.formState.errors.qualification.message}</p>
                   )}
                 </div>
 
                 <div>
-                  <label className="mb-1 block font-semibold text-ink">Exp. Years *</label>
+                  <label className="mb-1.5 block font-bold text-[#111927]">Exp. Years *</label>
                   <input
                     type="number"
                     min="0"
                     {...editForm.register('experienceYears')}
-                    className="input-field !py-2"
+                    className="w-full rounded-xl border border-[#d2d6dc] bg-white px-3.5 py-2.5 text-xs sm:text-sm text-[#111927] focus:border-[#0f4c5c] focus:ring-2 focus:ring-[#0f4c5c]/20 outline-none transition"
                   />
                   {editForm.formState.errors.experienceYears && (
-                    <p className="mt-0.5 text-rose-600">{editForm.formState.errors.experienceYears.message}</p>
+                    <p className="mt-1 text-[11px] font-medium text-rose-600">{editForm.formState.errors.experienceYears.message}</p>
                   )}
                 </div>
               </div>
 
+              {/* Phone Number */}
               <div>
-                <label className="mb-1 block font-semibold text-ink">Phone Number *</label>
-                <input type="text" {...editForm.register('phoneNumber')} className="input-field !py-2" />
+                <label className="mb-1.5 block font-bold text-[#111927]">Phone Number *</label>
+                <input
+                  type="text"
+                  {...editForm.register('phoneNumber')}
+                  className="w-full rounded-xl border border-[#d2d6dc] bg-white px-3.5 py-2.5 text-xs sm:text-sm text-[#111927] focus:border-[#0f4c5c] focus:ring-2 focus:ring-[#0f4c5c]/20 outline-none transition"
+                />
                 {editForm.formState.errors.phoneNumber && (
-                  <p className="mt-0.5 text-rose-600">{editForm.formState.errors.phoneNumber.message}</p>
+                  <p className="mt-1 text-[11px] font-medium text-rose-600">{editForm.formState.errors.phoneNumber.message}</p>
                 )}
               </div>
 
+              {/* Biography */}
               <div>
-                <label className="mb-1 block font-semibold text-ink">Biography (Optional)</label>
-                <textarea rows={2} {...editForm.register('bio')} className="input-field !py-2" />
+                <label className="mb-1.5 block font-bold text-[#111927]">Biography (Optional)</label>
+                <textarea
+                  rows={3}
+                  {...editForm.register('bio')}
+                  className="w-full rounded-xl border border-[#d2d6dc] bg-white px-3.5 py-2.5 text-xs sm:text-sm text-[#111927] focus:border-[#0f4c5c] focus:ring-2 focus:ring-[#0f4c5c]/20 outline-none transition resize-y"
+                />
               </div>
 
+              {/* Doctor Profile Photo */}
               <ImageUploadPicker
+                variant="doctor"
                 label="Doctor Profile Photo"
                 description="Upload a photo or select an existing asset for doctor cards and profiles."
                 value={editForm.watch('profileImageUrl')}
                 onChange={(url) => editForm.setValue('profileImageUrl', url)}
               />
 
-              <div className="flex justify-end space-x-3 border-t border-[#dde5e9] pt-3">
-                <button type="button" onClick={() => setEditingDoctor(null)} className="btn-secondary !text-xs">
+              {/* Modal Footer */}
+              <div className="mt-6 flex items-center justify-end space-x-3 border-t border-[#e2e8f0] pt-4">
+                <button
+                  type="button"
+                  onClick={() => setEditingDoctor(null)}
+                  className="rounded-xl border border-[#d2d6dc] bg-white px-5 py-2.5 text-xs font-semibold text-[#374151] transition hover:bg-gray-50"
+                >
                   Cancel
                 </button>
-                <button type="submit" disabled={editForm.formState.isSubmitting} className="btn-primary !text-xs">
+                <button
+                  type="submit"
+                  disabled={editForm.formState.isSubmitting}
+                  className="rounded-xl bg-[#0f4c5c] px-6 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-[#0c3d4a] disabled:opacity-50"
+                >
                   {editForm.formState.isSubmitting ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>

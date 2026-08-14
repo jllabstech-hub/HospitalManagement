@@ -17,6 +17,7 @@ import {
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import InteractiveSearchInput from '@/components/shared/InteractiveSearchInput';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
 
 import ImageUploadPicker from '@/components/shared/ImageUploadPicker';
 
@@ -152,14 +153,12 @@ export default function DepartmentManagement({
 
   return (
     <div className="space-y-6">
-      {/* Header Bar */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="font-display text-2xl font-semibold tracking-tight text-ink">Departments</h1>
-          <p className="mt-2 text-sm text-ink-muted">
-            Manage hospital medical departments and specialties.
-          </p>
-        </div>
+      {/* Header Bar with Frontend URL hint & Live Preview */}
+      <AdminPageHeader
+        title="Departments"
+        description="Manage hospital medical departments and specialties."
+        frontendPath="/departments"
+      >
         <button
           onClick={() => {
             setServerError(null);
@@ -169,7 +168,7 @@ export default function DepartmentManagement({
         >
           <span>+ Add Department</span>
         </button>
-      </div>
+      </AdminPageHeader>
 
       {/* Notifications */}
       {successMessage && (

@@ -4,6 +4,8 @@ import { prisma } from '@/server/db/client';
 import { getAdminAppointments } from '@/features/appointments/services/manage-appointments';
 import StatusBadge from '@/components/shared/StatusBadge';
 import { formatTimeTo12Hour } from '@/lib/date-utils';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import InteractiveSearchInput from '@/components/shared/InteractiveSearchInput';
 
 interface PageProps {
   searchParams: Promise<{
@@ -40,6 +42,11 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
 
   return (
     <div className="space-y-8">
+      <AdminPageHeader
+        title="Admin Dashboard"
+        description="System-wide hospital management, department master data, doctor provisioning, and appointment supervision."
+        frontendPath="/"
+      />
       <section className="relative overflow-hidden rounded-card bg-brand-950 px-6 py-8 text-white shadow-card sm:px-8">
         <div className="absolute inset-0 pattern-dots opacity-10" aria-hidden />
         <div className="relative flex flex-col justify-between gap-6 md:flex-row md:items-center">
@@ -105,23 +112,11 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <form method="GET" action="/admin/dashboard" className="flex gap-2">
-              <input
-                type="text"
-                name="search"
-                defaultValue={search}
-                placeholder="Search patient/doctor..."
-                className="input-field !py-1.5 !text-xs"
-              />
-              <button type="submit" className="btn-primary !py-1.5 !text-xs">
-                Search
-              </button>
-              {search && (
-                <Link href="/admin/dashboard" className="btn-secondary !py-1.5 !text-xs">
-                  Clear
-                </Link>
-              )}
-            </form>
+            <InteractiveSearchInput
+              defaultValue={search}
+              placeholder="Search patient/doctor..."
+              className="w-56"
+            />
             <Link
               href="/admin/appointments"
               className="whitespace-nowrap text-xs font-semibold text-brand-700 hover:underline"

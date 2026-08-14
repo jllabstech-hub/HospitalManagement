@@ -3,6 +3,8 @@ import { requireAdmin } from '@/server/security/auth-helpers';
 import { prisma } from '@/server/db/client';
 import MediaUploadWrapper from './MediaUploadWrapper';
 import DeleteMediaButton from './DeleteMediaButton';
+import InteractiveSearchInput from '@/components/shared/InteractiveSearchInput';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
 
 interface PageProps {
   searchParams?: Promise<{
@@ -30,17 +32,15 @@ export default async function AdminMediaLibraryPage({ searchParams }: PageProps)
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="font-display text-2xl font-semibold text-ink">Media Asset Library</h1>
-          <p className="mt-1 text-sm text-ink-muted">
-            Upload, inspect, search, and manage authoritative hospital media assets.
-          </p>
-        </div>
+      <AdminPageHeader
+        title="Media Asset Library"
+        description="Upload, inspect, search, and manage authoritative hospital media assets."
+        frontendPath="/"
+      >
         <Link href="/admin/content" className="text-sm font-semibold text-brand-700 hover:underline">
           ← Back to Content
         </Link>
-      </div>
+      </AdminPageHeader>
 
       {/* Upload Component Container */}
       <div className="card-surface p-5 sm:p-6">
@@ -50,23 +50,11 @@ export default async function AdminMediaLibraryPage({ searchParams }: PageProps)
 
       {/* Search Filter Bar */}
       <div className="card-surface p-4">
-        <form method="GET" action="/admin/media" className="flex items-center gap-3">
-          <input
-            type="text"
-            name="search"
-            defaultValue={search}
-            placeholder="Search media by filename, alt text, or caption..."
-            className="w-full rounded-button border border-[#dde5e9] px-3.5 py-2 text-xs font-medium focus:border-brand-600 focus:outline-none"
-          />
-          <button type="submit" className="btn-primary !py-2 !text-xs shrink-0">
-            Search Assets
-          </button>
-          {search && (
-            <Link href="/admin/media" className="btn-secondary !py-2 !text-xs shrink-0">
-              Clear
-            </Link>
-          )}
-        </form>
+        <InteractiveSearchInput
+          defaultValue={search}
+          placeholder="Search media by filename, alt text, or caption..."
+          className="w-full"
+        />
       </div>
 
       {/* Media Grid */}
@@ -93,12 +81,12 @@ export default async function AdminMediaLibraryPage({ searchParams }: PageProps)
                   <img
                     src={asset.url}
                     alt={asset.altText || 'Media Asset'}
-                    className="h-full w-full object-cover"
+                    className="h-full w-full max-h-full max-w-full object-contain"
                   />
                 </div>
                 <div className="mt-2 space-y-1 text-[11px]">
-                  <p className="font-bold text-ink truncate" title={asset.url}>
-                    {asset.url.split('/').pop()}
+                  <p className="font-bold text-ink truncate" title={asset.altText || (asset.url.startsWith('data:') ? 'Uploaded Asset' : asset.url)}>
+                    {asset.altText || (asset.url.startsWith('data:') ? 'Uploaded Asset' : asset.url.split('/').pop())}
                   </p>
                   <p className="text-ink-muted truncate">{asset.altText}</p>
                   <div className="flex items-center gap-1">

@@ -28,9 +28,7 @@ export default function InteractiveSearchInput({
     setText(searchParams.get(paramName) || '');
   }, [searchParams, paramName]);
 
-  // Debounced URL update on keypress — always read the live query string so
-  // concurrent GET form submits (e.g. department filter) are not wiped by a
-  // stale useSearchParams closure.
+  // Debounced URL update on keypress
   useEffect(() => {
     const timer = setTimeout(() => {
       const liveParams = new URLSearchParams(window.location.search);
@@ -55,6 +53,20 @@ export default function InteractiveSearchInput({
 
   return (
     <div className={`relative flex items-center ${className}`}>
+      {/* Search Magnifying Glass Icon */}
+      <svg
+        className="pointer-events-none absolute left-3 h-4 w-4 text-ink-muted"
+        viewBox="0 0 20 20"
+        fill="currentColor"
+        aria-hidden="true"
+      >
+        <path
+          fillRule="evenodd"
+          d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z"
+          clipRule="evenodd"
+        />
+      </svg>
+
       <input
         id="searchInput"
         type="text"
@@ -62,8 +74,9 @@ export default function InteractiveSearchInput({
         value={text}
         onChange={(e) => setText(e.target.value)}
         placeholder={placeholder}
-        className="input-field pr-8 text-xs font-medium sm:text-sm"
+        className="input-field pl-9 pr-8 text-xs font-medium sm:text-sm"
       />
+
       {text ? (
         <button
           type="button"

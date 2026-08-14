@@ -8,10 +8,15 @@ import path from 'path';
 const ALLOWED_MIME_TYPES = new Set([
   'image/jpeg',
   'image/jpg',
+  'image/pjpeg',
   'image/png',
+  'image/x-png',
   'image/webp',
   'image/svg+xml',
+  'image/svg',
 ]);
+
+const ALLOWED_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.svg']);
 
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
 
@@ -31,7 +36,13 @@ export async function POST(request: Request) {
     }
 
     // 3. Security Validations
-    if (!ALLOWED_MIME_TYPES.has(file.type.toLowerCase())) {
+    const fileExt = path.extname(file.name).toLowerCase();
+    const mimeType = file.type?.toLowerCase() || '';
+
+    const isValidMime = ALLOWED_MIME_TYPES.has(mimeType);
+    const isValidExt = ALLOWED_EXTENSIONS.has(fileExt);
+
+    if (!isValidMime && !isValidExt) {
       return NextResponse.json(
         { error: 'Invalid file format. Allowed formats: JPG, PNG, WebP, SVG.' },
         { status: 400 }
@@ -47,22 +58,53 @@ export async function POST(request: Request) {
 
     // Sanitize filename and build unique storage key
     const sanitizedOriginalName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-    const ext = path.extname(sanitizedOriginalName) || '.jpg';
+    const ext = fileExt || '.jpg';
     const timestamp = Date.now();
     const uniqueFilename = `${timestamp}-${Math.random().toString(36).substring(2, 8)}${ext}`;
 
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads');
-    await mkdir(uploadDir, { recursive: true });
-
-    const filePath = path.join(uploadDir, uniqueFilename);
     const buffer = Buffer.from(await file.arrayBuffer());
+    let publicUrl = `/uploads/${uniqueFilename}`;
 
-    // 4. Save file to disk storage abstraction (/public/uploads)
-    await writeFile(filePath, buffer);
+    // 4. Save file to disk if available, otherwise fallback to Data URL storage for serverless environments (e.g. Vercel)
+    try {
+      const uploadDir = path.join(process.cwd(), 'public', 'uploads');
+      await mkdir(uploadDir, { recursive: true });
+      const filePath = path.join(uploadDir, uniqueFilename);
+      await writeFile(filePath, buffer);
+    } catch (fsError) {
+      console.warn('Filesystem write unavailable (serverless environment), falling back to Data URL storage:', fsError);
+      const mime = file.type || 'image/jpeg';
+      const base64 = buffer.toString('base64');
+      publicUrl = `data:${mime};base64,${base64}`;
+    }
 
-    const publicUrl = `/uploads/${uniqueFilename}`;
+    // 5. Safe Tenant ID Resolution
+    let targetTenantId: string | null = admin.tenantId ?? null;
 
-    // 5. Create authoritative MediaAsset database record
+    if (targetTenantId) {
+      const existingTenant = await prisma.hospitalProfile.findUnique({
+        where: { id: targetTenantId },
+        select: { id: true },
+      });
+      if (!existingTenant) {
+        targetTenantId = null;
+      }
+    }
+
+    if (!targetTenantId) {
+      let defaultTenant = await prisma.hospitalProfile.findFirst({ select: { id: true } });
+      if (!defaultTenant) {
+        defaultTenant = await prisma.hospitalProfile.create({
+          data: {
+            hospitalName: 'CarePulse Hospital',
+          },
+          select: { id: true },
+        });
+      }
+      targetTenantId = defaultTenant.id;
+    }
+
+    // 6. Create authoritative MediaAsset database record
     const mediaAsset = await prisma.mediaAsset.create({
       data: {
         url: publicUrl,
@@ -72,8 +114,8 @@ export async function POST(request: Request) {
         width: 800,
         height: 600,
         fileSize: file.size,
-        mimeType: file.type,
-        tenantId: admin.tenantId,
+        mimeType: file.type || 'image/jpeg',
+        tenantId: targetTenantId,
       },
     });
 
@@ -81,9 +123,10 @@ export async function POST(request: Request) {
       success: true,
       media: mediaAsset,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in Admin media upload API:', error);
-    return NextResponse.json({ error: 'Failed to process media upload.' }, { status: 500 });
+    const detail = error?.message || 'Failed to process media upload.';
+    return NextResponse.json({ error: detail }, { status: 500 });
   }
 }
 
