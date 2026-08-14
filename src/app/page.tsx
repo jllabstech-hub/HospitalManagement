@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import SiteHeader from '@/components/layout/SiteHeader';
 import SiteFooter from '@/components/layout/SiteFooter';
+import FloatingActionDock from '@/components/public/FloatingActionDock';
 import Hero from '@/components/home/Hero';
 import TrustStats from '@/components/home/TrustStats';
 import AboutSection from '@/components/home/AboutSection';
@@ -96,7 +97,7 @@ export default async function HomePage() {
   }));
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col relative">
       <JsonLd data={[medicalOrganizationLd, breadcrumbLd]} />
       <SiteHeader profile={profile} />
       <main className="flex-1">
@@ -113,6 +114,7 @@ export default async function HomePage() {
         <ContactSection profile={profile} />
       </main>
       <SiteFooter profile={profile} />
+      <FloatingActionDock emergencyPhone={profile?.emergencyPhone} />
     </div>
   );
 }
