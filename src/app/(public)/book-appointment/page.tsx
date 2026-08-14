@@ -9,7 +9,7 @@ import { getHospitalTodayDateString } from '@/lib/date-utils';
 import EmptyState from '@/components/ui/EmptyState';
 import Card from '@/components/ui/Card';
 import { auth } from '@/features/auth';
-import { getPublishedDepartments } from '@/features/cms/queries/catalog';
+import { getPublishedDepartments, getPublishedSpecialities } from '@/features/cms/queries/catalog';
 import {
   getPublicDoctorByIdOrSlug,
   searchPublicDoctors,
@@ -25,6 +25,7 @@ interface PageProps {
   searchParams: Promise<{
     doctorId?: string;
     department?: string;
+    speciality?: string;
     step?: string;
   }>;
 }
@@ -36,16 +37,37 @@ export default async function BookAppointmentPage({ searchParams }: PageProps) {
   const todayDate = getHospitalTodayDateString();
 
   const doctorId = params.doctorId?.trim();
-  const departmentId = params.department?.trim();
-  const step = params.step ?? (doctorId ? 'doctor' : departmentId ? 'doctors' : 'department');
+  const departmentIdParam = params.department?.trim();
+  const specialityParam = params.speciality?.trim();
 
-  const [departments, preselectedDoctor, deptDoctors] = await Promise.all([
+  const [departments, specialities, preselectedDoctor] = await Promise.all([
     getPublishedDepartments(),
+    getPublishedSpecialities(),
     doctorId ? getPublicDoctorByIdOrSlug(doctorId) : Promise.resolve(null),
-    departmentId
-      ? searchPublicDoctors({ departmentId, limit: 50, sort: 'featured' })
-      : Promise.resolve(null),
   ]);
+
+  let targetDepartmentId = departmentIdParam;
+  if (!targetDepartmentId && specialityParam) {
+    const matchedDept = departments.find(
+      (d) => d.slug.toLowerCase() === specialityParam.toLowerCase() || d.id === specialityParam
+    );
+    if (matchedDept) {
+      targetDepartmentId = matchedDept.id;
+    } else {
+      const matchedSpec = specialities.find(
+        (s) => s.slug.toLowerCase() === specialityParam.toLowerCase() || s.id === specialityParam
+      );
+      if (matchedSpec?.department?.id) {
+        targetDepartmentId = matchedSpec.department.id;
+      }
+    }
+  }
+
+  const deptDoctors = targetDepartmentId
+    ? await searchPublicDoctors({ departmentId: targetDepartmentId, limit: 50, sort: 'featured' })
+    : null;
+
+  const step = params.step ?? (doctorId ? 'doctor' : targetDepartmentId ? 'doctors' : 'department');
 
   const patientBookingHref = (id: string) =>
     isPatient
@@ -67,8 +89,8 @@ export default async function BookAppointmentPage({ searchParams }: PageProps) {
           />
 
           <div className="mb-8 flex flex-wrap gap-2 text-sm">
-            <StepBadge active={step === 'department' || !departmentId} label="1. Department" />
-            <StepBadge active={step === 'doctors' || !!departmentId} label="2. Doctor" />
+            <StepBadge active={step === 'department' || !targetDepartmentId} label="1. Department" />
+            <StepBadge active={step === 'doctors' || !!targetDepartmentId} label="2. Doctor" />
             <StepBadge active={step === 'doctor' || !!doctorId} label="3. Book slot" />
           </div>
 
@@ -94,7 +116,7 @@ export default async function BookAppointmentPage({ searchParams }: PageProps) {
             </div>
           )}
 
-          {!preselectedDoctor && !departmentId && (
+          {!preselectedDoctor && !targetDepartmentId && (
             <div>
               <h2 className="font-display text-xl font-semibold text-ink">Step 1 — Choose department</h2>
               {departments.length === 0 ? (
@@ -127,7 +149,7 @@ export default async function BookAppointmentPage({ searchParams }: PageProps) {
             </div>
           )}
 
-          {!preselectedDoctor && departmentId && deptDoctors && (
+          {!preselectedDoctor && targetDepartmentId && deptDoctors && (
             <div>
               <div className="mb-4 flex items-center justify-between gap-4">
                 <h2 className="font-display text-xl font-semibold text-ink">Step 2 — Choose doctor</h2>
