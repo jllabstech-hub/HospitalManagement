@@ -21,7 +21,6 @@ const nextConfig = {
 
   webpack: (config, { dev }) => {
     if (dev) {
-      // Use named module and chunk IDs in dev mode to prevent stale integer module ID desync on Windows
       config.optimization = config.optimization || {};
       config.optimization.moduleIds = 'named';
       config.optimization.chunkIds = 'named';
@@ -40,9 +39,12 @@ const nextConfig = {
   },
 
   async headers() {
+    // Disable custom security header overrides in dev mode to let Next.js dev server serve HMR chunks cleanly
+    if (process.env.NODE_ENV === 'development') {
+      return [];
+    }
     return [
       {
-        // Exclude _next/static, _next/image, and favicon.ico from strict nosniff header matching to prevent browser MIME rejection errors in dev mode
         source: '/((?!_next/static|_next/image|favicon.ico).*)',
         headers: [
           { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
