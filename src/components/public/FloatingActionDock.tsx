@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { submitAppointmentEnquiryAction } from '@/features/cms/actions/public-forms';
 
 interface Props {
   emergencyPhone?: string | null;
@@ -11,8 +12,10 @@ export default function FloatingActionDock({ emergencyPhone }: Props) {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [isCallbackOpen, setIsCallbackOpen] = useState(false);
   const [callbackSubmitted, setCallbackSubmitted] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [patientName, setPatientName] = useState('');
   const [patientPhone, setPatientPhone] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
   const phone = emergencyPhone || '+91 80 4567 8999';
 
@@ -32,9 +35,26 @@ export default function FloatingActionDock({ emergencyPhone }: Props) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleCallbackSubmit = (e: React.FormEvent) => {
+  const handleCallbackSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!patientName.trim() || !patientPhone.trim()) return;
+    setError(null);
+    setSaving(true);
+
+    const cleanPhone = patientPhone.trim().replace(/[^0-9]/g, '') || '9999999999';
+    const result = await submitAppointmentEnquiryAction({
+      name: patientName.trim(),
+      phone: patientPhone.trim(),
+      email: `${cleanPhone}@callback.carepulse.com`,
+      message: 'Instant Callback Request from 24/7 Floating Emergency Dock',
+    });
+    setSaving(false);
+
+    if (!result.success) {
+      setError(result.error);
+      return;
+    }
+
     setCallbackSubmitted(true);
     setTimeout(() => {
       setCallbackSubmitted(false);
@@ -121,6 +141,12 @@ export default function FloatingActionDock({ emergencyPhone }: Props) {
               </button>
             </div>
 
+            {error && (
+              <p className="mt-3 rounded border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700">
+                {error}
+              </p>
+            )}
+
             {callbackSubmitted ? (
               <div className="my-6 rounded-card border border-emerald-200 bg-emerald-50 p-4 text-center text-sm font-semibold text-emerald-800">
                 ✓ Thank you {patientName}! Our outpatient executive will call you at {patientPhone} within 15 minutes.
@@ -160,11 +186,12 @@ export default function FloatingActionDock({ emergencyPhone }: Props) {
                     type="button"
                     onClick={() => setIsCallbackOpen(false)}
                     className="btn-secondary !px-4 !py-2 !text-xs"
+                    disabled={saving}
                   >
                     Cancel
                   </button>
-                  <button type="submit" className="btn-primary !px-5 !py-2 !text-xs">
-                    Submit Request →
+                  <button type="submit" className="btn-primary !px-5 !py-2 !text-xs" disabled={saving}>
+                    {saving ? 'Submitting...' : 'Submit Request →'}
                   </button>
                 </div>
               </form>
