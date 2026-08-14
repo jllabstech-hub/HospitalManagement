@@ -2,17 +2,18 @@ import Link from 'next/link';
 import { requireAdmin } from '@/server/security/auth-helpers';
 import { prisma } from '@/server/db/client';
 import MediaUploadWrapper from './MediaUploadWrapper';
+import DeleteMediaButton from './DeleteMediaButton';
 
 interface PageProps {
-  searchParams: Promise<{
+  searchParams?: Promise<{
     search?: string;
   }>;
 }
 
 export default async function AdminMediaLibraryPage({ searchParams }: PageProps) {
   await requireAdmin();
-  const params = await searchParams;
-  const search = params.search?.trim() || '';
+  const params = searchParams ? await searchParams : {};
+  const search = typeof params.search === 'string' ? params.search.trim() : '';
 
   const mediaAssets = await prisma.mediaAsset.findMany({
     where: search
@@ -111,19 +112,7 @@ export default async function AdminMediaLibraryPage({ searchParams }: PageProps)
                     )}
                   </div>
                 </div>
-                <form action={async () => {
-                  'use server';
-                  const { requireAdmin } = await import('@/server/security/auth-helpers');
-                  const { prisma } = await import('@/server/db/client');
-                  await requireAdmin();
-                  await prisma.mediaAsset.delete({ where: { id: asset.id } });
-                  const { revalidatePath } = await import('next/cache');
-                  revalidatePath('/admin/media');
-                }} className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition">
-                  <button type="submit" className="rounded-full bg-rose-100 p-1.5 text-rose-600 hover:bg-rose-200 shadow-sm" title="Delete Asset">
-                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                  </button>
-                </form>
+                <DeleteMediaButton id={asset.id} />
               </div>
             ))}
           </div>

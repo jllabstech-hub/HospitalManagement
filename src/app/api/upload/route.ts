@@ -18,7 +18,7 @@ const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
 export async function POST(request: Request) {
   try {
     // 1. Enforce strict Admin server authentication guard
-    await requireAdmin();
+    const admin = await requireAdmin();
 
     // 2. Parse Multipart Form Data
     const formData = await request.formData();
@@ -73,6 +73,7 @@ export async function POST(request: Request) {
         height: 600,
         fileSize: file.size,
         mimeType: file.type,
+        tenantId: admin.tenantId,
       },
     });
 
