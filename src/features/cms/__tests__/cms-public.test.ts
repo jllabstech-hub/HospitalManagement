@@ -174,6 +174,9 @@ describe('CMS Public Queries & Forms', () => {
     expect(byId).not.toHaveProperty('passwordHash');
     expect(bySlug).not.toHaveProperty('passwordHash');
     expect(JSON.stringify(byId)).not.toContain('hashed-secret-not-exposed');
+    expect(byId).not.toHaveProperty('phoneNumber');
+    expect(byId).not.toHaveProperty('email');
+    expect((byId as { user?: { email?: string } } | null)?.user).not.toHaveProperty('email');
   });
 
   it('department slugs must be unique (two departments, different slugs)', async () => {

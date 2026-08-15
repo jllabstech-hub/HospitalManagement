@@ -9,7 +9,7 @@ test.describe('Admin portal extended QA', () => {
     await expect(page.getByText('Total Doctors')).toBeVisible();
     await expectNoPasswordHashLeak(page);
 
-    await page.click('a:has-text("Content")');
+    await page.getByRole('link', { name: 'Content', exact: true }).click();
     await page.waitForURL('**/admin/content');
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 

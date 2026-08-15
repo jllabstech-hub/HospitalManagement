@@ -336,6 +336,18 @@ export default async function AdminContentPage() {
         frontendPath="/about"
       />
 
+      <div className="rounded-card border border-brand-200 bg-brand-50 p-4 sm:flex sm:items-center sm:justify-between">
+        <div>
+          <h2 className="font-semibold text-ink">Populate from a hospital website</h2>
+          <p className="mt-1 text-sm text-ink-muted">
+            Crawl public pages and import departments, services, packages, FAQs and more. Doctors are never imported.
+          </p>
+        </div>
+        <Link href="/admin/content-import" className="btn-primary mt-3 inline-flex sm:mt-0">
+          Import Content
+        </Link>
+      </div>
+
       {/* KPI Notification Cards */}
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="rounded-card border border-brand-200 bg-brand-50 p-4">

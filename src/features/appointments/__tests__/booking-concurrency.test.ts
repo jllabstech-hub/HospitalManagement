@@ -11,6 +11,9 @@ describe('Real Concurrency & Race-Condition Suite (Requirement 21 & PostgreSQL P
 
   beforeEach(async () => {
     // Cleanup test records
+    await prisma.notification.deleteMany({
+      where: { user: { email: { contains: 'concurrency.test' } } },
+    });
     await prisma.appointment.deleteMany({
       where: {
         OR: [

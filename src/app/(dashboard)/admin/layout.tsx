@@ -70,6 +70,12 @@ export default async function AdminLayout({
             Content
           </Link>
           <Link
+            href="/admin/content-import"
+            className="flex items-center rounded-button px-3 py-2.5 transition hover:bg-white/10 hover:text-white"
+          >
+            Import Content
+          </Link>
+          <Link
             href="/admin/media"
             className="flex items-center rounded-button px-3 py-2.5 transition hover:bg-white/10 hover:text-white"
           >

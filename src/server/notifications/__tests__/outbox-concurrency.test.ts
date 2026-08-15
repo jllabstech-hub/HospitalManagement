@@ -94,4 +94,67 @@ describe('Notification Outbox Concurrency & Provider Tests', () => {
 
     await prisma.notification.deleteMany({ where: { id: notifId } });
   });
+
+  it('reclaims PENDING notifications after the processing lease expires', async () => {
+    vi.mocked(sendViaProvider).mockResolvedValue({ success: true, error: null });
+    const notifId = randomUUID();
+    await prisma.notification.create({
+      data: {
+        id: notifId,
+        tenantId,
+        recipientUserId,
+        channel: NotificationChannel.EMAIL,
+        type: NotificationType.APPOINTMENT_BOOKED,
+        status: NotificationStatus.PENDING,
+        attemptCount: 0,
+        maxAttempts: 8,
+      },
+    });
+    await prisma.$executeRaw`
+      UPDATE "Notification"
+      SET
+        "processingStartedAt" = NOW() - INTERVAL '6 minutes',
+        "nextRetryAt" = NOW() - INTERVAL '1 minute'
+      WHERE id = ${notifId}::uuid
+    `;
+
+    const result = await processNotificationOutbox(10);
+    expect(result.processed).toBeGreaterThanOrEqual(1);
+    const updated = await prisma.notification.findUnique({ where: { id: notifId } });
+    expect(updated?.status).toBe(NotificationStatus.SENT);
+    expect(vi.mocked(sendViaProvider).mock.calls.some((call) => String(call[1]) === notifId)).toBe(true);
+
+    await prisma.notification.deleteMany({ where: { id: notifId } });
+  });
+
+  it('does not reclaim a notification whose lease is still active', async () => {
+    vi.mocked(sendViaProvider).mockResolvedValue({ success: true, error: null });
+    const notifId = randomUUID();
+    await prisma.notification.create({
+      data: {
+        id: notifId,
+        tenantId,
+        recipientUserId,
+        channel: NotificationChannel.EMAIL,
+        type: NotificationType.APPOINTMENT_BOOKED,
+        status: NotificationStatus.PENDING,
+        attemptCount: 0,
+        maxAttempts: 8,
+      },
+    });
+    await prisma.$executeRaw`
+      UPDATE "Notification"
+      SET
+        "processingStartedAt" = NOW(),
+        "nextRetryAt" = NOW() + INTERVAL '4 minutes'
+      WHERE id = ${notifId}::uuid
+    `;
+
+    await processNotificationOutbox(10);
+    const updated = await prisma.notification.findUnique({ where: { id: notifId } });
+    expect(updated?.status).toBe(NotificationStatus.PENDING);
+    expect(vi.mocked(sendViaProvider).mock.calls.some((call) => String(call[1]) === notifId)).toBe(false);
+
+    await prisma.notification.deleteMany({ where: { id: notifId } });
+  });
 });

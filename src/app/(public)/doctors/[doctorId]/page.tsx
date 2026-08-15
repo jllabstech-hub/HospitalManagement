@@ -66,7 +66,6 @@ export default async function PublicDoctorPage({ params }: PageProps) {
           <DoctorProfileHeader
             doctor={{
               fullName: displayName,
-              phoneNumber: doctor.phoneNumber,
               qualification: doctor.qualification,
               experienceYears: doctor.experienceYears,
               bio,

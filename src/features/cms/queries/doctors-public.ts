@@ -48,7 +48,6 @@ export function publicDoctorDetailSelectFor(tenantId: string) {
     id: true,
     fullName: true,
     slug: true,
-    phoneNumber: true,
     qualification: true,
     experienceYears: true,
     bio: true,
@@ -76,7 +75,6 @@ export function publicDoctorDetailSelectFor(tenantId: string) {
     },
     user: {
       select: {
-        email: true,
         isActive: true,
       },
     },

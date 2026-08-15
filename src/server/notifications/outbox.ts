@@ -3,18 +3,27 @@ import { NotificationChannel, NotificationStatus, NotificationType } from '@pris
 import { prisma } from '@/server/db/client';
 import { logger } from '@/lib/logger';
 
-export async function enqueueAppointmentNotification(input: {
-  tenantId: string;
-  type: NotificationType;
-  recipientUserId: string;
-  appointmentId: string;
-}): Promise<void> {
+type NotificationDb = {
+  notification: {
+    create: (typeof prisma)['notification']['create'];
+  };
+};
+
+export async function enqueueAppointmentNotification(
+  input: {
+    tenantId: string;
+    type: NotificationType;
+    recipientUserId: string;
+    appointmentId: string;
+  },
+  db: NotificationDb = prisma
+): Promise<void> {
   const channels: NotificationChannel[] = [NotificationChannel.EMAIL, NotificationChannel.SMS];
 
   for (const channel of channels) {
     const idempotencyKey = `${input.tenantId}:${input.appointmentId}:${input.type}:${channel}`;
     try {
-      await prisma.notification.create({
+      await db.notification.create({
         data: {
           id: randomUUID(),
           tenantId: input.tenantId,
@@ -37,6 +46,7 @@ export async function enqueueAppointmentNotification(input: {
         continue;
       }
       logger.error({ event: 'notification.enqueue_failed', tenantId: input.tenantId }, 'Failed to enqueue notification');
+      throw error;
     }
   }
 }

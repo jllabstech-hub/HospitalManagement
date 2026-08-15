@@ -1,4 +1,5 @@
 import { test, expect } from './fixtures/test';
+import { confirmFirstDoctorAppointment, completeFirstDoctorAppointment } from './fixtures/auth';
 
 test.describe('Doctor Appointment Management & Status Transitions E2E Suite', () => {
   test('TEST 1: Doctor Login, View Today Appointments, Confirm, and Complete Consultation', async ({ page }) => {
@@ -16,19 +17,15 @@ test.describe('Doctor Appointment Management & Status Transitions E2E Suite', ()
     await expect(page.getByRole('heading', { name: 'Doctor Appointments' })).toBeVisible();
 
     // 3. Confirm a BOOKED appointment if available
-    const confirmBtn = page.locator('button:has-text("Confirm")').first();
+    const confirmBtn = page.getByRole('button', { name: 'Confirm', exact: true }).first();
     if (await confirmBtn.isVisible()) {
-      await confirmBtn.click();
-      await page.click('button:has-text("Confirm Appointment")');
-      await expect(page.locator('span:has-text("CONFIRMED")').first()).toBeVisible();
+      await confirmFirstDoctorAppointment(page);
     }
 
     // 4. Complete a CONFIRMED appointment
-    const completeBtn = page.locator('button:has-text("Complete")').first();
+    const completeBtn = page.getByRole('button', { name: 'Complete', exact: true }).first();
     if (await completeBtn.isVisible()) {
-      await completeBtn.click();
-      await page.click('button:has-text("Mark Completed")');
-      await expect(page.locator('span:has-text("COMPLETED")').first()).toBeVisible();
+      await completeFirstDoctorAppointment(page);
     }
   });
 
@@ -43,17 +40,17 @@ test.describe('Doctor Appointment Management & Status Transitions E2E Suite', ()
     await page.goto('/doctor/appointments');
 
     // Confirm first if needed to get to CONFIRMED
-    const confirmBtn = page.locator('button:has-text("Confirm")').first();
+    const confirmBtn = page.getByRole('button', { name: 'Confirm', exact: true }).first();
     if (await confirmBtn.isVisible()) {
-      await confirmBtn.click();
-      await page.click('button:has-text("Confirm Appointment")');
+      await confirmFirstDoctorAppointment(page);
     }
 
-    const noShowBtn = page.locator('button:has-text("No-Show")').first();
+    const noShowBtn = page.getByRole('button', { name: 'No-Show', exact: true }).first();
     if (await noShowBtn.isVisible()) {
       await noShowBtn.click();
-      await page.click('button:has-text("Mark No-Show")');
-      await expect(page.locator('span:has-text("NO-SHOW")').first()).toBeVisible();
+      await page.getByRole('button', { name: 'Mark No-Show' }).click();
+      await expect(page.getByRole('dialog')).toBeHidden({ timeout: 20_000 });
+      await expect(page.getByTitle('Appointment Status: NO-SHOW').first()).toBeVisible({ timeout: 15_000 });
     }
   });
 });

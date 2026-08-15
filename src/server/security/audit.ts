@@ -18,18 +18,27 @@ export type AuditAction =
   | 'media.delete'
   | 'enquiry.update';
 
-export async function writeAuditLog(input: {
-  tenantId: string;
-  actorUserId?: string | null;
-  action: AuditAction | string;
-  entityType: string;
-  entityId?: string | null;
-  before?: Record<string, unknown> | null;
-  after?: Record<string, unknown> | null;
-  correlationId?: string | null;
-}): Promise<void> {
+type AuditDb = {
+  auditLog: {
+    create: (typeof prisma)['auditLog']['create'];
+  };
+};
+
+export async function writeAuditLog(
+  input: {
+    tenantId: string;
+    actorUserId?: string | null;
+    action: AuditAction | string;
+    entityType: string;
+    entityId?: string | null;
+    before?: Record<string, unknown> | null;
+    after?: Record<string, unknown> | null;
+    correlationId?: string | null;
+  },
+  db: AuditDb = prisma
+): Promise<void> {
   try {
-    await prisma.auditLog.create({
+    await db.auditLog.create({
       data: {
         id: randomUUID(),
         tenantId: input.tenantId,
@@ -42,7 +51,10 @@ export async function writeAuditLog(input: {
         correlationId: input.correlationId ?? null,
       },
     });
-  } catch {
+  } catch (error) {
     logger.error({ event: 'audit.write_failed', tenantId: input.tenantId }, 'Failed to persist audit log');
+    if (db !== prisma) {
+      throw error;
+    }
   }
 }

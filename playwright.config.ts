@@ -46,7 +46,11 @@ export default defineConfig({
       E2E_TEST_MODE: 'true',
       ALLOW_DEV_TENANT_FALLBACK: 'true',
       DEFAULT_TENANT_DOMAIN: 'carepulse',
-      AUTH_SECRET: process.env.AUTH_SECRET || 'e2e-auth-secret-key-min-32-chars-xxxx',
+      AUTH_URL: 'http://localhost:5001',
+      NEXTAUTH_URL: 'http://localhost:5001',
+      NEXT_PUBLIC_APP_URL: 'http://localhost:5001',
+      AUTH_SECRET: 'e2e-auth-secret-key-min-32-chars-xxxx',
+      NEXTAUTH_SECRET: 'e2e-auth-secret-key-min-32-chars-xxxx',
     },
   },
 });

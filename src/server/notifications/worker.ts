@@ -18,8 +18,9 @@ type ClaimedNotification = {
 
 /**
  * Atomically claim due outbox rows with a single UPDATE … RETURNING.
- * SKIP LOCKED plus `processingStartedAt IS NULL` prevents two workers from
- * returning the same id even when the connection pool is under contention.
+ * SKIP LOCKED plus a lease on `processingStartedAt` prevents two workers from
+ * returning the same id. Expired leases (`processingStartedAt` older than
+ * CLAIM_LEASE_MS) are reclaimed after a crash.
  */
 async function claimPendingNotifications(limit: number): Promise<ClaimedNotification[]> {
   const claimed = await prisma.$queryRaw<ClaimedNotification[]>(Prisma.sql`
@@ -27,7 +28,10 @@ async function claimPendingNotifications(limit: number): Promise<ClaimedNotifica
       SELECT id
       FROM "Notification"
       WHERE status = CAST('PENDING' AS "NotificationStatus")
-        AND "processingStartedAt" IS NULL
+        AND (
+          "processingStartedAt" IS NULL
+          OR "processingStartedAt" <= NOW() - (${CLAIM_LEASE_MS} * INTERVAL '1 millisecond')
+        )
         AND ("nextRetryAt" IS NULL OR "nextRetryAt" <= NOW())
         AND "attemptCount" < "maxAttempts"
       ORDER BY "createdAt" ASC
@@ -41,7 +45,10 @@ async function claimPendingNotifications(limit: number): Promise<ClaimedNotifica
     FROM picked
     WHERE n.id = picked.id
       AND n.status = CAST('PENDING' AS "NotificationStatus")
-      AND n."processingStartedAt" IS NULL
+      AND (
+        n."processingStartedAt" IS NULL
+        OR n."processingStartedAt" <= NOW() - (${CLAIM_LEASE_MS} * INTERVAL '1 millisecond')
+      )
     RETURNING
       n.id,
       n."tenantId",

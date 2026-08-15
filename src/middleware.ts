@@ -1,7 +1,7 @@
 import NextAuth from 'next-auth';
 import { authConfig } from '@/features/auth/auth.config';
 import { NextResponse } from 'next/server';
-import { isDashboardPath } from '@/server/security/dashboard-paths';
+import { isDashboardPath, safeInternalPath } from '@/server/security/dashboard-paths';
 
 const { auth } = NextAuth(authConfig);
 
@@ -40,7 +40,7 @@ export default auth((req) => {
     }
 
     if (pathname === '/login' || pathname === '/register') {
-      const callbackUrl = req.nextUrl.searchParams.get('callbackUrl');
+      const callbackUrl = safeInternalPath(req.nextUrl.searchParams.get('callbackUrl'));
 
       if (callbackUrl) {
         if (

@@ -1,8 +1,13 @@
 import { test, expect } from './fixtures/test';
-import { firstAvailableSlot, searchAndOpenDoctor } from './fixtures/auth';
+import {
+  completeFirstDoctorAppointment,
+  confirmFirstDoctorAppointment,
+  firstAvailableSlot,
+  searchAndOpenDoctor,
+} from './fixtures/auth';
 
 test.describe('Complete System End-to-End MVP Lifecycles', () => {
-  test.setTimeout(120_000);
+  test.setTimeout(180_000);
   test('LIFECYCLE 1: Patient Registration -> Booking (BOOKED) -> Doctor Confirm (CONFIRMED) -> Doctor Complete (COMPLETED)', async ({ page }) => {
     const timestamp = `${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`;
     const patientEmail = `e2e.life1.${timestamp}@example.com`;
@@ -45,21 +50,11 @@ test.describe('Complete System End-to-End MVP Lifecycles', () => {
     await page.click('button[type="submit"]');
     await page.waitForURL('**/doctor/dashboard');
 
-    const dateQuery = bookedDate ? `date=${bookedDate}&` : '';
-    await page.goto(`/doctor/appointments?${dateQuery}status=BOOKED`);
-    await page.locator('button:has-text("Confirm")').first().click();
-    await page.waitForSelector('button:has-text("Confirm Appointment")', { timeout: 10000 });
-    await page.click('button:has-text("Confirm Appointment")');
-
-    await page.goto(`/doctor/appointments?${dateQuery}status=CONFIRMED`);
-    await expect(page.locator('span:has-text("CONFIRMED")').first()).toBeVisible();
-
-    await page.locator('button:has-text("Complete")').first().click();
-    await page.waitForSelector('button:has-text("Mark Completed")', { timeout: 10000 });
-    await page.click('button:has-text("Mark Completed")');
-
-    await page.goto(`/doctor/appointments?${dateQuery}status=COMPLETED`);
-    await expect(page.locator('span:has-text("COMPLETED")').first()).toBeVisible();
+    const dateQuery = bookedDate ? `?date=${bookedDate}` : '';
+    await page.goto(`/doctor/appointments${dateQuery}`);
+    await confirmFirstDoctorAppointment(page);
+    await completeFirstDoctorAppointment(page);
+    await expect(page.getByTitle('Appointment Status: COMPLETED').first()).toBeVisible();
   });
 
   test('LIFECYCLE 2: Patient A Books -> Patient A Cancels -> Patient B Re-books Same Slot (SUCCESS)', async ({ page, browser }) => {

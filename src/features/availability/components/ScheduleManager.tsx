@@ -33,11 +33,14 @@ const DAYS_OF_WEEK = [
   { day: 0, name: 'Sunday' },
 ];
 
+const SLOT_DURATION_OPTIONS = [15, 20, 30, 45, 60] as const;
+
 interface AvailabilityWindow {
   id: string;
   dayOfWeek: number;
   startTime: string;
   endTime: string;
+  slotDurationMinutes: number;
 }
 
 interface BlockedDateItem {
@@ -71,7 +74,7 @@ export default function ScheduleManager({ availabilities, blockedDates, doctorNa
   // Availability Form Hooks
   const addAvailForm = useForm<CreateAvailabilityInput>({
     resolver: zodResolver(CreateAvailabilitySchema),
-    defaultValues: { dayOfWeek: 1, startTime: '09:00', endTime: '17:00' },
+    defaultValues: { dayOfWeek: 1, startTime: '09:00', endTime: '17:00', slotDurationMinutes: 30 },
   });
 
   const editAvailForm = useForm<UpdateAvailabilityInput>({
@@ -191,6 +194,7 @@ export default function ScheduleManager({ availabilities, blockedDates, doctorNa
       dayOfWeek: day,
       startTime: '09:00',
       endTime: '17:00',
+      slotDurationMinutes: 30,
     });
   };
 
@@ -200,6 +204,7 @@ export default function ScheduleManager({ availabilities, blockedDates, doctorNa
       id: win.id,
       startTime: win.startTime.slice(0, 5),
       endTime: win.endTime.slice(0, 5),
+      slotDurationMinutes: win.slotDurationMinutes || 30,
     });
   };
 
@@ -294,6 +299,9 @@ export default function ScheduleManager({ availabilities, blockedDates, doctorNa
                         >
                           <span className="font-medium text-ink">
                             {formatTimeTo12Hour(win.startTime)} – {formatTimeTo12Hour(win.endTime)}
+                            <span className="mt-0.5 block text-[11px] font-medium text-ink-muted">
+                              {win.slotDurationMinutes || 30} min consultation
+                            </span>
                           </span>
                           <div className="flex space-x-1">
                             <button
@@ -464,6 +472,26 @@ export default function ScheduleManager({ availabilities, blockedDates, doctorNa
                 </div>
               </div>
 
+              <div>
+                <label htmlFor="availSlotDuration" className="mb-1 block font-semibold text-ink">
+                  Consultation duration *
+                </label>
+                <select
+                  id="availSlotDuration"
+                  {...addAvailForm.register('slotDurationMinutes', { valueAsNumber: true })}
+                  className="input-field !py-2"
+                >
+                  {SLOT_DURATION_OPTIONS.map((minutes) => (
+                    <option key={minutes} value={minutes}>
+                      {minutes} min
+                    </option>
+                  ))}
+                </select>
+                {addAvailForm.formState.errors.slotDurationMinutes && (
+                  <p className="mt-1 text-rose-600">{addAvailForm.formState.errors.slotDurationMinutes.message}</p>
+                )}
+              </div>
+
               <div className="flex justify-end space-x-3 pt-2">
                 <button type="button" onClick={() => setActiveAddDay(null)} className="btn-secondary !px-4 !py-2 !text-xs">
                   Cancel
@@ -521,6 +549,26 @@ export default function ScheduleManager({ availabilities, blockedDates, doctorNa
                     <p className="mt-1 text-rose-600">{editAvailForm.formState.errors.endTime.message}</p>
                   )}
                 </div>
+              </div>
+
+              <div>
+                <label htmlFor="editAvailSlotDuration" className="mb-1 block font-semibold text-ink">
+                  Consultation duration *
+                </label>
+                <select
+                  id="editAvailSlotDuration"
+                  {...editAvailForm.register('slotDurationMinutes', { valueAsNumber: true })}
+                  className="input-field !py-2"
+                >
+                  {SLOT_DURATION_OPTIONS.map((minutes) => (
+                    <option key={minutes} value={minutes}>
+                      {minutes} min
+                    </option>
+                  ))}
+                </select>
+                {editAvailForm.formState.errors.slotDurationMinutes && (
+                  <p className="mt-1 text-rose-600">{editAvailForm.formState.errors.slotDurationMinutes.message}</p>
+                )}
               </div>
 
               <div className="flex justify-end space-x-3 pt-2">

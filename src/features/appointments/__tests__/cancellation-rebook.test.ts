@@ -12,6 +12,9 @@ describe('Cancellation Slot Release & Re-booking Integration Test', () => {
 
   beforeEach(async () => {
     // Cleanup in reverse dependency order
+    await prisma.notification.deleteMany({
+      where: { user: { email: { contains: 'cancelrebook.test' } } },
+    });
     await prisma.appointment.deleteMany({
       where: {
         OR: [

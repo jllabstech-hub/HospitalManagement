@@ -7,6 +7,7 @@ import { LoginSchema, LoginInput, PhoneInputSchema, PhoneInput, OtpInputSchema, 
 import { sendOtpAction } from '@/features/auth/actions';
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
+import { safeInternalPath } from '@/server/security/dashboard-paths';
 
 type AuthMode = 'phone' | 'email';
 
@@ -95,11 +96,11 @@ export default function LoginForm() {
       }
 
       const searchParams = new URLSearchParams(window.location.search);
-      const callbackUrl = searchParams.get('callbackUrl');
+      const callbackUrl = safeInternalPath(searchParams.get('callbackUrl'));
       if (callbackUrl) {
-        window.location.href = callbackUrl;
+        window.location.assign(callbackUrl);
       } else {
-        window.location.href = '/patient/dashboard';
+        window.location.assign('/patient/dashboard');
       }
     } catch (err) {
       console.error('OTP login error:', err);
@@ -128,18 +129,18 @@ export default function LoginForm() {
       }
 
       const searchParams = new URLSearchParams(window.location.search);
-      const callbackUrl = searchParams.get('callbackUrl');
+      const callbackUrl = safeInternalPath(searchParams.get('callbackUrl'));
       if (callbackUrl) {
-        window.location.href = callbackUrl;
+        window.location.assign(callbackUrl);
       } else {
         // Fetch session to determine role dashboard
         const sessionRes = await fetch('/api/auth/session');
         const sessionData = await sessionRes.json();
         const role = sessionData?.user?.role;
-        if (role === 'DOCTOR') window.location.href = '/doctor/dashboard';
-        else if (role === 'ADMIN') window.location.href = '/admin/dashboard';
-        else if (role === 'PATIENT') window.location.href = '/patient/dashboard';
-        else window.location.href = '/';
+        if (role === 'DOCTOR') window.location.assign('/doctor/dashboard');
+        else if (role === 'ADMIN') window.location.assign('/admin/dashboard');
+        else if (role === 'PATIENT') window.location.assign('/patient/dashboard');
+        else window.location.assign('/');
       }
     } catch (err) {
       console.error('Email login error:', err);

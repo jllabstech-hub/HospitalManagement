@@ -8,7 +8,7 @@ import bcrypt from 'bcryptjs';
 
 let tenantIdForExtension: string | undefined;
 
-const EXCLUDED_MODELS = ['HospitalProfile', 'Notification', 'DoctorSpeciality', 'DoctorCentre', 'CentreSpeciality', 'CentreService'];
+const EXCLUDED_MODELS = ['HospitalProfile', 'Notification'];
 
 const prisma = new PrismaClient().$extends({
   query: {

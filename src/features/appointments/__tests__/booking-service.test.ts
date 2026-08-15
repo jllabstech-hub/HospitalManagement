@@ -12,6 +12,9 @@ describe('Transactional Appointment Booking Service & Validation Suite', () => {
 
   beforeEach(async () => {
     // Cleanup test records
+    await prisma.notification.deleteMany({
+      where: { user: { email: { contains: 'bookingserv.test' } } },
+    });
     await prisma.appointment.deleteMany({
       where: {
         OR: [
@@ -142,6 +145,10 @@ describe('Transactional Appointment Booking Service & Validation Suite', () => {
       const dbAppt = await prisma.appointment.findUnique({ where: { id: res.appointment.id } });
       expect(dbAppt?.status).toBe(AppointmentStatus.BOOKED);
       expect(dbAppt?.patientId).toBe(patientProfileId);
+
+      const queued = await prisma.notification.findMany({ where: { appointmentId: res.appointment.id } });
+      expect(queued.length).toBeGreaterThanOrEqual(2);
+      expect(queued.every((row) => row.status === 'PENDING')).toBe(true);
     }
   });
 

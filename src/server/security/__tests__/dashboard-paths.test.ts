@@ -1,4 +1,4 @@
-import { isDashboardPath } from '../dashboard-paths';
+import { isDashboardPath, safeInternalPath } from '../dashboard-paths';
 import { describe, expect, it } from 'vitest';
 
 describe('isDashboardPath', () => {
@@ -21,5 +21,27 @@ describe('isDashboardPath', () => {
     expect(isDashboardPath('/admin', '/admin')).toBe(true);
     expect(isDashboardPath('/admin/dashboard', '/admin')).toBe(true);
     expect(isDashboardPath('/administration', '/admin')).toBe(false);
+  });
+});
+
+describe('safeInternalPath', () => {
+  it('allows relative application paths', () => {
+    expect(safeInternalPath('/patient/dashboard')).toBe('/patient/dashboard');
+    expect(safeInternalPath('/book-appointment')).toBe('/book-appointment');
+    expect(safeInternalPath('/doctors/jane-smith?from=home')).toBe('/doctors/jane-smith?from=home');
+  });
+
+  it('rejects open redirects', () => {
+    expect(safeInternalPath('https://evil.com')).toBeNull();
+    expect(safeInternalPath('http://evil.com/phish')).toBeNull();
+    expect(safeInternalPath('//evil.com')).toBeNull();
+    expect(safeInternalPath('///evil.com')).toBeNull();
+    expect(safeInternalPath('/\\evil.com')).toBeNull();
+    expect(safeInternalPath('/\\\\evil.com')).toBeNull();
+    expect(safeInternalPath('/%2F%2Fevil.com')).toBeNull();
+    expect(safeInternalPath('/%2f%2fevil.com')).toBeNull();
+    expect(safeInternalPath(null)).toBeNull();
+    expect(safeInternalPath('')).toBeNull();
+    expect(safeInternalPath('javascript:alert(1)')).toBeNull();
   });
 });

@@ -24,6 +24,7 @@ export default async function DoctorAvailabilityPage() {
         dayOfWeek: true,
         startTime: true,
         endTime: true,
+        slotDurationMinutes: true,
       },
     }),
     prisma.blockedDate.findMany({

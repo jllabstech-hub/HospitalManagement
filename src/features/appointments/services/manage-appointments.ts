@@ -153,17 +153,50 @@ export async function transitionAppointmentStatus({
       };
     }
 
-    const updated = await prisma.appointment.updateMany({
-      where: {
-        id: appointmentId,
-        tenantId: tenant.tenantId,
-        status: appointment.status,
-      },
-      data: {
-        status: targetStatus,
-        cancelledBy: targetStatus === AppointmentStatus.CANCELLED ? actorUser.role : undefined,
-        cancellationReason: targetStatus === AppointmentStatus.CANCELLED ? cancellationReason || null : undefined,
-      },
+    const updated = await prisma.$transaction(async (tx) => {
+      const result = await tx.appointment.updateMany({
+        where: {
+          id: appointmentId,
+          tenantId: tenant.tenantId,
+          status: appointment.status,
+        },
+        data: {
+          status: targetStatus,
+          cancelledBy: targetStatus === AppointmentStatus.CANCELLED ? actorUser.role : undefined,
+          cancellationReason: targetStatus === AppointmentStatus.CANCELLED ? cancellationReason || null : undefined,
+        },
+      });
+
+      if (result.count !== 1) {
+        return result;
+      }
+
+      await writeAuditLog(
+        {
+          tenantId: tenant.tenantId,
+          actorUserId: actorUser.id,
+          action: auditActionForStatus(targetStatus),
+          entityType: 'Appointment',
+          entityId: appointmentId,
+          before: { status: appointment.status },
+          after: { status: targetStatus },
+        },
+        tx
+      );
+
+      if (targetStatus === AppointmentStatus.CONFIRMED || targetStatus === AppointmentStatus.CANCELLED) {
+        await enqueueAppointmentNotification(
+          {
+            tenantId: tenant.tenantId,
+            type: targetStatus === AppointmentStatus.CONFIRMED ? 'APPOINTMENT_CONFIRMED' : 'APPOINTMENT_CANCELLED',
+            recipientUserId: appointment.patient.userId,
+            appointmentId: appointment.id,
+          },
+          tx
+        );
+      }
+
+      return result;
     });
 
     if (updated.count !== 1) {
@@ -172,25 +205,6 @@ export async function transitionAppointmentStatus({
         code: 'INVALID_TRANSITION',
         error: 'Appointment was updated by another request. Please refresh and try again.',
       };
-    }
-
-    await writeAuditLog({
-      tenantId: tenant.tenantId,
-      actorUserId: actorUser.id,
-      action: auditActionForStatus(targetStatus),
-      entityType: 'Appointment',
-      entityId: appointmentId,
-      before: { status: appointment.status },
-      after: { status: targetStatus },
-    });
-
-    if (targetStatus === AppointmentStatus.CONFIRMED || targetStatus === AppointmentStatus.CANCELLED) {
-      enqueueAppointmentNotification({
-        tenantId: tenant.tenantId,
-        type: targetStatus === AppointmentStatus.CONFIRMED ? 'APPOINTMENT_CONFIRMED' : 'APPOINTMENT_CANCELLED',
-        recipientUserId: appointment.patient.userId,
-        appointmentId: appointment.id,
-      }).catch(() => undefined);
     }
 
     return { success: true, data: { id: appointmentId, status: targetStatus } };

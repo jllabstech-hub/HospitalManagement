@@ -16,7 +16,7 @@ const basePrisma =
         : ['error'],
   });
 
-const EXCLUDED_MODELS = ['HospitalProfile', 'DoctorSpeciality', 'DoctorCentre', 'CentreSpeciality', 'CentreService'];
+const EXCLUDED_MODELS = ['HospitalProfile'];
 
 export const prisma = process.env.NODE_ENV === 'test' 
   ? basePrisma.$extends({

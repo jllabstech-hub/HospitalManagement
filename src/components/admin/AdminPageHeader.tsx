@@ -32,6 +32,7 @@ const FRONTEND_PATH_MAP: Record<string, string> = {
   '/admin/enquiries': '/contact',
   '/admin/content': '/about',
   '/admin/content/hospital': '/about/overview',
+  '/admin/content-import': '/departments',
 };
 
 export default function AdminPageHeader({

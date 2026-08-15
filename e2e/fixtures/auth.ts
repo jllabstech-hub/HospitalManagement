@@ -88,6 +88,24 @@ export async function firstAvailableSlot(page: Page) {
   return slot;
 }
 
+/** Wait for the doctor confirm/complete dialog to finish its server action. */
+async function waitForDoctorStatus(page: Page, status: 'CONFIRMED' | 'COMPLETED' | 'NO-SHOW') {
+  await expect(page.getByRole('dialog')).toBeHidden({ timeout: 20_000 });
+  await expect(page.getByTitle(`Appointment Status: ${status}`).first()).toBeVisible({ timeout: 15_000 });
+}
+
+export async function confirmFirstDoctorAppointment(page: Page) {
+  await page.getByRole('button', { name: 'Confirm', exact: true }).first().click();
+  await page.getByRole('button', { name: 'Confirm Appointment' }).click();
+  await waitForDoctorStatus(page, 'CONFIRMED');
+}
+
+export async function completeFirstDoctorAppointment(page: Page) {
+  await page.getByRole('button', { name: 'Complete', exact: true }).first().click();
+  await page.getByRole('button', { name: 'Mark Completed' }).click();
+  await waitForDoctorStatus(page, 'COMPLETED');
+}
+
 export const PUBLIC_ROUTES = [
   '/',
   '/about/overview',

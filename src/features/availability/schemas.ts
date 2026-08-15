@@ -17,7 +17,7 @@ export const CreateAvailabilitySchema = z
     endTime: z
       .string()
       .regex(timeRegex, { message: 'End time must be in HH:mm format (e.g. 17:00).' }),
-    slotDurationMinutes: z.number().int().min(5).max(180).optional(),
+    slotDurationMinutes: z.coerce.number().int().min(5).max(180).optional(),
   })
   .refine(
     (data) => timeToMinutes(data.startTime) < timeToMinutes(data.endTime),
@@ -38,6 +38,7 @@ export const UpdateAvailabilitySchema = z
     endTime: z
       .string()
       .regex(timeRegex, { message: 'End time must be in HH:mm format.' }),
+    slotDurationMinutes: z.coerce.number().int().min(5).max(180).optional(),
   })
   .refine(
     (data) => timeToMinutes(data.startTime) < timeToMinutes(data.endTime),

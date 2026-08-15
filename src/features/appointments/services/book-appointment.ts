@@ -159,40 +159,50 @@ export async function bookAppointmentTransaction(
     }
 
     try {
-      const createdAppt = await prisma.appointment.create({
-        data: {
-          patientId: patientProfileId,
-          doctorId,
-          tenantId: tenant.tenantId,
-          appointmentDate: targetUtcDate,
-          startTime: matchedSlot.startTime,
-          endTime: matchedSlot.endTime,
-          status: AppointmentStatus.BOOKED,
-        },
-        select: {
-          id: true,
-          appointmentDate: true,
-          startTime: true,
-          endTime: true,
-          status: true,
-        },
-      });
+      const createdAppt = await prisma.$transaction(async (tx) => {
+        const appointment = await tx.appointment.create({
+          data: {
+            patientId: patientProfileId,
+            doctorId,
+            tenantId: tenant.tenantId,
+            appointmentDate: targetUtcDate,
+            startTime: matchedSlot.startTime,
+            endTime: matchedSlot.endTime,
+            status: AppointmentStatus.BOOKED,
+          },
+          select: {
+            id: true,
+            appointmentDate: true,
+            startTime: true,
+            endTime: true,
+            status: true,
+          },
+        });
 
-      await writeAuditLog({
-        tenantId: tenant.tenantId,
-        actorUserId: actorUserId ?? patient.userId,
-        action: 'appointment.create',
-        entityType: 'Appointment',
-        entityId: createdAppt.id,
-        after: { status: 'BOOKED', doctorId, appointmentDate, startTime: matchedSlot.startTime },
-      });
+        await writeAuditLog(
+          {
+            tenantId: tenant.tenantId,
+            actorUserId: actorUserId ?? patient.userId,
+            action: 'appointment.create',
+            entityType: 'Appointment',
+            entityId: appointment.id,
+            after: { status: 'BOOKED', doctorId, appointmentDate, startTime: matchedSlot.startTime },
+          },
+          tx
+        );
 
-      enqueueAppointmentNotification({
-        tenantId: tenant.tenantId,
-        type: 'APPOINTMENT_BOOKED',
-        recipientUserId: patient.userId,
-        appointmentId: createdAppt.id,
-      }).catch(() => undefined);
+        await enqueueAppointmentNotification(
+          {
+            tenantId: tenant.tenantId,
+            type: 'APPOINTMENT_BOOKED',
+            recipientUserId: patient.userId,
+            appointmentId: appointment.id,
+          },
+          tx
+        );
+
+        return appointment;
+      });
 
       return {
         success: true,

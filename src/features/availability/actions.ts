@@ -135,7 +135,7 @@ export async function updateAvailabilityAction(
       return { success: false, error: issue };
     }
 
-    const { id, startTime, endTime } = parsed.data;
+    const { id, startTime, endTime, slotDurationMinutes } = parsed.data;
     const formattedStart = normalizeTimeFormat(startTime);
     const formattedEnd = normalizeTimeFormat(endTime);
 
@@ -172,6 +172,7 @@ export async function updateAvailabilityAction(
       data: {
         startTime: formattedStart,
         endTime: formattedEnd,
+        ...(slotDurationMinutes ? { slotDurationMinutes } : {}),
       },
     });
     if (updated.count !== 1) {

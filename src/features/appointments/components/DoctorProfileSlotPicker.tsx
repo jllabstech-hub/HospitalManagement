@@ -108,7 +108,7 @@ export default function DoctorProfileSlotPicker({
         setShowConfirmModal(false);
         fetchSlots(selectedDate);
       }
-    } catch (error: unknown) {
+    } catch {
       console.error('Booking submission error');
       setBookingConflictMsg('An unexpected error occurred. Please try again.');
       setShowConfirmModal(false);

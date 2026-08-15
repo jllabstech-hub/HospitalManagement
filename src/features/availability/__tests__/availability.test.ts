@@ -144,6 +144,7 @@ describe('Doctor Weekly Availability Server Actions & Ownership Security', () =>
       dayOfWeek: 2,
       startTime: '09:00',
       endTime: '12:00',
+      slotDurationMinutes: 45,
     });
 
     expect(created.success).toBe(true);
@@ -155,11 +156,13 @@ describe('Doctor Weekly Availability Server Actions & Ownership Security', () =>
       id: winId,
       startTime: '10:00',
       endTime: '13:00',
+      slotDurationMinutes: 60,
     });
     expect(editRes.success).toBe(true);
 
     const updated = await prisma.weeklyAvailability.findUnique({ where: { id: winId } });
     expect(updated?.startTime).toBe('10:00:00');
+    expect(updated?.slotDurationMinutes).toBe(60);
 
     // Delete
     const delRes = await deleteAvailabilityAction(winId);
