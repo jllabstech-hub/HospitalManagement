@@ -389,6 +389,49 @@ async function ensureDemoPublicContent(tenantId: string) {
     },
   });
 
+  await prisma.facility.upsert({
+    where: { tenantId_slug: { tenantId, slug: 'modular-operation-theatres' } },
+    update: { ...published, name: 'Modular Operation Theatres' },
+    create: {
+      ...published,
+      name: 'Modular Operation Theatres',
+      slug: 'modular-operation-theatres',
+      category: 'Surgical',
+      description: 'Theatres, ICUs and diagnostic imaging for advanced procedures.',
+    },
+  });
+
+  await prisma.insurancePartner.upsert({
+    where: { tenantId_slug: { tenantId, slug: 'demo-health-insurance' } },
+    update: { ...published, name: 'Demo Health Insurance' },
+    create: {
+      ...published,
+      name: 'Demo Health Insurance',
+      slug: 'demo-health-insurance',
+      description: 'Cashless and reimbursement support for eligible outpatient visits.',
+    },
+  });
+
+  await prisma.internationalPageContent.upsert({
+    where: { tenantId },
+    update: {
+      title: 'International patients',
+      introduction: 'Coordinators, visa assistance and remote opinion for patients travelling to Bengaluru.',
+      coordinatorContact: 'international@hospital.com',
+    },
+    create: {
+      tenantId,
+      title: 'International patients',
+      introduction: 'Coordinators, visa assistance and remote opinion for patients travelling to Bengaluru.',
+      howToRequest: 'Share medical reports and travel dates with the international desk.',
+      secondOpinion: 'Remote second-opinion reviews are arranged with treating consultants.',
+      requiredDocuments: 'Passport, prior medical records, and treating-doctor summary.',
+      travelInformation: 'Bengaluru International Airport is the nearest arrival point.',
+      accommodationInfo: 'Guest-house and partner hotel options are shared after confirmation.',
+      coordinatorContact: 'international@hospital.com',
+    },
+  });
+
   const jane = await prisma.doctorProfile.findFirst({
     where: { tenantId, user: { email: 'dr.smith@hospital.com' } },
   });
@@ -434,6 +477,42 @@ async function ensureDemoPublicContent(tenantId: string) {
   console.log('Ensured demo public CMS content for tenant', tenantId);
 }
 
+async function ensureTenantHostnames() {
+  const alphaAdmin = await prisma.user.findFirst({
+    where: { email: 'admin@hospital.com' },
+    select: { tenantId: true },
+  });
+  if (alphaAdmin?.tenantId) {
+    const profile = await prisma.hospitalProfile.findUnique({
+      where: { id: alphaAdmin.tenantId },
+      select: { id: true, customDomain: true, subdomain: true },
+    });
+    if (profile && (!profile.customDomain || !profile.subdomain)) {
+      await prisma.hospitalProfile.update({
+        where: { id: profile.id },
+        data: {
+          customDomain: profile.customDomain ?? 'hospital-a.com',
+          subdomain: profile.subdomain ?? 'carepulse',
+        },
+      });
+    }
+  }
+
+  const beta = await prisma.hospitalProfile.findFirst({
+    where: { hospitalName: 'Beta Hospital' },
+    select: { id: true, customDomain: true, subdomain: true },
+  });
+  if (beta && (!beta.customDomain || !beta.subdomain)) {
+    await prisma.hospitalProfile.update({
+      where: { id: beta.id },
+      data: {
+        customDomain: beta.customDomain ?? 'hospital-b.com',
+        subdomain: beta.subdomain ?? 'beta',
+      },
+    });
+  }
+}
+
 async function main() {
   if (process.env.NODE_ENV === 'production' && process.env.ALLOW_DESTRUCTIVE_SEED !== 'true') {
     throw new Error('Refusing to run seed in production. Set ALLOW_DESTRUCTIVE_SEED=true only for disposable environments.');
@@ -446,6 +525,7 @@ async function main() {
     if (tenantId) {
       await ensureDemoPublicContent(tenantId);
     }
+    await ensureTenantHostnames();
     return;
   }
 
@@ -461,6 +541,7 @@ async function main() {
   if (alphaAdmin?.tenantId) {
     await ensureDemoPublicContent(alphaAdmin.tenantId);
   }
+  await ensureTenantHostnames();
 
   console.log('Seed complete.');
 }
