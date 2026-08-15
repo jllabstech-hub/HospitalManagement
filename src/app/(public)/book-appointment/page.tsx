@@ -178,7 +178,7 @@ export default async function BookAppointmentPage({ searchParams }: PageProps) {
                         department: doc.department,
                       }}
                       href={`/doctors/${doc.slug ?? doc.id}`}
-                      bookHref={patientBookingHref(doc.id)}
+                      bookHref={`/book-appointment?doctorId=${doc.id}`}
                       publicMode
                     />
                   ))}

@@ -152,7 +152,17 @@ export async function searchPublicDoctors(
   }
 
   if (params.departmentId?.trim()) {
-    whereClause.departmentId = params.departmentId.trim();
+    const targetDept = await prisma.department.findUnique({
+      where: { id: params.departmentId.trim() },
+      select: { name: true },
+    });
+    if (targetDept) {
+      whereClause.department = {
+        name: { equals: targetDept.name, mode: 'insensitive' },
+      };
+    } else {
+      whereClause.departmentId = params.departmentId.trim();
+    }
   }
 
   if (params.specialityId?.trim()) {

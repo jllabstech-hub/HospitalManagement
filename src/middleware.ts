@@ -40,8 +40,31 @@ export default auth((req) => {
       if (userRole === 'DOCTOR') return NextResponse.redirect(new URL('/doctor/dashboard', req.url));
     }
 
-    // 3. Redirect authenticated users away from /login or /register to their role dashboard
+    // 3. Redirect authenticated users away from /login or /register
     if (pathname === '/login' || pathname === '/register') {
+      const callbackUrl = req.nextUrl.searchParams.get('callbackUrl');
+
+      if (callbackUrl) {
+        if (
+          callbackUrl.startsWith('/book-appointment') ||
+          (!callbackUrl.startsWith('/admin') &&
+            !callbackUrl.startsWith('/doctor') &&
+            !callbackUrl.startsWith('/patient'))
+        ) {
+          return NextResponse.redirect(new URL(callbackUrl, req.url));
+        }
+
+        if (callbackUrl.startsWith('/patient') && userRole === 'PATIENT') {
+          return NextResponse.redirect(new URL(callbackUrl, req.url));
+        }
+        if (callbackUrl.startsWith('/doctor') && userRole === 'DOCTOR') {
+          return NextResponse.redirect(new URL(callbackUrl, req.url));
+        }
+        if (callbackUrl.startsWith('/admin') && userRole === 'ADMIN') {
+          return NextResponse.redirect(new URL(callbackUrl, req.url));
+        }
+      }
+
       if (userRole === 'PATIENT') return NextResponse.redirect(new URL('/patient/dashboard', req.url));
       if (userRole === 'DOCTOR') return NextResponse.redirect(new URL('/doctor/dashboard', req.url));
       if (userRole === 'ADMIN') return NextResponse.redirect(new URL('/admin/dashboard', req.url));

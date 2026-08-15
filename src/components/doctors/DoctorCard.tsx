@@ -25,7 +25,7 @@ export default function DoctorCard({
   className,
 }: DoctorCardProps) {
   const profileHref = href || `/doctors/${doctor.id}`;
-  const bookLink = bookHref || `/patient/doctors/${doctor.id}`;
+  const bookLink = bookHref || `/book-appointment?doctorId=${doctor.id}`;
 
   const displayName = doctor.fullName.startsWith('Dr') ? doctor.fullName : `Dr ${doctor.fullName}`;
   const designationText = doctor.designation || `Consultant ${doctor.department.name}`;

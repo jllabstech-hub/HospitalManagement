@@ -123,24 +123,30 @@ const insurancePartnerSelect = {
 } as const;
 
 export async function getPublishedDepartments() {
-  try {
-    return await unstable_cache(
-      async () => {
-        return prisma.department.findMany({
-          where: ACTIVE_PUBLISHED_FILTER,
-          select: departmentListSelect,
-          orderBy: [{ isFeatured: 'desc' }, { displayOrder: 'asc' }, { name: 'asc' }],
-        });
-      },
-      ['published-departments-list'],
-      { revalidate: 300, tags: ['public-departments'] }
-    )();
-  } catch {
-    return prisma.department.findMany({
+  const fetchDepartments = async () => {
+    const depts = await prisma.department.findMany({
       where: ACTIVE_PUBLISHED_FILTER,
       select: departmentListSelect,
       orderBy: [{ isFeatured: 'desc' }, { displayOrder: 'asc' }, { name: 'asc' }],
     });
+    const map = new Map<string, (typeof depts)[0]>();
+    for (const dept of depts) {
+      const key = dept.name.trim().toLowerCase();
+      if (!map.has(key)) {
+        map.set(key, dept);
+      }
+    }
+    return Array.from(map.values());
+  };
+
+  try {
+    return await unstable_cache(
+      fetchDepartments,
+      ['published-departments-list'],
+      { revalidate: 300, tags: ['public-departments'] }
+    )();
+  } catch {
+    return fetchDepartments();
   }
 }
 
@@ -154,11 +160,19 @@ export async function getDepartmentBySlug(slug: string) {
 }
 
 export async function getPublishedSpecialities() {
-  return prisma.speciality.findMany({
+  const specs = await prisma.speciality.findMany({
     where: ACTIVE_PUBLISHED_FILTER,
     select: specialityListSelect,
     orderBy: [{ isFeatured: 'desc' }, { displayOrder: 'asc' }, { name: 'asc' }],
   });
+  const map = new Map<string, (typeof specs)[0]>();
+  for (const spec of specs) {
+    const key = spec.name.trim().toLowerCase();
+    if (!map.has(key)) {
+      map.set(key, spec);
+    }
+  }
+  return Array.from(map.values());
 }
 
 export async function getSpecialityBySlug(slug: string) {
