@@ -42,7 +42,7 @@ export default async function ContactPage() {
             className="mb-8"
           />
 
-          {/* Top Row: Apollo Hospitals Style 4-Card Contact Grid */}
+          {/* Top Row: 4-Card Contact Grid */}
           <div className="mb-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {/* Card 1: 24/7 Emergency Hotline */}
             <div className="group relative overflow-hidden rounded-card border border-rose-200 bg-gradient-to-br from-rose-50 to-white p-6 shadow-soft transition-all duration-300 hover:-translate-y-1 hover:shadow-card">

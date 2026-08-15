@@ -73,7 +73,7 @@ export default function DoctorCard({
           </div>
         </div>
 
-        {/* Info Badges Row: Location & Experience Pills like Medicover Hospitals */}
+        {/* Info Badges Row: Location & Experience Pills */}
         <div className="grid gap-2 pt-1 text-xs">
           <div className="flex items-center gap-2 rounded-button bg-surface-muted px-3 py-1.5 font-semibold text-ink-muted">
             <svg viewBox="0 0 20 20" className="h-3.5 w-3.5 fill-brand-600 shrink-0" aria-hidden>

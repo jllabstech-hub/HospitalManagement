@@ -52,7 +52,7 @@ export default function Specialities({ specialities, departments }: Props) {
         <SectionHeader
           eyebrow="Clinical Excellence"
           title="Explore Our Centres of Speciality"
-          description="Apollo & Jeevika style interactive specialty finder—browse treatments, key procedures, and book consultations."
+          description="Interactive specialty finder—browse treatments, key procedures, and book consultations."
           action={
             <Link href="/specialities" className="btn-secondary">
               View All Specialities →

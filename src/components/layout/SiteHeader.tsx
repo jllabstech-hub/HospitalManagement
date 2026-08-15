@@ -130,7 +130,7 @@ interface SiteHeaderProps {
 }
 
 /**
- * Public site header — Server Component shell with Aster-inspired streamlined nav.
+ * Public site header — Server Component shell with streamlined nav.
  */
 export default function SiteHeader({ profile }: SiteHeaderProps) {
   const phone = profile?.phone ?? APP_CONFIG.contact.phone;

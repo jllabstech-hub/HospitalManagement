@@ -83,7 +83,7 @@ export default function Testimonials({ testimonials }: { testimonials?: CmsTesti
           <SectionHeader
             eyebrow="Patient Voices & Recovery Stories"
             title="Experiences from Our Outpatient Community"
-            description="Apollo & Vijaya style verified patient reflections. Hear directly from patients treated at CarePulse Hospital."
+            description="Verified patient reflections. Hear directly from patients treated at CarePulse Hospital."
           />
           {/* Slider Navigation Buttons */}
           <div className="flex items-center gap-2 mb-4 sm:mb-0">

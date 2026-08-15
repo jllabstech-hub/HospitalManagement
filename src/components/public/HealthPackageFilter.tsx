@@ -38,7 +38,7 @@ export default function HealthPackageFilter({ packages }: Props) {
 
   return (
     <div className="space-y-6">
-      {/* Category Filter Pills (Manipal & Vijaya Style) */}
+      {/* Category Filter Pills */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
         {CATEGORIES.map((cat) => {
           const isActive = selectedCategory === cat;

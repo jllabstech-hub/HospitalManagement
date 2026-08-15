@@ -15,7 +15,7 @@ interface DoctorProfileHeaderProps {
 }
 
 /**
- * Medicover Hospitals inspired Doctor Profile Header Component.
+ * Doctor Profile Header Component.
  */
 export default function DoctorProfileHeader({ doctor }: DoctorProfileHeaderProps) {
   const displayName = doctor.fullName.startsWith('Dr') ? doctor.fullName : `Dr ${doctor.fullName}`;
@@ -56,7 +56,7 @@ export default function DoctorProfileHeader({ doctor }: DoctorProfileHeaderProps
           </div>
         </div>
 
-        {/* Right Side: Medicover-style Info Cards */}
+        {/* Right Side: Doctor Info Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs font-semibold">
           <div className="rounded-card border border-[#dde5e9] bg-surface-muted p-3 text-center">
             <span className="block text-ink-muted">Experience</span>

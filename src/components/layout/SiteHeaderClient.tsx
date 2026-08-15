@@ -136,7 +136,7 @@ export default function SiteHeaderClient({
           {/* Hospital Brand Logo */}
           <div className="min-w-0 shrink-0">{brand}</div>
 
-          {/* Desktop Navigation Menu (Aster-inspired with hover cards & popovers) */}
+          {/* Desktop Navigation Menu */}
           <nav
             className="hidden items-center gap-1 xl:flex"
             aria-label="Primary Navigation"

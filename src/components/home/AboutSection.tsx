@@ -51,7 +51,7 @@ export default function AboutSection({ profile }: AboutSectionProps) {
             </div>
           </div>
 
-          {/* Apollo-Style Floating Glass Accent Card */}
+          {/* Floating Glass Accent Card */}
           <div className="absolute -bottom-6 -right-4 sm:right-6 animate-fade-up hidden sm:flex items-center gap-3.5 rounded-card border border-white/80 bg-white/90 p-4 shadow-elevated backdrop-blur-md transition-all duration-300 hover:scale-105">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 font-bold text-emerald-800 text-xl shadow-inner">
               ✓
@@ -63,7 +63,7 @@ export default function AboutSection({ profile }: AboutSectionProps) {
           </div>
         </div>
 
-        {/* Right Side: Apollo Inspired Content + Live Counter Metrics */}
+        {/* Right Side: Hospital Overview Content + Live Counter Metrics */}
         <div className="space-y-6 lg:col-span-6 animate-fade-up">
           <SectionHeader
             eyebrow={`About ${hospitalName}`}
@@ -74,7 +74,7 @@ export default function AboutSection({ profile }: AboutSectionProps) {
             }
           />
 
-          {/* Apollo-Style 4-Grid Live Counter Cards */}
+          {/* 4-Grid Live Counter Cards */}
           <div className="grid grid-cols-2 gap-3.5 pt-2 sm:grid-cols-4">
             {STATS_COUNTER.map((stat, idx) => (
               <div

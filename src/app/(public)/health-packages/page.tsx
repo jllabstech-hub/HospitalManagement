@@ -19,7 +19,7 @@ export default async function HealthPackagesPage() {
       <PageHero
         eyebrow="Preventive Healthcare & Diagnostics"
         title="Comprehensive Health Check Packages"
-        subtitle="Manipal & Vijaya style structured screening programmes. Early detection packages designed for all age groups and health needs."
+        subtitle="Structured screening programmes and early detection packages designed for all age groups and health needs."
       />
       <section className="section-pad bg-gradient-to-b from-white via-surface-soft/40 to-white">
         <div className="container-page">

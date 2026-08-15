@@ -22,7 +22,7 @@ export default function Hero({ profile }: HeroProps) {
 
   return (
     <section className="relative overflow-hidden">
-      {/* Apollo / Manipal Style 24/7 Emergency Ticker Bar */}
+      {/* 24/7 Emergency Ticker Bar */}
       <div className="relative z-20 bg-gradient-to-r from-rose-900 via-red-800 to-rose-900 px-4 py-2 text-white shadow-md">
         <div className="container-page flex flex-wrap items-center justify-between gap-2 text-xs">
           <div className="flex items-center gap-2.5">

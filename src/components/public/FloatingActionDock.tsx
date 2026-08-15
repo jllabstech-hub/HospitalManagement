@@ -126,7 +126,7 @@ export default function FloatingActionDock({ emergencyPhone }: Props) {
             <div className="flex items-center justify-between border-b border-[#dde5e9] pb-3">
               <div>
                 <span className="rounded bg-brand-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-brand-800">
-                  Apollo / Manipal Style Desk
+                  24/7 Outpatient Desk
                 </span>
                 <h3 className="mt-1 font-display text-lg font-bold text-ink">
                   Request an Instant Callback
