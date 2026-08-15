@@ -1,11 +1,22 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const e2eDbUrl = process.env.E2E_DATABASE_URL;
+if (!e2eDbUrl) {
+  throw new Error(
+    'E2E_DATABASE_URL is required. Run `npm run test:e2e` so Playwright uses an isolated PostgreSQL database.'
+  );
+}
+if (/\.neon\.tech|neon\.build/i.test(e2eDbUrl)) {
+  throw new Error('E2E_DATABASE_URL must not point at the shared Neon database.');
+}
+
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: 0,
   workers: 1,
+  globalSetup: './e2e/global-setup.ts',
   reporter: [
     ['list'],
     ['html', { open: 'never', outputFolder: 'playwright-report' }],
@@ -25,9 +36,17 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npx prisma db seed && npx next dev -p 5001',
+    command: 'npx next dev -p 5001',
     url: 'http://localhost:5001',
-    reuseExistingServer: true,
+    reuseExistingServer: false,
     timeout: 180 * 1000,
+    env: {
+      ...process.env,
+      DATABASE_URL: e2eDbUrl,
+      E2E_TEST_MODE: 'true',
+      ALLOW_DEV_TENANT_FALLBACK: 'true',
+      DEFAULT_TENANT_DOMAIN: 'carepulse',
+      AUTH_SECRET: process.env.AUTH_SECRET || 'e2e-auth-secret-key-min-32-chars-xxxx',
+    },
   },
 });

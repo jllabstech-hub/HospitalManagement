@@ -1,8 +1,9 @@
 import { prisma } from '@/server/db/client';
 import { unstable_cache } from 'next/cache';
 import { ACTIVE_PUBLISHED_FILTER, PUBLISHED_FILTER } from '@/features/cms/constants';
-import { publicDoctorListSelect, publicDoctorWhere } from '@/features/cms/queries/doctors-public';
+import { publicDoctorListSelect, publicDoctorWhereFor } from '@/features/cms/queries/doctors-public';
 import { buildFuzzyDoctorWhere } from '@/lib/fuzzy-search';
+import { requireTenantContext } from '@/server/tenant';
 
 const SEARCH_TAKE = 5;
 
@@ -27,13 +28,13 @@ export interface GlobalSearchResult {
   news: Awaited<ReturnType<typeof searchNews>>;
 }
 
-async function searchDoctors(q: string) {
+async function searchDoctors(q: string, tenantId: string) {
   const tokens = tokenizeQuery(q);
   const fuzzyClause = buildFuzzyDoctorWhere(q);
 
   return prisma.doctorProfile.findMany({
     where: {
-      ...publicDoctorWhere,
+      ...publicDoctorWhereFor(tenantId),
       OR: [
         ...(Object.keys(fuzzyClause).length > 0 ? [fuzzyClause] : []),
         ...tokens.flatMap((token) => [
@@ -48,12 +49,13 @@ async function searchDoctors(q: string) {
   });
 }
 
-async function searchDepartments(q: string) {
+async function searchDepartments(q: string, tenantId: string) {
   const tokens = tokenizeQuery(q);
 
   return prisma.department.findMany({
     where: {
       ...ACTIVE_PUBLISHED_FILTER,
+      tenantId,
       ...buildTokenAnd(tokens, (token) => ({
         OR: [
           { name: { contains: token, mode: 'insensitive' as const } },
@@ -74,12 +76,13 @@ async function searchDepartments(q: string) {
   });
 }
 
-async function searchSpecialities(q: string) {
+async function searchSpecialities(q: string, tenantId: string) {
   const tokens = tokenizeQuery(q);
 
   return prisma.speciality.findMany({
     where: {
       ...ACTIVE_PUBLISHED_FILTER,
+      tenantId,
       ...buildTokenAnd(tokens, (token) => ({
         OR: [
           { name: { contains: token, mode: 'insensitive' as const } },
@@ -100,12 +103,13 @@ async function searchSpecialities(q: string) {
   });
 }
 
-async function searchServices(q: string) {
+async function searchServices(q: string, tenantId: string) {
   const tokens = tokenizeQuery(q);
 
   return prisma.hospitalService.findMany({
     where: {
       ...ACTIVE_PUBLISHED_FILTER,
+      tenantId,
       ...buildTokenAnd(tokens, (token) => ({
         OR: [
           { name: { contains: token, mode: 'insensitive' as const } },
@@ -126,12 +130,13 @@ async function searchServices(q: string) {
   });
 }
 
-async function searchArticles(q: string) {
+async function searchArticles(q: string, tenantId: string) {
   const tokens = tokenizeQuery(q);
 
   return prisma.healthArticle.findMany({
     where: {
       ...PUBLISHED_FILTER,
+      tenantId,
       ...buildTokenAnd(tokens, (token) => ({
         OR: [
           { title: { contains: token, mode: 'insensitive' as const } },
@@ -153,12 +158,13 @@ async function searchArticles(q: string) {
   });
 }
 
-async function searchNews(q: string) {
+async function searchNews(q: string, tenantId: string) {
   const tokens = tokenizeQuery(q);
 
   return prisma.newsArticle.findMany({
     where: {
       ...PUBLISHED_FILTER,
+      tenantId,
       ...buildTokenAnd(tokens, (token) => ({
         OR: [
           { title: { contains: token, mode: 'insensitive' as const } },
@@ -195,31 +201,33 @@ export async function globalPublicSearch(q: string): Promise<GlobalSearchResult>
     };
   }
 
+  const { tenantId } = await requireTenantContext();
+
   try {
     return await unstable_cache(
       async () => {
         const [doctors, departments, specialities, services, articles, news] = await Promise.all([
-          searchDoctors(trimmed),
-          searchDepartments(trimmed),
-          searchSpecialities(trimmed),
-          searchServices(trimmed),
-          searchArticles(trimmed),
-          searchNews(trimmed),
+          searchDoctors(trimmed, tenantId),
+          searchDepartments(trimmed, tenantId),
+          searchSpecialities(trimmed, tenantId),
+          searchServices(trimmed, tenantId),
+          searchArticles(trimmed, tenantId),
+          searchNews(trimmed, tenantId),
         ]);
 
         return { doctors, departments, specialities, services, articles, news };
       },
-      ['global-public-search', trimmed],
-      { revalidate: 300, tags: ['public-search'] }
+      ['global-public-search', tenantId, trimmed],
+      { revalidate: 300, tags: [`public-search-${tenantId}`] }
     )();
   } catch {
     const [doctors, departments, specialities, services, articles, news] = await Promise.all([
-      searchDoctors(trimmed),
-      searchDepartments(trimmed),
-      searchSpecialities(trimmed),
-      searchServices(trimmed),
-      searchArticles(trimmed),
-      searchNews(trimmed),
+      searchDoctors(trimmed, tenantId),
+      searchDepartments(trimmed, tenantId),
+      searchSpecialities(trimmed, tenantId),
+      searchServices(trimmed, tenantId),
+      searchArticles(trimmed, tenantId),
+      searchNews(trimmed, tenantId),
     ]);
 
     return { doctors, departments, specialities, services, articles, news };

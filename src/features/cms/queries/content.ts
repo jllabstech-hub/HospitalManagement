@@ -1,6 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/server/db/client';
 import { PUBLISHED_FILTER } from '@/features/cms/constants';
+import { requireTenantContext } from '@/server/tenant';
 
 const articleListSelect = {
   id: true,
@@ -148,12 +149,14 @@ export async function getPublishedArticles(params: {
   page?: number;
   limit?: number;
 }): Promise<PaginatedArticlesResult> {
+  const { tenantId } = await requireTenantContext();
   const page = Math.max(1, params.page ?? 1);
   const limit = Math.max(1, Math.min(50, params.limit ?? 12));
   const skip = (page - 1) * limit;
 
   const where: Prisma.HealthArticleWhereInput = {
     ...PUBLISHED_FILTER,
+    tenantId,
     ...buildArticleSearchWhere(params.search),
     ...(params.specialityId?.trim() ? { specialityId: params.specialityId.trim() } : {}),
   };
@@ -176,9 +179,10 @@ export async function getPublishedArticles(params: {
 
 export async function getArticleBySlug(slug: string) {
   if (!slug?.trim()) return null;
+  const { tenantId } = await requireTenantContext();
 
   return prisma.healthArticle.findFirst({
-    where: { slug: slug.trim(), ...PUBLISHED_FILTER },
+    where: { slug: slug.trim(), tenantId, ...PUBLISHED_FILTER },
     select: articleDetailSelect,
   });
 }
@@ -189,12 +193,14 @@ export async function getPublishedNews(params: {
   page?: number;
   limit?: number;
 }): Promise<PaginatedNewsResult> {
+  const { tenantId } = await requireTenantContext();
   const page = Math.max(1, params.page ?? 1);
   const limit = Math.max(1, Math.min(50, params.limit ?? 12));
   const skip = (page - 1) * limit;
 
   const where: Prisma.NewsArticleWhereInput = {
     ...PUBLISHED_FILTER,
+    tenantId,
     ...buildNewsSearchWhere(params.search),
     ...(params.category?.trim()
       ? { category: { equals: params.category.trim(), mode: 'insensitive' } }
@@ -219,16 +225,18 @@ export async function getPublishedNews(params: {
 
 export async function getNewsBySlug(slug: string) {
   if (!slug?.trim()) return null;
+  const { tenantId } = await requireTenantContext();
 
   return prisma.newsArticle.findFirst({
-    where: { slug: slug.trim(), ...PUBLISHED_FILTER },
+    where: { slug: slug.trim(), tenantId, ...PUBLISHED_FILTER },
     select: newsDetailSelect,
   });
 }
 
 export async function getPublishedSuccessStories() {
+  const { tenantId } = await requireTenantContext();
   return prisma.successStory.findMany({
-    where: PUBLISHED_FILTER,
+    where: { ...PUBLISHED_FILTER, tenantId },
     select: successStoryListSelect,
     orderBy: [{ publishedAt: 'desc' }, { createdAt: 'desc' }],
   });
@@ -236,9 +244,10 @@ export async function getPublishedSuccessStories() {
 
 export async function getSuccessStoryBySlug(slug: string) {
   if (!slug?.trim()) return null;
+  const { tenantId } = await requireTenantContext();
 
   return prisma.successStory.findFirst({
-    where: { slug: slug.trim(), ...PUBLISHED_FILTER },
+    where: { slug: slug.trim(), tenantId, ...PUBLISHED_FILTER },
     select: {
       ...successStoryListSelect,
       content: true,
@@ -247,8 +256,9 @@ export async function getSuccessStoryBySlug(slug: string) {
 }
 
 export async function getPublishedTestimonials() {
+  const { tenantId } = await requireTenantContext();
   return prisma.testimonial.findMany({
-    where: PUBLISHED_FILTER,
+    where: { ...PUBLISHED_FILTER, tenantId },
     select: testimonialSelect,
     orderBy: [{ displayOrder: 'asc' }, { publishedAt: 'desc' }],
   });

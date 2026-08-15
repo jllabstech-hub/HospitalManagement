@@ -2,35 +2,37 @@ import Link from 'next/link';
 import BrandLogo from './BrandLogo';
 import { APP_CONFIG } from '@/config';
 
-const FOOTER_COLS = [
-  {
-    title: 'Hospital',
-    links: [
-      { href: '/about/overview', label: 'About CarePulse' },
-      { href: '/centres-of-excellence', label: 'Centres of Excellence' },
-      { href: '/locations', label: 'Locations' },
-      { href: '/contact', label: 'Contact' },
-    ],
-  },
-  {
-    title: 'Care',
-    links: [
-      { href: '/departments', label: 'Departments' },
-      { href: '/specialities', label: 'Specialities' },
-      { href: '/doctors', label: 'Find a Doctor' },
-      { href: '/services', label: 'Services' },
-    ],
-  },
-  {
-    title: 'Patient Services',
-    links: [
-      { href: '/book-appointment', label: 'Book Appointment' },
-      { href: '/patient-resources', label: 'Patient Resources' },
-      { href: '/health-packages', label: 'Health Packages' },
-      { href: '/login', label: 'Patient Portal' },
-    ],
-  },
-];
+function footerColumns(hospitalName?: string | null) {
+  return [
+    {
+      title: 'Hospital',
+      links: [
+        { href: '/about/overview', label: `About ${hospitalName || APP_CONFIG.shortName}` },
+        { href: '/centres-of-excellence', label: 'Centres of Excellence' },
+        { href: '/locations', label: 'Locations' },
+        { href: '/contact', label: 'Contact' },
+      ],
+    },
+    {
+      title: 'Care',
+      links: [
+        { href: '/departments', label: 'Departments' },
+        { href: '/specialities', label: 'Specialities' },
+        { href: '/doctors', label: 'Find a Doctor' },
+        { href: '/services', label: 'Services' },
+      ],
+    },
+    {
+      title: 'Patient Services',
+      links: [
+        { href: '/book-appointment', label: 'Book Appointment' },
+        { href: '/patient-resources', label: 'Patient Resources' },
+        { href: '/health-packages', label: 'Health Packages' },
+        { href: '/login', label: 'Patient Portal' },
+      ],
+    },
+  ];
+}
 
 interface SiteFooterProps {
   profile?: {
@@ -117,7 +119,7 @@ export default function SiteFooter({ profile }: SiteFooterProps) {
             )}
           </div>
 
-          {FOOTER_COLS.map((col) => (
+          {footerColumns(profile?.hospitalName).map((col) => (
             <div key={col.title} className="lg:col-span-2">
               <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-brand-300">
                 {col.title}

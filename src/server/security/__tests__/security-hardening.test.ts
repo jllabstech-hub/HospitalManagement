@@ -122,7 +122,8 @@ describe('Phase 7A Comprehensive Security Hardening & Vulnerability Test Suite',
   });
 
   it('2. Rejects Malformed Grid Time Inputs (10:15, 10:45, 99:99)', async () => {
-    const invalidTimes = ['10:15', '10:45', '99:99', 'invalid'];
+    const invalidTimes = ['99:99', 'invalid'];
+    const offSlotTimes = ['10:15', '10:45'];
 
     for (const timeStr of invalidTimes) {
       const res = await bookAppointmentTransaction(patAUser.patientProfileId, {
@@ -134,6 +135,19 @@ describe('Phase 7A Comprehensive Security Hardening & Vulnerability Test Suite',
       expect(res.success).toBe(false);
       if (!res.success) {
         expect(res.code).toBe('VALIDATION_ERROR');
+      }
+    }
+
+    for (const timeStr of offSlotTimes) {
+      const res = await bookAppointmentTransaction(patAUser.patientProfileId, {
+        doctorId: docAUser.doctorProfileId,
+        appointmentDate: '2026-12-25',
+        startTime: timeStr,
+      });
+
+      expect(res.success).toBe(false);
+      if (!res.success) {
+        expect(res.code).toBe('SLOT_UNAVAILABLE');
       }
     }
   });

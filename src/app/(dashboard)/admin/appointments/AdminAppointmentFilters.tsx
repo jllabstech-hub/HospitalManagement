@@ -58,7 +58,28 @@ export default function AdminAppointmentFilters({
   );
 
   return (
-    <div className="card-surface space-y-4 p-6">
+    <form
+      className="card-surface space-y-4 p-6"
+      onSubmit={(e) => {
+        e.preventDefault();
+        const form = e.currentTarget;
+        const searchInput = form.elements.namedItem('search') as HTMLInputElement | null;
+        const dept = form.elements.namedItem('department') as HTMLSelectElement | null;
+        const doctor = form.elements.namedItem('doctor') as HTMLSelectElement | null;
+        const status = form.elements.namedItem('status') as HTMLSelectElement | null;
+        const params = new URLSearchParams();
+        const q = searchInput?.value.trim() || '';
+        if (q) params.set('search', q);
+        if (dept?.value) params.set('department', dept.value);
+        if (doctor?.value) params.set('doctor', doctor.value);
+        if (status?.value) params.set('status', status.value);
+        params.set('page', '1');
+        startTransition(() => {
+          const query = params.toString();
+          router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+        });
+      }}
+    >
       <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
         {/* Live Search Input */}
         <div className="md:col-span-4">
@@ -78,6 +99,7 @@ export default function AdminAppointmentFilters({
           </label>
           <select
             id="adminDeptFilter"
+            name="department"
             value={currentDepartment}
             onChange={(e) => updateParam('department', e.target.value)}
             className="input-field !py-2 text-xs sm:text-sm"
@@ -98,6 +120,7 @@ export default function AdminAppointmentFilters({
           </label>
           <select
             id="adminDoctorFilter"
+            name="doctor"
             value={currentDoctor}
             onChange={(e) => updateParam('doctor', e.target.value)}
             className="input-field !py-2 text-xs sm:text-sm"
@@ -118,6 +141,7 @@ export default function AdminAppointmentFilters({
           </label>
           <select
             id="adminStatusFilter"
+            name="status"
             value={currentStatus}
             onChange={(e) => updateParam('status', e.target.value)}
             className="input-field !py-2 text-xs sm:text-sm"
@@ -144,20 +168,25 @@ export default function AdminAppointmentFilters({
             </span>
           )}
         </div>
-        {hasActiveFilters && (
-          <button
-            type="button"
-            onClick={() => {
-              startTransition(() => {
-                router.replace(pathname, { scroll: false });
-              });
-            }}
-            className="font-semibold text-brand-700 hover:underline"
-          >
-            Reset Filters
+        <div className="flex items-center gap-3">
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={() => {
+                startTransition(() => {
+                  router.replace(pathname, { scroll: false });
+                });
+              }}
+              className="font-semibold text-brand-700 hover:underline"
+            >
+              Reset Filters
+            </button>
+          )}
+          <button type="submit" className="btn-primary !py-1.5 !text-xs">
+            Filter
           </button>
-        )}
+        </div>
       </div>
-    </div>
+    </form>
   );
 }

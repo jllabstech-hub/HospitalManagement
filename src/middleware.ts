@@ -1,6 +1,7 @@
 import NextAuth from 'next-auth';
 import { authConfig } from '@/features/auth/auth.config';
 import { NextResponse } from 'next/server';
+import { isDashboardPath } from '@/server/security/dashboard-paths';
 
 const { auth } = NextAuth(authConfig);
 
@@ -8,13 +9,12 @@ export default auth((req) => {
   const { pathname } = req.nextUrl;
   const session = req.auth;
 
-  const isPatientRoute = pathname.startsWith('/patient');
-  const isDoctorRoute = pathname.startsWith('/doctor');
-  const isAdminRoute = pathname.startsWith('/admin');
+  const isPatientRoute = isDashboardPath(pathname, '/patient');
+  const isDoctorRoute = isDashboardPath(pathname, '/doctor');
+  const isAdminRoute = isDashboardPath(pathname, '/admin');
 
   const isProtectedRoute = isPatientRoute || isDoctorRoute || isAdminRoute;
 
-  // 1. Unauthenticated users accessing protected routes -> Redirect to /login
   if (isProtectedRoute && !session?.user) {
     const loginUrl = new URL('/login', req.url);
     loginUrl.searchParams.set('callbackUrl', pathname);
@@ -24,7 +24,6 @@ export default auth((req) => {
   if (session?.user) {
     const userRole = session.user.role;
 
-    // 2. Role-based Route Protection
     if (isPatientRoute && userRole !== 'PATIENT') {
       if (userRole === 'DOCTOR') return NextResponse.redirect(new URL('/doctor/dashboard', req.url));
       if (userRole === 'ADMIN') return NextResponse.redirect(new URL('/admin/dashboard', req.url));
@@ -40,27 +39,26 @@ export default auth((req) => {
       if (userRole === 'DOCTOR') return NextResponse.redirect(new URL('/doctor/dashboard', req.url));
     }
 
-    // 3. Redirect authenticated users away from /login or /register
     if (pathname === '/login' || pathname === '/register') {
       const callbackUrl = req.nextUrl.searchParams.get('callbackUrl');
 
       if (callbackUrl) {
         if (
           callbackUrl.startsWith('/book-appointment') ||
-          (!callbackUrl.startsWith('/admin') &&
-            !callbackUrl.startsWith('/doctor') &&
-            !callbackUrl.startsWith('/patient'))
+          (!isDashboardPath(callbackUrl, '/admin') &&
+            !isDashboardPath(callbackUrl, '/doctor') &&
+            !isDashboardPath(callbackUrl, '/patient'))
         ) {
           return NextResponse.redirect(new URL(callbackUrl, req.url));
         }
 
-        if (callbackUrl.startsWith('/patient') && userRole === 'PATIENT') {
+        if (isDashboardPath(callbackUrl, '/patient') && userRole === 'PATIENT') {
           return NextResponse.redirect(new URL(callbackUrl, req.url));
         }
-        if (callbackUrl.startsWith('/doctor') && userRole === 'DOCTOR') {
+        if (isDashboardPath(callbackUrl, '/doctor') && userRole === 'DOCTOR') {
           return NextResponse.redirect(new URL(callbackUrl, req.url));
         }
-        if (callbackUrl.startsWith('/admin') && userRole === 'ADMIN') {
+        if (isDashboardPath(callbackUrl, '/admin') && userRole === 'ADMIN') {
           return NextResponse.redirect(new URL(callbackUrl, req.url));
         }
       }
@@ -71,9 +69,9 @@ export default auth((req) => {
     }
   }
 
-  // Clone headers to pass down to server components
   const requestHeaders = new Headers(req.headers);
-  const host = requestHeaders.get('host') || '';
+  const host = req.headers.get('host') || req.nextUrl.host || '';
+  // Always overwrite. Never trust a client-provided x-tenant-host.
   requestHeaders.set('x-tenant-host', host);
 
   return NextResponse.next({
@@ -85,11 +83,6 @@ export default auth((req) => {
 
 export const config = {
   matcher: [
-    '/',
-    '/patient/:path*',
-    '/doctor/:path*',
-    '/admin/:path*',
-    '/login',
-    '/register',
+    '/((?!_next/static|_next/image|favicon.ico|uploads/|.*\\..*).*)',
   ],
 };

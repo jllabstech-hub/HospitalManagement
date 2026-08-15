@@ -6,7 +6,7 @@ import AdminPageHeader from '@/components/admin/AdminPageHeader';
 export default async function AdminFaqPage() {
   const admin = await requireAdmin();
   const rawRecords = await prisma.faqItem.findMany({
-    where: admin.tenantId ? { tenantId: admin.tenantId } : {},
+    where: { tenantId: admin.tenantId },
     orderBy: { question: 'asc' },
   });
 

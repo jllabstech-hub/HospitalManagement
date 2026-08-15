@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { globalPublicSearch } from '@/features/cms/queries/search';
+import { logger } from '@/lib/logger';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -20,11 +21,12 @@ export async function GET(request: Request) {
     const results = await globalPublicSearch(q);
     return NextResponse.json(results, {
       headers: {
-        'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=600',
+        'Cache-Control': 'private, max-age=60',
+        Vary: 'Host',
       },
     });
-  } catch (error) {
-    console.error('Error in search API route:', error);
+  } catch {
+    logger.error({ event: 'search.failed' }, 'Failed to perform search');
     return NextResponse.json({ error: 'Failed to perform search' }, { status: 500 });
   }
 }

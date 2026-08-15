@@ -1,31 +1,16 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/server/security/auth-helpers';
 import { prisma } from '@/server/db/client';
-import { writeFile, mkdir } from 'fs/promises';
-import path from 'path';
-
-// Permitted MIME types and maximum file size (5MB)
-const ALLOWED_MIME_TYPES = new Set([
-  'image/jpeg',
-  'image/jpg',
-  'image/pjpeg',
-  'image/png',
-  'image/x-png',
-  'image/webp',
-  'image/svg+xml',
-  'image/svg',
-]);
-
-const ALLOWED_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.svg']);
-
-const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
+import { validateImageUpload, MAX_UPLOAD_BYTES } from '@/server/security/media';
+import { DomainError } from '@/server/errors/domain-error';
+import { writeAuditLog } from '@/server/security/audit';
+import { logger } from '@/lib/logger';
+import { getStorageProvider } from '@/server/storage';
 
 export async function POST(request: Request) {
   try {
-    // 1. Enforce strict Admin server authentication guard
     const admin = await requireAdmin();
 
-    // 2. Parse Multipart Form Data
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
     const altText = (formData.get('altText') as string | null) ?? '';
@@ -35,124 +20,75 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No image file provided.' }, { status: 400 });
     }
 
-    // 3. Security Validations
-    const fileExt = path.extname(file.name).toLowerCase();
-    const mimeType = file.type?.toLowerCase() || '';
-
-    const isValidMime = ALLOWED_MIME_TYPES.has(mimeType);
-    const isValidExt = ALLOWED_EXTENSIONS.has(fileExt);
-
-    if (!isValidMime && !isValidExt) {
-      return NextResponse.json(
-        { error: 'Invalid file format. Allowed formats: JPG, PNG, WebP, SVG.' },
-        { status: 400 }
-      );
+    if (file.size > MAX_UPLOAD_BYTES) {
+      return NextResponse.json({ error: 'File size exceeds maximum limit of 5MB.' }, { status: 400 });
     }
-
-    if (file.size > MAX_FILE_SIZE_BYTES) {
-      return NextResponse.json(
-        { error: 'File size exceeds maximum limit of 5MB.' },
-        { status: 400 }
-      );
-    }
-
-    // Sanitize filename and build unique storage key
-    const sanitizedOriginalName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-    const ext = fileExt || '.jpg';
-    const timestamp = Date.now();
-    const uniqueFilename = `${timestamp}-${Math.random().toString(36).substring(2, 8)}${ext}`;
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    let publicUrl = `/uploads/${uniqueFilename}`;
+    const validated = validateImageUpload({
+      originalName: file.name,
+      declaredMime: file.type,
+      size: file.size,
+      buffer,
+    });
 
-    // 4. Save file to disk if available, otherwise fallback to Data URL storage for serverless environments (e.g. Vercel)
-    try {
-      const uploadDir = path.join(process.cwd(), 'public', 'uploads');
-      await mkdir(uploadDir, { recursive: true });
-      const filePath = path.join(uploadDir, uniqueFilename);
-      await writeFile(filePath, buffer);
-    } catch (fsError) {
-      console.warn('Filesystem write unavailable (serverless environment), falling back to Data URL storage:', fsError);
-      const mime = file.type || 'image/jpeg';
-      const base64 = buffer.toString('base64');
-      publicUrl = `data:${mime};base64,${base64}`;
-    }
+    const storage = getStorageProvider();
+    const uploadResult = await storage.uploadObject({
+      tenantId: admin.tenantId,
+      filename: validated.filename,
+      buffer,
+      mimeType: validated.mimeType,
+    });
 
-    // 5. Safe Tenant ID Resolution
-    let targetTenantId: string | null = admin.tenantId ?? null;
-
-    if (targetTenantId) {
-      const existingTenant = await prisma.hospitalProfile.findUnique({
-        where: { id: targetTenantId },
-        select: { id: true },
-      });
-      if (!existingTenant) {
-        targetTenantId = null;
-      }
-    }
-
-    if (!targetTenantId) {
-      let defaultTenant = await prisma.hospitalProfile.findFirst({ select: { id: true } });
-      if (!defaultTenant) {
-        defaultTenant = await prisma.hospitalProfile.create({
-          data: {
-            hospitalName: 'CarePulse Hospital',
-          },
-          select: { id: true },
-        });
-      }
-      targetTenantId = defaultTenant.id;
-    }
-
-    // 6. Create authoritative MediaAsset database record
     const mediaAsset = await prisma.mediaAsset.create({
       data: {
-        url: publicUrl,
-        altText: altText.trim() || sanitizedOriginalName,
-        caption: caption.trim() || null,
+        url: uploadResult.publicUrl,
+        altText: altText.trim().slice(0, 200) || validated.filename,
+        caption: caption.trim().slice(0, 500) || null,
         type: 'IMAGE',
-        width: 800,
-        height: 600,
+        width: validated.width,
+        height: validated.height,
         fileSize: file.size,
-        mimeType: file.type || 'image/jpeg',
-        tenantId: targetTenantId,
+        mimeType: validated.mimeType,
+        storageKey: uploadResult.key,
+        isPrivate: false,
+        tenantId: admin.tenantId,
       },
+    });
+
+    await writeAuditLog({
+      tenantId: admin.tenantId,
+      actorUserId: admin.id,
+      action: 'media.upload',
+      entityType: 'MediaAsset',
+      entityId: mediaAsset.id,
     });
 
     return NextResponse.json({
       success: true,
       media: mediaAsset,
     });
-  } catch (error: any) {
-    console.error('Error in Admin media upload API:', error);
-    const detail = error?.message || 'Failed to process media upload.';
-    return NextResponse.json({ error: detail }, { status: 500 });
+  } catch (error: unknown) {
+    if (error instanceof DomainError) {
+      return NextResponse.json({ error: error.message }, { status: error.statusCode || 400 });
+    }
+    logger.error({ event: 'media.upload_failed' }, 'Media upload failed');
+    return NextResponse.json({ error: 'Failed to process media upload.' }, { status: 500 });
   }
 }
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    await requireAdmin();
-    const { searchParams } = new URL(request.url);
-    const search = searchParams.get('search')?.trim() || '';
-
+    const admin = await requireAdmin();
     const mediaAssets = await prisma.mediaAsset.findMany({
-      where: search
-        ? {
-            OR: [
-              { url: { contains: search, mode: 'insensitive' } },
-              { altText: { contains: search, mode: 'insensitive' } },
-              { caption: { contains: search, mode: 'insensitive' } },
-            ],
-          }
-        : {},
+      where: { tenantId: admin.tenantId },
       orderBy: { createdAt: 'desc' },
       take: 100,
     });
 
     return NextResponse.json({ media: mediaAssets });
-  } catch (error) {
-    console.error('Error fetching admin media assets:', error);
+  } catch {
+    logger.error({ event: 'media.list_failed' }, 'Failed to list media');
     return NextResponse.json({ error: 'Failed to fetch media assets.' }, { status: 500 });
   }
 }

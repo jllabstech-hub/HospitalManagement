@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useTransition } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import InteractiveSearchInput from './InteractiveSearchInput';
 
 interface DepartmentOption {
@@ -24,44 +24,69 @@ export default function PatientDoctorSearchFilters({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
+  const [department, setDepartment] = useState(currentDepartment);
 
-  const handleDepartmentChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const deptId = e.target.value;
+  useEffect(() => {
+    setDepartment(currentDepartment);
+  }, [currentDepartment]);
+
+  const applyQuery = (searchValue: string, departmentValue: string) => {
     const params = new URLSearchParams(searchParams.toString());
-    if (deptId) {
-      params.set('department', deptId);
+    const trimmed = searchValue.trim();
+    if (trimmed) {
+      params.set('search', trimmed);
+    } else {
+      params.delete('search');
+    }
+    if (departmentValue) {
+      params.set('department', departmentValue);
     } else {
       params.delete('department');
     }
     params.set('page', '1');
-
     startTransition(() => {
       const query = params.toString();
       router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
     });
   };
 
+  const handleDepartmentChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const nextDept = e.target.value;
+    setDepartment(nextDept);
+    applyQuery(searchParams.get('search') || currentSearch, nextDept);
+  };
+
   return (
-    <div className="card-surface p-5 sm:p-6 space-y-4">
+    <form
+      className="card-surface p-5 sm:p-6 space-y-4"
+      onSubmit={(e) => {
+        e.preventDefault();
+        const form = e.currentTarget;
+        const input = form.elements.namedItem('search') as HTMLInputElement | null;
+        const dept = form.elements.namedItem('department') as HTMLSelectElement | null;
+        applyQuery(input?.value || '', dept?.value || '');
+      }}
+    >
       <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
-        <div className="md:col-span-7">
+        <div className="md:col-span-6">
           <label className="mb-1 block text-xs font-semibold text-ink">
             Interactive Search (Doctor / Specialization / Keyword)
           </label>
           <InteractiveSearchInput
             placeholder="Type doctor name, specialty, qualification..."
             defaultValue={currentSearch}
+            live={false}
           />
         </div>
 
-        <div className="md:col-span-5">
+        <div className="md:col-span-4">
           <label htmlFor="deptFilter" className="mb-1 block text-xs font-semibold text-ink">
             Medical Department
           </label>
           <select
             id="deptFilter"
             name="department"
-            value={currentDepartment}
+            value={department}
             onChange={handleDepartmentChange}
             className="input-field"
           >
@@ -73,6 +98,12 @@ export default function PatientDoctorSearchFilters({
             ))}
           </select>
         </div>
+
+        <div className="md:col-span-2 flex items-end">
+          <button type="submit" className="btn-primary w-full">
+            Search
+          </button>
+        </div>
       </div>
 
       {isPending && (
@@ -81,6 +112,6 @@ export default function PatientDoctorSearchFilters({
           <span>Updating doctor directory results...</span>
         </div>
       )}
-    </div>
+    </form>
   );
 }

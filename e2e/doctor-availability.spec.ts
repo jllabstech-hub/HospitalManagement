@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures/test';
 
 test.describe('Doctor Schedule Manager E2E Suite', () => {
   test('TEST 1: Doctor Login, Weekly Availability & Blocked Date CRUD', async ({ page }) => {
@@ -15,26 +15,25 @@ test.describe('Doctor Schedule Manager E2E Suite', () => {
     await page.waitForURL('**/doctor/availability');
     await expect(page.getByRole('heading', { name: 'Doctor Schedule Manager' })).toBeVisible();
 
-    // 3. Add Working Window for Saturday (dayOfWeek: 6)
     const saturdayCard = page.getByTestId('day-card-6');
+    await expect(saturdayCard.getByRole('button', { name: 'Edit' })).toBeVisible();
+
+    await saturdayCard.getByRole('button', { name: 'Edit' }).first().click();
+    await page.waitForSelector('#editAvailStartTime', { state: 'visible' });
+    await page.fill('#editAvailStartTime', '10:00');
+    await page.click('button[type="submit"]:has-text("Save Changes")');
+    await expect(page.getByText('Availability window updated successfully!')).toBeVisible();
+
+    await saturdayCard.getByRole('button', { name: 'Delete' }).first().click();
+    await page.click('button:has-text("Delete Window")');
+    await expect(page.getByText('Availability window deleted.')).toBeVisible();
+
     await saturdayCard.getByRole('button', { name: '+ Add Working Window' }).click();
     await page.waitForSelector('#availStartTime', { state: 'visible' });
     await page.fill('#availStartTime', '09:00');
     await page.fill('#availEndTime', '13:00');
     await page.click('button[type="submit"]:has-text("Add Window")');
     await expect(page.getByText('Availability window added successfully!')).toBeVisible();
-
-    // 4. Edit Working Window
-    await saturdayCard.getByRole('button', { name: 'Edit' }).click();
-    await page.waitForSelector('#editAvailStartTime', { state: 'visible' });
-    await page.fill('#editAvailStartTime', '10:00');
-    await page.click('button[type="submit"]:has-text("Save Changes")');
-    await expect(page.getByText('Availability window updated successfully!')).toBeVisible();
-
-    // 5. Delete Working Window
-    await saturdayCard.getByRole('button', { name: 'Delete' }).click();
-    await page.click('button:has-text("Delete Window")');
-    await expect(page.getByText('Availability window deleted.')).toBeVisible();
 
     // 6. Add Blocked Date (Full Day)
     await page.click('button:has-text("+ Block Date / Range")');

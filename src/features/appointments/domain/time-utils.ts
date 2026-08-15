@@ -1,4 +1,4 @@
-import { HOSPITAL_TIMEZONE, timeToMinutes, doTimeWindowsOverlap } from '@/lib/date-utils';
+import { timeToMinutes, doTimeWindowsOverlap, resolveTimezone } from '@/lib/date-utils';
 
 /**
  * Returns total minutes from midnight for a time string "HH:mm" or "HH:mm:ss".
@@ -46,9 +46,9 @@ export function getWeekdayFromDateString(dateStr: string): number {
 /**
  * Returns current hospital time in HH:mm format according to Asia/Kolkata timezone.
  */
-export function getHospitalCurrentTimeHHMM(): string {
+export function getHospitalCurrentTimeHHMM(timezone?: string | null): string {
   const formatter = new Intl.DateTimeFormat('en-GB', {
-    timeZone: HOSPITAL_TIMEZONE,
+    timeZone: resolveTimezone(timezone),
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,

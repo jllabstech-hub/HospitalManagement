@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { AvailableSlot } from '../domain/slot-types';
 import { getAvailableSlotsAction, bookAppointmentAction } from '../actions';
 import { formatTimeTo12Hour } from '@/lib/date-utils';
+import { formatSlotDurationLabel } from '../domain/slot-duration';
 import { BookAppointmentSuccessResult } from '../schemas/booking-schema';
 
 interface Props {
@@ -108,7 +109,7 @@ export default function DoctorProfileSlotPicker({
         fetchSlots(selectedDate);
       }
     } catch (error: unknown) {
-      console.error('Booking submission error:', error);
+      console.error('Booking submission error');
       setBookingConflictMsg('An unexpected error occurred. Please try again.');
       setShowConfirmModal(false);
       fetchSlots(selectedDate);
@@ -146,6 +147,10 @@ export default function DoctorProfileSlotPicker({
               <button
                 key={slot.startTime}
                 type="button"
+                data-testid="available-slot"
+                data-slot-start={slot.startTime}
+                data-slot-end={slot.endTime}
+                data-slot-duration={String(formatSlotDurationLabel(slot).replace(' min', ''))}
                 onClick={() => setSelectedSlot(slot)}
                 className={`flex flex-col items-center justify-center rounded-button border p-3 text-xs font-semibold transition duration-brand ${
                   isSelected
@@ -159,7 +164,7 @@ export default function DoctorProfileSlotPicker({
                     isSelected ? 'text-brand-100' : 'text-ink-soft'
                   }`}
                 >
-                  30 min
+                  {formatSlotDurationLabel(slot)}
                 </span>
               </button>
             );
@@ -236,7 +241,7 @@ export default function DoctorProfileSlotPicker({
         <div className="flex flex-col justify-between gap-4 border-b border-[#dde5e9] pb-4 sm:flex-row sm:items-center">
           <div>
             <h2 className="text-lg font-semibold text-ink">Available Appointments</h2>
-            <p className="text-sm text-ink-muted">Pick an available 30-minute consultation slot.</p>
+            <p className="text-sm text-ink-muted">Pick an available consultation slot.</p>
           </div>
 
           <div className="flex items-center gap-2">
@@ -261,6 +266,9 @@ export default function DoctorProfileSlotPicker({
               <button
                 key={date}
                 type="button"
+                data-testid="slot-date-chip"
+                data-date={date}
+                data-selected={active ? 'true' : 'false'}
                 onClick={() => setSelectedDate(date)}
                 className={`min-w-[4.75rem] shrink-0 rounded-button border px-3 py-2.5 text-center transition duration-brand ${
                   active
@@ -304,7 +312,7 @@ export default function DoctorProfileSlotPicker({
           <div className="space-y-2 rounded-card border border-[#dde5e9] bg-surface-muted p-8 text-center">
             <h4 className="text-sm font-bold text-ink">No Appointments Available</h4>
             <p className="text-xs text-ink-muted">
-              No 30-minute slots are available for{' '}
+              No consultation slots are available for{' '}
               <strong className="font-semibold text-ink">{selectedDate}</strong>. The doctor may be
               off-duty or fully booked.
             </p>

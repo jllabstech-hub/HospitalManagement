@@ -69,7 +69,7 @@ export async function createAvailabilityAction(
       return { success: false, error: issue };
     }
 
-    const { dayOfWeek, startTime, endTime } = parsed.data;
+    const { dayOfWeek, startTime, endTime, slotDurationMinutes } = parsed.data;
     const formattedStart = normalizeTimeFormat(startTime);
     const formattedEnd = normalizeTimeFormat(endTime);
 
@@ -77,6 +77,7 @@ export async function createAvailabilityAction(
     const existingWindows = await prisma.weeklyAvailability.findMany({
       where: {
         doctorId,
+        tenantId: user.tenantId,
         dayOfWeek,
       },
     });
@@ -97,7 +98,8 @@ export async function createAvailabilityAction(
         dayOfWeek,
         startTime: formattedStart,
         endTime: formattedEnd,
-        slotDurationMinutes: 30,
+        slotDurationMinutes: slotDurationMinutes || 30,
+        tenantId: user.tenantId,
       },
     });
 
@@ -138,8 +140,8 @@ export async function updateAvailabilityAction(
     const formattedEnd = normalizeTimeFormat(endTime);
 
     // Verify ownership
-    const existing = await prisma.weeklyAvailability.findUnique({
-      where: { id },
+    const existing = await prisma.weeklyAvailability.findFirst({
+      where: { id, doctorId, tenantId: user.tenantId },
     });
 
     if (!existing || existing.doctorId !== doctorId) {
@@ -150,6 +152,7 @@ export async function updateAvailabilityAction(
     const otherWindows = await prisma.weeklyAvailability.findMany({
       where: {
         doctorId,
+        tenantId: user.tenantId,
         dayOfWeek: existing.dayOfWeek,
         id: { not: id },
       },
@@ -164,13 +167,16 @@ export async function updateAvailabilityAction(
       }
     }
 
-    await prisma.weeklyAvailability.update({
-      where: { id },
+    const updated = await prisma.weeklyAvailability.updateMany({
+      where: { id, doctorId, tenantId: user.tenantId },
       data: {
         startTime: formattedStart,
         endTime: formattedEnd,
       },
     });
+    if (updated.count !== 1) {
+      return { success: false, error: 'Availability window not found.' };
+    }
 
     safeRevalidate('/doctor/availability');
     return { success: true };
@@ -196,17 +202,20 @@ export async function deleteAvailabilityAction(id: string): Promise<ActionResult
       return { success: false, error: 'Doctor profile not found.' };
     }
 
-    const existing = await prisma.weeklyAvailability.findUnique({
-      where: { id },
+    const existing = await prisma.weeklyAvailability.findFirst({
+      where: { id, doctorId, tenantId: user.tenantId },
     });
 
     if (!existing || existing.doctorId !== doctorId) {
       return { success: false, error: 'Availability window not found.' };
     }
 
-    await prisma.weeklyAvailability.delete({
-      where: { id },
+    const deleted = await prisma.weeklyAvailability.deleteMany({
+      where: { id, doctorId, tenantId: user.tenantId },
     });
+    if (deleted.count !== 1) {
+      return { success: false, error: 'Availability window not found.' };
+    }
 
     safeRevalidate('/doctor/availability');
     return { success: true };
@@ -301,6 +310,7 @@ export async function createBlockedDateAction(
     const record = await prisma.blockedDate.create({
       data: {
         doctorId,
+        tenantId: user.tenantId,
         startDate: startUtcDate,
         endDate: endUtcDate,
         startTime: formattedStart,
@@ -344,8 +354,8 @@ export async function updateBlockedDateAction(
     const { id, startDate, endDate, isFullDay, startTime, endTime, reason } = parsed.data;
     const targetEndDateStr = endDate || startDate;
 
-    const existing = await prisma.blockedDate.findUnique({
-      where: { id },
+    const existing = await prisma.blockedDate.findFirst({
+      where: { id, doctorId, tenantId: user.tenantId },
     });
 
     if (!existing || existing.doctorId !== doctorId) {
@@ -403,8 +413,8 @@ export async function updateBlockedDateAction(
       }
     }
 
-    await prisma.blockedDate.update({
-      where: { id },
+    const updated = await prisma.blockedDate.updateMany({
+      where: { id, doctorId, tenantId: user.tenantId },
       data: {
         startDate: startUtcDate,
         endDate: endUtcDate,
@@ -413,6 +423,9 @@ export async function updateBlockedDateAction(
         reason: reason || null,
       },
     });
+    if (updated.count !== 1) {
+      return { success: false, error: 'Blocked date record not found.' };
+    }
 
     safeRevalidate('/doctor/availability');
     return { success: true };
@@ -438,17 +451,20 @@ export async function deleteBlockedDateAction(id: string): Promise<ActionResult>
       return { success: false, error: 'Doctor profile not found.' };
     }
 
-    const existing = await prisma.blockedDate.findUnique({
-      where: { id },
+    const existing = await prisma.blockedDate.findFirst({
+      where: { id, doctorId, tenantId: user.tenantId },
     });
 
     if (!existing || existing.doctorId !== doctorId) {
       return { success: false, error: 'Blocked date record not found.' };
     }
 
-    await prisma.blockedDate.delete({
-      where: { id },
+    const deleted = await prisma.blockedDate.deleteMany({
+      where: { id, doctorId, tenantId: user.tenantId },
     });
+    if (deleted.count !== 1) {
+      return { success: false, error: 'Blocked date record not found.' };
+    }
 
     safeRevalidate('/doctor/availability');
     return { success: true };

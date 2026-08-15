@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Breadcrumbs from '@/components/public/Breadcrumbs';
 import PageHero from '@/components/public/PageHero';
-import { getLeadershipBySlug, getPublishedLeadership } from '@/features/cms/queries/hospital';
+import { getLeadershipBySlug } from '@/features/cms/queries/hospital';
 import { APP_CONFIG } from '@/config';
 
 interface PageProps {
@@ -11,8 +11,8 @@ interface PageProps {
 }
 
 export async function generateStaticParams() {
-  const leaders = await getPublishedLeadership();
-  return leaders.map((l) => ({ slug: l.slug }));
+  // Host-based multi-tenancy: slugs are resolved at request time.
+  return [];
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {

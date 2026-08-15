@@ -1,3 +1,7 @@
+import { redactEmail, redactPhone } from '@/lib/pii-redact';
+import { sendViaProvider } from '@/server/notifications/providers';
+import { NotificationChannel } from '@prisma/client';
+
 export interface NotificationPayload {
   recipientId: string;
   recipientName: string;
@@ -5,47 +9,48 @@ export interface NotificationPayload {
   recipientEmail?: string;
   appointmentId?: string;
   message: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  metadata?: any;
+  metadata?: Record<string, unknown>;
+}
+
+export interface AdapterResult {
+  success: boolean;
+  reason?: 'PROVIDER_NOT_CONFIGURED' | 'PROVIDER_REJECTED' | 'UNSUPPORTED_CHANNEL';
+  error: string | null;
 }
 
 export interface NotificationAdapter {
-  send(payload: NotificationPayload): Promise<boolean>;
+  send(payload: NotificationPayload): Promise<AdapterResult>;
 }
 
 export class EmailAdapter implements NotificationAdapter {
-  async send(payload: NotificationPayload): Promise<boolean> {
-    console.log(`[EmailAdapter] Sending email to ${payload.recipientEmail}...`);
-    console.log(`[EmailAdapter] Message: ${payload.message}`);
-    // Simulate network delay
-    await new Promise((resolve) => setTimeout(resolve, 100));
-    return true; // Always return true for now since we don't have production credentials
+  async send(payload: NotificationPayload): Promise<AdapterResult> {
+    void redactEmail(payload.recipientEmail);
+    return sendViaProvider(NotificationChannel.EMAIL, payload.appointmentId || payload.recipientId, {
+      email: payload.recipientEmail,
+    });
   }
 }
 
 export class SmsAdapter implements NotificationAdapter {
-  async send(payload: NotificationPayload): Promise<boolean> {
-    console.log(`[SmsAdapter] Sending SMS to ${payload.recipientPhone}...`);
-    console.log(`[SmsAdapter] Message: ${payload.message}`);
-    await new Promise((resolve) => setTimeout(resolve, 100));
-    return true;
+  async send(payload: NotificationPayload): Promise<AdapterResult> {
+    void redactPhone(payload.recipientPhone);
+    return sendViaProvider(NotificationChannel.SMS, payload.appointmentId || payload.recipientId, {
+      phone: payload.recipientPhone,
+    });
   }
 }
 
 export class WhatsAppAdapter implements NotificationAdapter {
-  async send(payload: NotificationPayload): Promise<boolean> {
-    console.log(`[WhatsAppAdapter] Sending WhatsApp message to ${payload.recipientPhone}...`);
-    console.log(`[WhatsAppAdapter] Message: ${payload.message}`);
-    await new Promise((resolve) => setTimeout(resolve, 100));
-    return true;
+  async send(payload: NotificationPayload): Promise<AdapterResult> {
+    void redactPhone(payload.recipientPhone);
+    return sendViaProvider(NotificationChannel.WHATSAPP, payload.appointmentId || payload.recipientId, {
+      phone: payload.recipientPhone,
+    });
   }
 }
 
 export class PushAdapter implements NotificationAdapter {
-  async send(payload: NotificationPayload): Promise<boolean> {
-    console.log(`[PushAdapter] Sending push notification to User ${payload.recipientId}...`);
-    console.log(`[PushAdapter] Message: ${payload.message}`);
-    await new Promise((resolve) => setTimeout(resolve, 100));
-    return true;
+  async send(payload: NotificationPayload): Promise<AdapterResult> {
+    return sendViaProvider(NotificationChannel.PUSH, payload.appointmentId || payload.recipientId);
   }
 }

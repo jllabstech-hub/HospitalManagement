@@ -67,8 +67,8 @@ export async function createDoctorAction(
     const normalizedEmail = email.toLowerCase().trim();
 
     // 1. Verify department exists and is ACTIVE
-    const department = await prisma.department.findUnique({
-      where: { id: departmentId },
+    const department = await prisma.department.findFirst({
+      where: { id: departmentId, tenantId: admin.tenantId },
     });
 
     if (!department) {
@@ -112,7 +112,7 @@ export async function createDoctorAction(
       const baseSlug = slugify(fullName.trim()) || 'doctor';
       let slug = baseSlug;
       let suffix = 0;
-      while (await tx.doctorProfile.findUnique({ where: { slug } })) {
+      while (await tx.doctorProfile.findFirst({ where: { slug, tenantId: admin.tenantId } })) {
         suffix += 1;
         slug = `${baseSlug}-${suffix}`;
       }
@@ -130,6 +130,7 @@ export async function createDoctorAction(
           experienceYears,
           bio: bio || null,
           profileImageUrl: parsed.data.profileImageUrl?.trim() || null,
+          tenantId: admin.tenantId,
         },
       });
 
@@ -142,6 +143,7 @@ export async function createDoctorAction(
             startTime: '09:00:00',
             endTime: '17:00:00',
             slotDurationMinutes: 30,
+            tenantId: admin.tenantId,
           },
         });
       }
@@ -170,7 +172,7 @@ export async function updateDoctorAction(
   rawInput: UpdateDoctorInput
 ): Promise<ActionResult> {
   try {
-    await requireAdmin();
+    const admin = await requireAdmin();
 
     const parsed = UpdateDoctorSchema.safeParse(rawInput);
     if (!parsed.success) {
@@ -188,8 +190,8 @@ export async function updateDoctorAction(
       bio,
     } = parsed.data;
 
-    const existingProfile = await prisma.doctorProfile.findUnique({
-      where: { id },
+    const existingProfile = await prisma.doctorProfile.findFirst({
+      where: { id, tenantId: admin.tenantId },
     });
 
     if (!existingProfile) {
@@ -197,8 +199,8 @@ export async function updateDoctorAction(
     }
 
     // Verify department exists and is ACTIVE
-    const department = await prisma.department.findUnique({
-      where: { id: departmentId },
+    const department = await prisma.department.findFirst({
+      where: { id: departmentId, tenantId: admin.tenantId },
     });
 
     if (!department) {
@@ -212,8 +214,8 @@ export async function updateDoctorAction(
       };
     }
 
-    await prisma.doctorProfile.update({
-      where: { id },
+    const updated = await prisma.doctorProfile.updateMany({
+      where: { id, tenantId: admin.tenantId },
       data: {
         departmentId,
         fullName: fullName.trim(),
@@ -225,6 +227,9 @@ export async function updateDoctorAction(
         profileImageUrl: parsed.data.profileImageUrl?.trim() || null,
       },
     });
+    if (updated.count !== 1) {
+      return { success: false, error: 'Doctor profile not found.' };
+    }
 
     safeRevalidate('/admin/doctors');
     safeRevalidate('/admin/dashboard');
@@ -245,14 +250,14 @@ export async function updateDoctorAction(
  */
 export async function toggleDoctorStatusAction(id: string): Promise<ActionResult> {
   try {
-    await requireAdmin();
+    const admin = await requireAdmin();
 
     if (!id || typeof id !== 'string') {
       return { success: false, error: 'Invalid doctor profile ID.' };
     }
 
-    const profile = await prisma.doctorProfile.findUnique({
-      where: { id },
+    const profile = await prisma.doctorProfile.findFirst({
+      where: { id, tenantId: admin.tenantId },
       include: { user: true },
     });
 
@@ -260,10 +265,13 @@ export async function toggleDoctorStatusAction(id: string): Promise<ActionResult
       return { success: false, error: 'Doctor profile not found.' };
     }
 
-    await prisma.user.update({
-      where: { id: profile.userId },
+    const toggled = await prisma.user.updateMany({
+      where: { id: profile.userId, tenantId: admin.tenantId },
       data: { isActive: !profile.user.isActive },
     });
+    if (toggled.count !== 1) {
+      return { success: false, error: 'Doctor user not found.' };
+    }
 
     safeRevalidate('/admin/doctors');
     safeRevalidate('/admin/dashboard');

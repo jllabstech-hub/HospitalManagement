@@ -12,12 +12,12 @@ export default async function DoctorAvailabilityPage() {
   }
 
   const [doctorProfile, availabilities, blockedDates] = await Promise.all([
-    prisma.doctorProfile.findUnique({
-      where: { id: doctorId },
+    prisma.doctorProfile.findFirst({
+      where: { id: doctorId, tenantId: user.tenantId },
       select: { fullName: true },
     }),
     prisma.weeklyAvailability.findMany({
-      where: { doctorId },
+      where: { doctorId, tenantId: user.tenantId },
       orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }],
       select: {
         id: true,
@@ -27,7 +27,7 @@ export default async function DoctorAvailabilityPage() {
       },
     }),
     prisma.blockedDate.findMany({
-      where: { doctorId },
+      where: { doctorId, tenantId: user.tenantId },
       orderBy: [{ startDate: 'asc' }, { startTime: 'asc' }],
       select: {
         id: true,

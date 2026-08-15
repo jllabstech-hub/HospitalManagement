@@ -94,4 +94,19 @@ describe('Server-Side Resource Ownership Authorization Guards', () => {
       'You do not have permission to access this resource.'
     );
   });
+
+  it('rejects inactive users even with a valid session', async () => {
+    mockAuth.mockResolvedValueOnce({
+      user: {
+        id: 'user-inactive',
+        email: 'inactive@example.com',
+        role: Role.ADMIN,
+        isActive: false,
+      },
+    });
+
+    await expect(requireRole(Role.ADMIN)).rejects.toThrow(
+      'Your account is inactive. Please contact the administrator.'
+    );
+  });
 });

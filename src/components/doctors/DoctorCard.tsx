@@ -32,6 +32,7 @@ export default function DoctorCard({
 
   return (
     <div
+      data-testid="doctor-card"
       className={cn(
         'group flex h-full flex-col justify-between rounded-card border border-[#dde5e9]/80 bg-white p-5 shadow-soft transition-all duration-300 hover:-translate-y-1 hover:border-brand-300 hover:shadow-card',
         className

@@ -1,6 +1,7 @@
 import { unstable_cache } from 'next/cache';
 import { prisma } from '@/server/db/client';
 import { ACTIVE_PUBLISHED_FILTER } from '@/features/cms/constants';
+import { requireTenantContext } from '@/server/tenant';
 
 const hospitalProfileSelect = {
   id: true,
@@ -81,41 +82,43 @@ const facilitySelect = {
 } as const;
 
 export async function getActiveHospitalProfile() {
+  const { tenantId } = await requireTenantContext();
   try {
     return await unstable_cache(
       async () => {
         return prisma.hospitalProfile.findFirst({
-          where: { isActive: true },
+          where: { id: tenantId, isActive: true },
           select: hospitalProfileSelect,
         });
       },
-      ['active-hospital-profile'],
-      { revalidate: 600, tags: ['hospital-profile'] }
+      ['active-hospital-profile', tenantId],
+      { revalidate: 600, tags: [`hospital-profile-${tenantId}`] }
     )();
   } catch {
     return prisma.hospitalProfile.findFirst({
-      where: { isActive: true },
+      where: { id: tenantId, isActive: true },
       select: hospitalProfileSelect,
     });
   }
 }
 
 export async function getPublishedLocations() {
+  const { tenantId } = await requireTenantContext();
   try {
     return await unstable_cache(
       async () => {
         return prisma.hospitalLocation.findMany({
-          where: ACTIVE_PUBLISHED_FILTER,
+          where: { ...ACTIVE_PUBLISHED_FILTER, tenantId },
           select: locationSelect,
           orderBy: [{ isPrimary: 'desc' }, { name: 'asc' }],
         });
       },
-      ['published-locations-list'],
-      { revalidate: 600, tags: ['hospital-locations'] }
+      ['published-locations-list', tenantId],
+      { revalidate: 600, tags: [`hospital-locations-${tenantId}`] }
     )();
   } catch {
     return prisma.hospitalLocation.findMany({
-      where: ACTIVE_PUBLISHED_FILTER,
+      where: { ...ACTIVE_PUBLISHED_FILTER, tenantId },
       select: locationSelect,
       orderBy: [{ isPrimary: 'desc' }, { name: 'asc' }],
     });
@@ -124,16 +127,18 @@ export async function getPublishedLocations() {
 
 export async function getLocationBySlug(slug: string) {
   if (!slug?.trim()) return null;
+  const { tenantId } = await requireTenantContext();
 
   return prisma.hospitalLocation.findFirst({
-    where: { slug: slug.trim(), ...ACTIVE_PUBLISHED_FILTER },
+    where: { slug: slug.trim(), tenantId, ...ACTIVE_PUBLISHED_FILTER },
     select: locationSelect,
   });
 }
 
 export async function getPublishedLeadership() {
+  const { tenantId } = await requireTenantContext();
   return prisma.leadershipMember.findMany({
-    where: ACTIVE_PUBLISHED_FILTER,
+    where: { ...ACTIVE_PUBLISHED_FILTER, tenantId },
     select: leadershipSelect,
     orderBy: [{ displayOrder: 'asc' }, { name: 'asc' }],
   });
@@ -141,16 +146,18 @@ export async function getPublishedLeadership() {
 
 export async function getLeadershipBySlug(slug: string) {
   if (!slug?.trim()) return null;
+  const { tenantId } = await requireTenantContext();
 
   return prisma.leadershipMember.findFirst({
-    where: { slug: slug.trim(), ...ACTIVE_PUBLISHED_FILTER },
+    where: { slug: slug.trim(), tenantId, ...ACTIVE_PUBLISHED_FILTER },
     select: leadershipSelect,
   });
 }
 
 export async function getPublishedFacilities() {
+  const { tenantId } = await requireTenantContext();
   return prisma.facility.findMany({
-    where: ACTIVE_PUBLISHED_FILTER,
+    where: { ...ACTIVE_PUBLISHED_FILTER, tenantId },
     select: facilitySelect,
     orderBy: [{ displayOrder: 'asc' }, { name: 'asc' }],
   });

@@ -46,7 +46,7 @@ export default function LoginForm() {
     formState: { errors: otpErrors, isSubmitting: isOtpSubmitting },
   } = useForm<OtpInput>({
     resolver: zodResolver(OtpInputSchema),
-    defaultValues: { phoneNumber: '', otp: '123456' },
+    defaultValues: { phoneNumber: '', otp: '' },
   });
 
   // 1. Dispatch OTP via Server Action
@@ -64,11 +64,7 @@ export default function LoginForm() {
 
       setActivePhone(data.phoneNumber);
       setOtpSent(true);
-      if (res.data?.isRealSmsSent) {
-        setInfoMsg(`📲 SMS verification OTP code sent to ${data.phoneNumber} via Telephony Gateway!`);
-      } else {
-        setInfoMsg(`OTP code sent to ${data.phoneNumber}. (Sandbox mode: Use OTP 123456)`);
-      }
+      setInfoMsg(`A verification code was sent to ${data.phoneNumber}.`);
     } catch (err) {
       console.error('Send OTP error:', err);
       setServerError('Failed to dispatch OTP. Please try again.');
@@ -93,7 +89,7 @@ export default function LoginForm() {
         if (result?.error === 'ACCOUNT_INACTIVE' || result?.error?.includes('ACCOUNT_INACTIVE')) {
           setServerError('Your account is currently inactive. Please contact the hospital administrator.');
         } else {
-          setServerError('Invalid OTP code. Please enter 123456.');
+          setServerError('Invalid verification code.');
         }
         return;
       }
@@ -244,8 +240,8 @@ export default function LoginForm() {
                 {sendingOtp ? 'Sending OTP...' : 'Send OTP Verification Code'}
               </button>
 
-              <div className="mt-3 flex items-center justify-between rounded-card border border-brand-200 bg-brand-50/70 p-3 text-xs text-brand-900">
-                <span>Enter any 10-digit phone number. Default OTP: <strong className="font-mono text-brand-950 font-bold">123456</strong></span>
+              <div className="mt-3 rounded-card border border-brand-200 bg-brand-50/70 p-3 text-xs text-brand-900">
+                <span>Enter a 10-digit phone number to receive a one-time verification code.</span>
               </div>
             </form>
           ) : (
@@ -269,13 +265,13 @@ export default function LoginForm() {
                   maxLength={6}
                   {...registerOtp('otp')}
                   className="input-field text-center font-mono text-lg tracking-widest"
-                  placeholder="123456"
+                  placeholder="000000"
                 />
                 {otpErrors.otp && (
                   <p className="mt-1 text-xs text-rose-600">{otpErrors.otp.message}</p>
                 )}
-                <p className="mt-1 text-center text-[11px] font-semibold text-emerald-700">
-                  Demo Test OTP: <code className="rounded bg-emerald-100 px-1 py-0.5 font-mono">123456</code>
+                <p className="mt-1 text-center text-[11px] text-ink-muted">
+                  Enter the 6-digit code sent to your phone. It expires in a few minutes.
                 </p>
               </div>
 
@@ -354,6 +350,7 @@ export default function LoginForm() {
         </Link>
       </div>
 
+      {process.env.NODE_ENV !== 'production' && (
       <div className="mt-6 space-y-2 rounded-card border border-[#dde5e9] bg-surface-muted p-4 text-xs text-ink-muted">
         <div className="mb-2 border-b border-[#dde5e9] pb-1 text-sm font-semibold text-ink">
           Demo Quick Login Credentials
@@ -365,7 +362,7 @@ export default function LoginForm() {
               +91 99999 11111
             </code>
           </div>
-          <span className="font-mono text-emerald-700 font-bold">OTP: 123456</span>
+          <span className="font-mono text-ink-soft">Use the code sent to your phone</span>
         </div>
         <div className="flex items-center justify-between rounded-button border border-[#dde5e9] bg-white p-2">
           <div>
@@ -395,6 +392,7 @@ export default function LoginForm() {
           <span className="font-mono text-ink-soft">test123</span>
         </div>
       </div>
+      )}
     </div>
   );
 }

@@ -9,8 +9,11 @@ import {
 import { getPublishedLocations } from '@/features/cms/queries/hospital';
 import { getPublishedArticles, getPublishedNews, getPublishedSuccessStories } from '@/features/cms/queries/content';
 import { searchPublicDoctors } from '@/features/cms/queries/doctors-public';
+import { getTenantContext } from '@/server/tenant';
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://carepulse.hospital';
+
+export const dynamic = 'force-dynamic';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes: MetadataRoute.Sitemap = [
@@ -43,6 +46,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     changeFrequency: path === '' ? 'daily' : 'weekly',
     priority: path === '' ? 1 : 0.7,
   }));
+
+  const tenant = await getTenantContext();
+  if (!tenant) {
+    return staticRoutes;
+  }
 
   const [
     departments,

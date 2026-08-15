@@ -67,7 +67,7 @@ export async function upsertHospitalProfileAction(
   rawInput: z.infer<typeof HospitalProfileSchema>
 ): Promise<AdminCmsActionResult> {
   try {
-    await requireAdmin();
+    const admin = await requireAdmin();
 
     const parsed = HospitalProfileSchema.safeParse(rawInput);
     if (!parsed.success) {
@@ -110,20 +110,18 @@ export async function upsertHospitalProfileAction(
     };
 
     if (parsed.data.id) {
+      if (parsed.data.id !== admin.tenantId) {
+        return { success: false, error: 'You can only update the current hospital profile.' };
+      }
       await prisma.hospitalProfile.update({
-        where: { id: parsed.data.id },
+        where: { id: admin.tenantId },
         data,
       });
     } else {
-      const existing = await prisma.hospitalProfile.findFirst({ select: { id: true } });
-      if (existing) {
-        await prisma.hospitalProfile.update({
-          where: { id: existing.id },
-          data,
-        });
-      } else {
-        await prisma.hospitalProfile.create({ data });
-      }
+      await prisma.hospitalProfile.update({
+        where: { id: admin.tenantId },
+        data,
+      });
     }
 
     safeRevalidate('/admin/content/hospital');
@@ -140,7 +138,7 @@ export async function updateEnquiryStatusAction(input: {
   status: EnquiryStatus;
 }): Promise<AdminCmsActionResult> {
   try {
-    await requireAdmin();
+    const admin = await requireAdmin();
 
     const typeParsed = EnquiryTypeSchema.safeParse(input.type);
     const statusParsed = EnquiryStatusSchema.safeParse(input.status);
@@ -158,13 +156,13 @@ export async function updateEnquiryStatusAction(input: {
 
     switch (type) {
       case 'appointment':
-        await prisma.appointmentEnquiry.update({ where: { id }, data: { status } });
+        await prisma.appointmentEnquiry.updateMany({ where: { id, tenantId: admin.tenantId }, data: { status } });
         break;
       case 'international':
-        await prisma.internationalPatientEnquiry.update({ where: { id }, data: { status } });
+        await prisma.internationalPatientEnquiry.updateMany({ where: { id, tenantId: admin.tenantId }, data: { status } });
         break;
       case 'package':
-        await prisma.packageInformationRequest.update({ where: { id }, data: { status } });
+        await prisma.packageInformationRequest.updateMany({ where: { id, tenantId: admin.tenantId }, data: { status } });
         break;
     }
 
@@ -180,7 +178,7 @@ export async function updateContactMessageStatusAction(input: {
   status: ContactMessageStatus;
 }): Promise<AdminCmsActionResult> {
   try {
-    await requireAdmin();
+    const admin = await requireAdmin();
 
     const idParsed = z.string().uuid().safeParse(input.id);
     const statusParsed = ContactMessageStatusSchema.safeParse(input.status);
@@ -189,8 +187,8 @@ export async function updateContactMessageStatusAction(input: {
       return { success: false, error: 'Invalid contact message update request.' };
     }
 
-    await prisma.contactMessage.update({
-      where: { id: idParsed.data },
+    await prisma.contactMessage.updateMany({
+      where: { id: idParsed.data, tenantId: admin.tenantId },
       data: { status: statusParsed.data },
     });
 

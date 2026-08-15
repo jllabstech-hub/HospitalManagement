@@ -14,9 +14,10 @@ interface PageProps {
 }
 
 export default async function AdminDashboardPage({ searchParams }: PageProps) {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const resolvedParams = await searchParams;
   const search = resolvedParams.search?.trim() || '';
+  const tenantWhere = { tenantId: admin.tenantId };
 
   const [
     deptCount,
@@ -29,14 +30,14 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
     cancelledAppts,
     recentApptsResult,
   ] = await Promise.all([
-    prisma.department.count(),
-    prisma.doctorProfile.count(),
-    prisma.patientProfile.count(),
-    prisma.appointment.count(),
-    prisma.appointment.count({ where: { status: 'BOOKED' } }),
-    prisma.appointment.count({ where: { status: 'CONFIRMED' } }),
-    prisma.appointment.count({ where: { status: 'COMPLETED' } }),
-    prisma.appointment.count({ where: { status: 'CANCELLED' } }),
+    prisma.department.count({ where: tenantWhere }),
+    prisma.doctorProfile.count({ where: tenantWhere }),
+    prisma.patientProfile.count({ where: tenantWhere }),
+    prisma.appointment.count({ where: tenantWhere }),
+    prisma.appointment.count({ where: { ...tenantWhere, status: 'BOOKED' } }),
+    prisma.appointment.count({ where: { ...tenantWhere, status: 'CONFIRMED' } }),
+    prisma.appointment.count({ where: { ...tenantWhere, status: 'COMPLETED' } }),
+    prisma.appointment.count({ where: { ...tenantWhere, status: 'CANCELLED' } }),
     getAdminAppointments({ page: 1, limit: 6, search }),
   ]);
 
@@ -54,9 +55,9 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
             <span className="rounded-pill border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-brand-100">
               System Administration
             </span>
-            <h1 className="mt-3 font-display text-3xl font-semibold tracking-tight">
-              Admin Dashboard
-            </h1>
+            <p className="mt-3 font-display text-3xl font-semibold tracking-tight">
+              Hospital operations
+            </p>
             <p className="mt-2 max-w-xl text-sm text-brand-100">
               System-wide hospital management, department master data, doctor provisioning, and
               appointment supervision.

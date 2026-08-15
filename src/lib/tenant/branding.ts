@@ -1,34 +1,27 @@
-import { headers } from 'next/headers';
 import { prisma } from '@/server/db/client';
+import { getTenantContext } from '@/server/tenant';
+import { DEFAULT_TENANT_TIMEZONE } from '@/server/tenant/types';
 
 export async function getTenantBranding() {
-  const headersList = await headers();
-  let host = headersList.get('x-tenant-host') || '';
-
-  // Remove port in dev (e.g. localhost:5000)
-  if (host.includes(':')) {
-    host = host.split(':')[0];
-  }
-
-  // 1. First, try finding a tenant by custom domain
-  let profile = await prisma.hospitalProfile.findUnique({
-    where: { customDomain: host },
+  const tenant = await getTenantContext();
+  if (!tenant) return null;
+  const profile = await prisma.hospitalProfile.findFirst({
+    where: { id: tenant.tenantId, isActive: true },
+    select: {
+      id: true,
+      hospitalName: true,
+      shortDescription: true,
+      logoUrl: true,
+      primaryColor: true,
+      secondaryColor: true,
+      fontFamily: true,
+      timezone: true,
+    },
   });
 
-  // 2. Fallback to subdomain mapping
-  if (!profile) {
-    profile = await prisma.hospitalProfile.findUnique({
-      where: { subdomain: host },
-    });
-  }
-
-  // 3. Fallback to the first active tenant in a multi-tenant DB if no domain matches
-  // In a strict production system, this could return null or redirect to a 404 page
-  if (!profile) {
-    profile = await prisma.hospitalProfile.findFirst({
-      where: { isActive: true },
-    });
-  }
-
-  return profile;
+  if (!profile) return null;
+  return {
+    ...profile,
+    timezone: profile.timezone || DEFAULT_TENANT_TIMEZONE,
+  };
 }

@@ -6,7 +6,7 @@ import AdminPageHeader from '@/components/admin/AdminPageHeader';
 export default async function AdminNewsPage() {
   const admin = await requireAdmin();
   const rawRecords = await prisma.newsArticle.findMany({
-    where: admin.tenantId ? { tenantId: admin.tenantId } : {},
+    where: { tenantId: admin.tenantId },
     orderBy: { title: 'asc' },
   });
 

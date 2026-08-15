@@ -24,11 +24,10 @@ export default async function AdminDoctorsPage({ searchParams }: PageProps) {
   const page = Math.max(1, parseInt(params.page || '1', 10));
   const limit = Math.max(1, parseInt(params.limit || '10', 10));
 
-  const whereCondition: Prisma.DoctorProfileWhereInput = buildFuzzyDoctorWhere(search);
-
-  if (admin.tenantId) {
-    whereCondition.tenantId = admin.tenantId;
-  }
+  const whereCondition: Prisma.DoctorProfileWhereInput = {
+    ...buildFuzzyDoctorWhere(search),
+    tenantId: admin.tenantId,
+  };
 
   if (departmentId) {
     whereCondition.departmentId = departmentId;
@@ -61,7 +60,7 @@ export default async function AdminDoctorsPage({ searchParams }: PageProps) {
       },
     }),
     prisma.department.findMany({
-      where: admin.tenantId ? { tenantId: admin.tenantId, isActive: true } : { isActive: true },
+      where: { tenantId: admin.tenantId, isActive: true },
       orderBy: { name: 'asc' },
       select: { id: true, name: true },
     }),

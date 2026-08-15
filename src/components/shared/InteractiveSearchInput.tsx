@@ -8,6 +8,8 @@ interface Props {
   paramName?: string;
   className?: string;
   defaultValue?: string;
+  /** When false, typing does not update the URL until a parent form submits. */
+  live?: boolean;
 }
 
 export default function InteractiveSearchInput({
@@ -15,6 +17,7 @@ export default function InteractiveSearchInput({
   paramName = 'search',
   className = '',
   defaultValue = '',
+  live = true,
 }: Props) {
   const router = useRouter();
   const pathname = usePathname();
@@ -30,6 +33,7 @@ export default function InteractiveSearchInput({
 
   // Debounced URL update on keypress
   useEffect(() => {
+    if (!live) return;
     const timer = setTimeout(() => {
       const liveParams = new URLSearchParams(window.location.search);
       const currentVal = liveParams.get(paramName) || '';
@@ -49,7 +53,7 @@ export default function InteractiveSearchInput({
     }, 150);
 
     return () => clearTimeout(timer);
-  }, [text, paramName, pathname, router]);
+  }, [text, paramName, pathname, router, live]);
 
   return (
     <div className={`relative flex items-center ${className}`}>

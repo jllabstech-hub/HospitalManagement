@@ -5,8 +5,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { CreateServiceSchema, CreateServiceInput, UpdateServiceSchema, UpdateServiceInput } from '../schemas';
 import { createServiceAction, updateServiceAction, deleteServiceAction } from '../actions';
 import Button from '@/components/ui/Button';
+import { cmsRecordLabel, type CmsListRecord } from '@/features/cms/management-types';
 
-export default function ServiceManagement({ initialData }: { initialData: any[] }) {
+export default function ServiceManagement({ initialData }: { initialData: CmsListRecord[] }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState('');
   
@@ -15,7 +16,7 @@ export default function ServiceManagement({ initialData }: { initialData: any[] 
     defaultValues: { name: '', shortDescription: '', fullDescription: '' },
   });
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: CreateServiceInput) => {
     setError('');
     let res;
     if (editingId) {
@@ -31,9 +32,9 @@ export default function ServiceManagement({ initialData }: { initialData: any[] 
     }
   };
 
-  const editRecord = (record: any) => {
+  const editRecord = (record: CmsListRecord) => {
     setEditingId(record.id);
-    reset({ ...record });
+    reset({ ...record } as unknown as CreateServiceInput);
   };
 
   const deleteRecord = async (id: string) => {
@@ -69,7 +70,7 @@ export default function ServiceManagement({ initialData }: { initialData: any[] 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {initialData.map((item) => (
           <div key={item.id} className="p-4 border rounded bg-white">
-            <h4 className="font-bold">{item.name}</h4>
+            <h4 className="font-bold">{cmsRecordLabel(item)}</h4>
             <div className="mt-4 flex gap-2">
               <button onClick={() => editRecord(item)} className="text-brand-600 text-sm">Edit</button>
               <button onClick={() => deleteRecord(item.id)} className="text-red-600 text-sm">Delete</button>

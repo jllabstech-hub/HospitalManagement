@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures/test';
 
 test.describe('Admin Portal E2E Suite', () => {
   test('TEST 1: Admin Login, Dashboard Stats & Department CRUD', async ({ page }) => {

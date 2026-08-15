@@ -1,5 +1,5 @@
-import { test, expect } from '@playwright/test';
-import { loginPatientA, loginDoctorA, SEED } from '../fixtures/auth';
+import { test, expect } from '../fixtures/test';
+import { loginPatientA, loginDoctorA, firstAvailableSlot, searchAndOpenDoctor } from '../fixtures/auth';
 
 test.describe('Accessibility smoke', () => {
   test('Login form has labels and focusable controls', async ({ page }) => {
@@ -15,13 +15,8 @@ test.describe('Accessibility smoke', () => {
 
   test('Booking confirmation dialog has dialog semantics', async ({ page }) => {
     await loginPatientA(page);
-    await page.goto('/patient/doctors');
-    await page.fill('input[id="searchInput"]', 'Jane Smith');
-    await page.click('button[type="submit"]:has-text("Search")');
-    await page.click('a:has-text("Book Appointment")');
-    await page.waitForURL('**/patient/doctors/*');
-    await page.waitForSelector('button:has-text("AM"), button:has-text("PM")', { timeout: 15000 });
-    const slot = page.locator('button').filter({ hasText: /\d{1,2}:\d{2}\s*(AM|PM)/ }).first();
+    await searchAndOpenDoctor(page, 'Jane Smith');
+    const slot = await firstAvailableSlot(page);
     await slot.click();
     await page.click('button:has-text("Proceed to Confirmation")');
     const dialog = page.getByRole('dialog');

@@ -7,6 +7,7 @@ import { transitionAppointmentStatus } from './services/manage-appointments';
 import { BookAppointmentResult } from './schemas/booking-schema';
 import { AppointmentStatus, Role } from '@prisma/client';
 import { DomainError } from '@/server/errors/domain-error';
+import { logger } from '@/lib/logger';
 
 /**
  * Server Action for patient slot retrieval.
@@ -23,7 +24,7 @@ export async function getAvailableSlotsAction(
     if (error instanceof DomainError) {
       return { success: false, slots: [], error: error.message };
     }
-    console.error('getAvailableSlotsAction error:', error);
+    logger.error({ event: 'appointments.slots_failed' }, 'Failed to retrieve available slots');
     return { success: false, slots: [], error: 'An error occurred while retrieving available slots.' };
   }
 }
@@ -56,7 +57,7 @@ export async function bookAppointmentAction(
         message: error.message,
       };
     }
-    console.error('bookAppointmentAction error:', error);
+    logger.error({ event: 'appointments.book_failed' }, 'Failed to book appointment');
     return {
       success: false,
       code: 'SERVER_ERROR',
@@ -88,7 +89,7 @@ export async function cancelPatientAppointmentAction(input: {
     if (error instanceof DomainError) {
       return { success: false, code: 'FORBIDDEN', error: error.message };
     }
-    console.error('cancelPatientAppointmentAction error:', error);
+    logger.error({ event: 'appointments.cancel_patient_failed' }, 'Failed to cancel patient appointment');
     return { success: false, code: 'SERVER_ERROR', error: 'Failed to cancel appointment.' };
   }
 }
@@ -112,7 +113,7 @@ export async function confirmDoctorAppointmentAction(input: { appointmentId: str
     if (error instanceof DomainError) {
       return { success: false, code: 'FORBIDDEN', error: error.message };
     }
-    console.error('confirmDoctorAppointmentAction error:', error);
+    logger.error({ event: 'appointments.confirm_failed' }, 'Failed to confirm appointment');
     return { success: false, code: 'SERVER_ERROR', error: 'Failed to confirm appointment.' };
   }
 }
@@ -136,7 +137,7 @@ export async function completeDoctorAppointmentAction(input: { appointmentId: st
     if (error instanceof DomainError) {
       return { success: false, code: 'FORBIDDEN', error: error.message };
     }
-    console.error('completeDoctorAppointmentAction error:', error);
+    logger.error({ event: 'appointments.complete_failed' }, 'Failed to complete appointment');
     return { success: false, code: 'SERVER_ERROR', error: 'Failed to complete appointment.' };
   }
 }
@@ -160,7 +161,7 @@ export async function noShowDoctorAppointmentAction(input: { appointmentId: stri
     if (error instanceof DomainError) {
       return { success: false, code: 'FORBIDDEN', error: error.message };
     }
-    console.error('noShowDoctorAppointmentAction error:', error);
+    logger.error({ event: 'appointments.noshow_failed' }, 'Failed to mark appointment no-show');
     return { success: false, code: 'SERVER_ERROR', error: 'Failed to mark appointment as no-show.' };
   }
 }
@@ -188,7 +189,7 @@ export async function cancelDoctorAppointmentAction(input: {
     if (error instanceof DomainError) {
       return { success: false, code: 'FORBIDDEN', error: error.message };
     }
-    console.error('cancelDoctorAppointmentAction error:', error);
+    logger.error({ event: 'appointments.cancel_doctor_failed' }, 'Failed to cancel doctor appointment');
     return { success: false, code: 'SERVER_ERROR', error: 'Failed to cancel appointment.' };
   }
 }

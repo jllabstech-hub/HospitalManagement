@@ -99,6 +99,7 @@ export default function DepartmentManagement({
     setSuccessMessage('Department created successfully!');
     createForm.reset();
     setIsCreateOpen(false);
+    applyFilters(data.name.trim(), 1, limitFilter);
   };
 
   const handleEditSubmit = async (data: UpdateDepartmentInput) => {

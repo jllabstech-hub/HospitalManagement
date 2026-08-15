@@ -2,6 +2,7 @@ import { Prisma } from '@prisma/client';
 import { unstable_cache } from 'next/cache';
 import { prisma } from '@/server/db/client';
 import { buildFuzzyDoctorWhere } from '@/lib/fuzzy-search';
+import { requireTenantContext } from '@/server/tenant';
 
 /**
  * Uses Next.js data cache when running in an App Router request.
@@ -59,8 +60,9 @@ export interface SearchDoctorsResult {
  * current FK rows after seed/admin mutations (stale IDs yield empty results).
  */
 export async function getPublicDepartments() {
+  const { tenantId } = await requireTenantContext();
   return prisma.department.findMany({
-    where: { isActive: true },
+    where: { isActive: true, tenantId },
     select: {
       id: true,
       name: true,
@@ -75,6 +77,7 @@ export async function getPublicDepartments() {
  * Enforces active status projections and pagination. Never exposes passwordHash or sensitive tokens.
  */
 export async function searchDoctors(params: SearchDoctorsParams): Promise<SearchDoctorsResult> {
+  const { tenantId } = await requireTenantContext();
   const page = Math.max(1, params.page || 1);
   const limit = Math.max(1, Math.min(50, params.limit || 20));
   const skip = (page - 1) * limit;
@@ -85,8 +88,9 @@ export async function searchDoctors(params: SearchDoctorsParams): Promise<Search
   // Build Prisma filter clauses
   const whereClause: Prisma.DoctorProfileWhereInput = {
     ...fuzzyClause,
-    user: { isActive: true },
-    department: { isActive: true },
+    tenantId,
+    user: { isActive: true, tenantId },
+    department: { isActive: true, tenantId },
   };
 
   if (params.departmentId && params.departmentId.trim() !== '') {
@@ -146,13 +150,14 @@ export async function searchDoctors(params: SearchDoctorsParams): Promise<Search
  */
 export async function getDoctorPublicProfile(doctorId: string): Promise<DoctorPublicProfile | null> {
   if (!doctorId || typeof doctorId !== 'string') return null;
+  const { tenantId } = await requireTenantContext();
 
   return cachedQuery(
-    ['public-doctor-profile', doctorId],
-    { revalidate: 120, tags: ['public-doctors', `doctor-${doctorId}`] },
+    ['public-doctor-profile', tenantId, doctorId],
+    { revalidate: 120, tags: [`public-doctors-${tenantId}`, `doctor-${tenantId}-${doctorId}`] },
     () =>
-      prisma.doctorProfile.findUnique({
-        where: { id: doctorId },
+      prisma.doctorProfile.findFirst({
+        where: { id: doctorId, tenantId },
         select: {
           id: true,
           fullName: true,

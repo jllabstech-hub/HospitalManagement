@@ -4,6 +4,8 @@ import { getHospitalTodayDateString, parseDateStringToUTCDate } from '@/lib/date
 import { computeAvailableSlots } from '../domain/slot-engine';
 import { AvailableSlot, WeeklyAvailabilityItem, BlockedDateItem, ActiveAppointmentItem } from '../domain/slot-types';
 import { getWeekdayFromDateString } from '../domain/time-utils';
+import { requireTenantContext } from '@/server/tenant';
+import { DEFAULT_TENANT_TIMEZONE } from '@/server/tenant/types';
 
 export interface GetSlotsResult {
   success: boolean;
@@ -13,18 +15,11 @@ export interface GetSlotsResult {
   isFullyBlocked?: boolean;
 }
 
-/**
- * Server-side service to fetch doctor schedule data from Prisma and compute available slots
- * via the pure computeAvailableSlots domain engine.
- *
- * NO DATABASE WRITES occur in this service.
- */
 export async function getAvailableSlotsForDoctorDate(
   doctorId: string,
   dateStr: string
 ): Promise<GetSlotsResult> {
   try {
-    // 1. Defensive validation of doctorId and date format
     if (!doctorId || typeof doctorId !== 'string') {
       return { success: false, slots: [], error: 'Invalid doctor ID.' };
     }
@@ -33,22 +28,28 @@ export async function getAvailableSlotsForDoctorDate(
       return { success: false, slots: [], error: 'Invalid date format. Expected YYYY-MM-DD.' };
     }
 
-    const todayStr = getHospitalTodayDateString();
+    const tenant = await requireTenantContext();
+    const timezone = tenant.timezone || DEFAULT_TENANT_TIMEZONE;
+    const todayStr = getHospitalTodayDateString(timezone);
     if (dateStr < todayStr) {
       return { success: false, slots: [], error: 'Cannot check availability for a date in the past.' };
     }
 
-    // 2. Fetch Doctor Profile & User Active Status
-    const doctor = await prisma.doctorProfile.findUnique({
-      where: { id: doctorId },
+    const doctor = await prisma.doctorProfile.findFirst({
+      where: { id: doctorId, tenantId: tenant.tenantId },
       select: {
         id: true,
-        department: { select: { isActive: true } },
+        department: { select: { isActive: true, tenantId: true } },
         user: { select: { isActive: true } },
       },
     });
 
-    if (!doctor || !doctor.user.isActive || !doctor.department.isActive) {
+    if (
+      !doctor ||
+      !doctor.user.isActive ||
+      !doctor.department.isActive ||
+      doctor.department.tenantId !== tenant.tenantId
+    ) {
       return {
         success: false,
         slots: [],
@@ -57,17 +58,12 @@ export async function getAvailableSlotsForDoctorDate(
       };
     }
 
-    // 3. Determine Weekday in Asia/Kolkata
     const dayOfWeek = getWeekdayFromDateString(dateStr);
     const targetUtcDate = parseDateStringToUTCDate(dateStr);
 
-    // 4. Fetch Weekly Availability, Blocked Dates, and Active Appointments concurrently
     const [weeklyAvailability, blockedDates, activeAppts] = await Promise.all([
       prisma.weeklyAvailability.findMany({
-        where: {
-          doctorId,
-          dayOfWeek,
-        },
+        where: { doctorId, dayOfWeek, tenantId: tenant.tenantId },
         select: {
           id: true,
           dayOfWeek: true,
@@ -79,6 +75,7 @@ export async function getAvailableSlotsForDoctorDate(
       prisma.blockedDate.findMany({
         where: {
           doctorId,
+          tenantId: tenant.tenantId,
           startDate: { lte: targetUtcDate },
           endDate: { gte: targetUtcDate },
         },
@@ -94,6 +91,7 @@ export async function getAvailableSlotsForDoctorDate(
       prisma.appointment.findMany({
         where: {
           doctorId,
+          tenantId: tenant.tenantId,
           appointmentDate: targetUtcDate,
           status: { in: [AppointmentStatus.BOOKED, AppointmentStatus.CONFIRMED] },
         },
@@ -107,7 +105,6 @@ export async function getAvailableSlotsForDoctorDate(
       }),
     ]);
 
-    // Check full-day block flag for UX messaging
     const hasFullDayBlock = blockedDates.some(
       (b) => !b.startTime || !b.endTime || b.startTime.trim() === '' || b.endTime.trim() === ''
     );
@@ -120,7 +117,6 @@ export async function getAvailableSlotsForDoctorDate(
       };
     }
 
-    // 5. Map Prisma records to pure domain input formats
     const domainWeekly: WeeklyAvailabilityItem[] = weeklyAvailability.map((w) => ({
       id: w.id,
       dayOfWeek: w.dayOfWeek,
@@ -147,9 +143,9 @@ export async function getAvailableSlotsForDoctorDate(
       status: a.status,
     }));
 
-    // 6. Invoke pure domain slot engine
     const slots = computeAvailableSlots({
       date: dateStr,
+      timezone,
       weeklyAvailability: domainWeekly,
       blockedDates: domainBlocked,
       activeAppointments: domainActiveAppts,
@@ -160,8 +156,7 @@ export async function getAvailableSlotsForDoctorDate(
       success: true,
       slots,
     };
-  } catch (error: unknown) {
-    console.error('getAvailableSlotsForDoctorDate error:', error);
+  } catch {
     return {
       success: false,
       slots: [],

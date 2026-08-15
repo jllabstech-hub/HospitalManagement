@@ -13,20 +13,23 @@ interface PageProps {
 }
 
 export default async function AdminMediaLibraryPage({ searchParams }: PageProps) {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const params = searchParams ? await searchParams : {};
   const search = typeof params.search === 'string' ? params.search.trim() : '';
 
   const mediaAssets = await prisma.mediaAsset.findMany({
-    where: search
-      ? {
-          OR: [
-            { url: { contains: search, mode: 'insensitive' } },
-            { altText: { contains: search, mode: 'insensitive' } },
-            { caption: { contains: search, mode: 'insensitive' } },
-          ],
-        }
-      : {},
+    where: {
+      tenantId: admin.tenantId,
+      ...(search
+        ? {
+            OR: [
+              { url: { contains: search, mode: 'insensitive' } },
+              { altText: { contains: search, mode: 'insensitive' } },
+              { caption: { contains: search, mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+    },
     orderBy: { createdAt: 'desc' },
   });
 

@@ -1,4 +1,7 @@
 import { PrismaClient } from '@prisma/client';
+import { assertDatabaseIsolation } from './database-guard';
+
+assertDatabaseIsolation();
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -13,7 +16,7 @@ const basePrisma =
         : ['error'],
   });
 
-const EXCLUDED_MODELS = ['HospitalProfile', 'Notification', 'DoctorSpeciality', 'DoctorCentre', 'CentreSpeciality', 'CentreService'];
+const EXCLUDED_MODELS = ['HospitalProfile', 'DoctorSpeciality', 'DoctorCentre', 'CentreSpeciality', 'CentreService'];
 
 export const prisma = process.env.NODE_ENV === 'test' 
   ? basePrisma.$extends({

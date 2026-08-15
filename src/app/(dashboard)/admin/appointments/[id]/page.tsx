@@ -12,11 +12,11 @@ interface PageProps {
 }
 
 export default async function AdminAppointmentDetailPage({ params }: PageProps) {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const resolvedParams = await params;
 
-  const appt = await prisma.appointment.findUnique({
-    where: { id: resolvedParams.id },
+  const appt = await prisma.appointment.findFirst({
+    where: { id: resolvedParams.id, tenantId: admin.tenantId },
     select: {
       id: true,
       appointmentDate: true,

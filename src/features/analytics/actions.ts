@@ -5,37 +5,14 @@ import { prisma } from '@/server/db/client';
 
 export async function getDashboardAnalytics() {
   const authUser = await requireAdmin();
-
-  let tenantId: string | null = authUser.tenantId || null;
-
-  if (authUser.id || authUser.email) {
-    const dbUser = await prisma.user.findFirst({
-      where: {
-        OR: [
-          ...(authUser.id ? [{ id: authUser.id }] : []),
-          ...(authUser.email ? [{ email: authUser.email }] : []),
-        ],
-      },
-      select: { tenantId: true },
-    });
-    if (dbUser?.tenantId) {
-      tenantId = dbUser.tenantId;
-    }
-  }
-
-  if (!tenantId) {
-    const firstHospital = await prisma.hospitalProfile.findFirst({ select: { id: true } });
-    if (firstHospital) {
-      tenantId = firstHospital.id;
-    }
-  }
+  const tenantId = authUser.tenantId;
 
   const now = new Date();
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const endOfToday = new Date(startOfToday.getTime() + 24 * 60 * 60 * 1000 - 1);
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-  const tenantWhere = tenantId ? { tenantId } : {};
+  const tenantWhere = { tenantId };
 
   // 1. Fetch Top-Level KPIs
   const [

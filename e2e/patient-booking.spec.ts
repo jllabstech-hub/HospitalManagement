@@ -1,4 +1,5 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures/test';
+import { firstAvailableSlot, searchAndOpenDoctor } from './fixtures/auth';
 
 test.describe('Patient Transactional Booking E2E Suite (Phase 5C)', () => {
   test('TEST 1: Successful Patient Booking Flow (Status BOOKED & Success Card)', async ({ page }) => {
@@ -10,30 +11,21 @@ test.describe('Patient Transactional Booking E2E Suite (Phase 5C)', () => {
     await page.click('button[type="submit"]');
     await page.waitForURL('**/patient/dashboard');
 
-    // 2. Navigate to Doctor Directory
-    await page.click('a:has-text("Find a Doctor")');
-    await page.waitForURL('**/patient/doctors');
+    await searchAndOpenDoctor(page, 'Jane Smith');
 
-    // 3. Search and View Doctor Profile
-    await page.fill('input[id="searchInput"]', 'Jane Smith');
-    await page.click('a:has-text("Book Appointment")');
-    await page.waitForURL('**/patient/doctors/*');
+    const slot = await firstAvailableSlot(page);
+    const startLabel = (await slot.locator('span').first().innerText()).trim();
+    await slot.click();
 
-    // 4. Select Slot
-    await page.waitForSelector('button:has-text("10:00 AM")', { timeout: 10000 });
-    await page.locator('button:has-text("10:00 AM")').first().click();
-
-    // 5. Open Modal & Confirm Booking
     await page.click('button:has-text("Proceed to Confirmation")');
     await expect(page.getByRole('heading', { name: 'Confirm Appointment Selection' })).toBeVisible();
 
     await page.click('button:has-text("Confirm Appointment")');
 
-    // 6. Assert Success Screen with status BOOKED
     await expect(page.getByRole('heading', { name: 'Appointment Booked!' })).toBeVisible();
     await expect(page.getByText('Status: BOOKED')).toBeVisible();
     await expect(page.getByText('Dr. Jane Smith').first()).toBeVisible();
-    await expect(page.getByText('10:00 AM').first()).toBeVisible();
+    await expect(page.getByText(startLabel).first()).toBeVisible();
 
     // 7. Click Go to Patient Dashboard
     await page.click('a:has-text("Go to Patient Dashboard")');
@@ -50,11 +42,10 @@ test.describe('Patient Transactional Booking E2E Suite (Phase 5C)', () => {
     await page.click('button[type="submit"]');
     await page.waitForURL('**/patient/dashboard');
 
-    // Open Doctor Profile in Page A
-    await page.goto('/patient/doctors');
-    await page.fill('input[id="searchInput"]', 'Robert Johnson');
-    await page.click('a:has-text("Book Appointment")');
-    await page.waitForSelector('button:has-text("11:00 AM")', { timeout: 10000 });
+    await searchAndOpenDoctor(page, 'Robert Johnson');
+    const slotA = await firstAvailableSlot(page);
+    const slotStart = await slotA.getAttribute('data-slot-start');
+    const slotDate = await page.locator('[data-testid="slot-date-chip"][data-selected="true"]').getAttribute('data-date');
 
     // Open Patient B in an ISOLATED browser context
     const contextB = await browser.newContext();
@@ -66,23 +57,28 @@ test.describe('Patient Transactional Booking E2E Suite (Phase 5C)', () => {
     await pageB.click('button[type="submit"]');
     await pageB.waitForURL('**/patient/dashboard');
 
-    await pageB.goto('/patient/doctors');
-    await pageB.fill('input[id="searchInput"]', 'Robert Johnson');
-    await pageB.click('a:has-text("Book Appointment")');
-    await pageB.waitForSelector('button:has-text("11:00 AM")', { timeout: 10000 });
+    await searchAndOpenDoctor(pageB, 'Robert Johnson');
+    if (slotDate) {
+      const dateChip = pageB.locator(`[data-testid="slot-date-chip"][data-date="${slotDate}"]`);
+      if (await dateChip.count()) {
+        await dateChip.click();
+        await expect(pageB.getByText('Checking live doctor schedule')).toBeHidden({ timeout: 15000 });
+      }
+    }
+    const slotB = slotStart
+      ? pageB.locator(`[data-testid="available-slot"][data-slot-start="${slotStart}"]`).first()
+      : await firstAvailableSlot(pageB);
+    await expect(slotB).toBeVisible({ timeout: 15000 });
 
-    // Patient A selects 11:00 AM and confirms booking
-    await page.locator('button:has-text("11:00 AM")').first().click();
+    await slotA.click();
     await page.click('button:has-text("Proceed to Confirmation")');
     await page.click('button:has-text("Confirm Appointment")');
     await expect(page.getByRole('heading', { name: 'Appointment Booked!' })).toBeVisible();
 
-    // Patient B attempts to select 11:00 AM and confirms booking
-    await pageB.locator('button:has-text("11:00 AM")').first().click();
+    await slotB.click();
     await pageB.click('button:has-text("Proceed to Confirmation")');
     await pageB.click('button:has-text("Confirm Appointment")');
 
-    // Patient B receives Conflict Notice
     await expect(pageB.getByText('This time slot was just booked by another patient')).toBeVisible();
 
     await contextB.close();

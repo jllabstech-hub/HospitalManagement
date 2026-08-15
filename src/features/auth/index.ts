@@ -1,9 +1,24 @@
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import { headers } from 'next/headers';
 import { authConfig } from './auth.config';
 import { prisma } from '@/server/db/client';
 import { verifyPassword } from '@/server/security/password';
 import { Role } from '@prisma/client';
+import { requireTenantByHost } from '@/server/tenant/resolve';
+import { normalizePhone, verifyOtpChallenge } from '@/server/security/otp';
+import { assertRateLimit, recordAuthAttempt } from '@/server/security/rate-limit';
+import { DomainError } from '@/server/errors/domain-error';
+
+async function resolveRequestTenant() {
+  const headerList = await headers();
+  const host = headerList.get('x-tenant-host') || headerList.get('host') || '';
+  return requireTenantByHost(host);
+}
+
+function clientIpFromHeaders(): string {
+  return 'unknown';
+}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -18,28 +33,34 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         isPhoneAuth: { label: 'IsPhoneAuth', type: 'text' },
       },
       async authorize(credentials) {
-        if (credentials?.isPhoneAuth === 'true') {
-          const phone = (credentials.phone as string || '').replace(/[^0-9+]/g, '').trim();
-          const otp = credentials.otp as string;
+        const tenant = await resolveRequestTenant();
+        const ip = clientIpFromHeaders();
 
-          if (!phone || otp !== '123456') {
+        if (credentials?.isPhoneAuth === 'true') {
+          const phone = normalizePhone((credentials.phone as string) || '');
+          const otp = (credentials.otp as string) || '';
+
+          try {
+            await verifyOtpChallenge({
+              tenantId: tenant.tenantId,
+              phone,
+              otp,
+              ipAddress: ip,
+            });
+          } catch {
             return null;
           }
 
-          // 1. Find PatientProfile by phoneNumber or create auto-provisioned patient
           let patientProfile = await prisma.patientProfile.findFirst({
             where: {
-              OR: [
-                { phoneNumber: phone },
-                { phoneNumber: { contains: phone.slice(-10) } },
-              ],
+              tenantId: tenant.tenantId,
+              OR: [{ phoneNumber: phone }, { phoneNumber: { contains: phone.slice(-10) } }],
             },
             include: { user: true },
           });
 
           if (!patientProfile) {
-            // Auto-provision new Patient User + PatientProfile for seamless OTP login
-            const generatedEmail = `patient.${phone.slice(-10)}@carepulse.hospital`;
+            const generatedEmail = `patient.${phone.slice(-10)}.${tenant.tenantId.slice(0, 8)}@carepulse.hospital`;
             const dummyHash = 'otp-authenticated-user';
 
             let user = await prisma.user.findUnique({
@@ -53,13 +74,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                   passwordHash: dummyHash,
                   role: Role.PATIENT,
                   isActive: true,
+                  tenantId: tenant.tenantId,
                 },
               });
+            } else if (user.tenantId !== tenant.tenantId) {
+              return null;
             }
 
             patientProfile = await prisma.patientProfile.create({
               data: {
                 userId: user.id,
+                tenantId: tenant.tenantId,
                 fullName: `Patient (${phone.slice(-4)})`,
                 phoneNumber: phone,
                 dateOfBirth: new Date('1995-01-01'),
@@ -67,6 +92,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               },
               include: { user: true },
             });
+          }
+
+          if (patientProfile.tenantId !== tenant.tenantId || patientProfile.user.tenantId !== tenant.tenantId) {
+            return null;
           }
 
           if (!patientProfile.user.isActive) {
@@ -78,7 +107,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             email: patientProfile.user.email,
             role: patientProfile.user.role,
             isActive: patientProfile.user.isActive,
-            tenantId: patientProfile.user.tenantId ?? '',
+            tenantId: patientProfile.user.tenantId,
             patientProfileId: patientProfile.id,
             doctorProfileId: null,
           };
@@ -89,8 +118,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
 
         const normalizedEmail = (credentials.email as string).toLowerCase().trim();
+        const rateKey = `login:${tenant.tenantId}:${normalizedEmail}`;
 
-        // 1. Fetch user by email including profile relationships
+        try {
+          await assertRateLimit({ kind: 'LOGIN', key: rateKey, tenantId: tenant.tenantId });
+        } catch (error) {
+          if (error instanceof DomainError) {
+            throw new Error('RATE_LIMITED');
+          }
+          throw error;
+        }
+
         const user = await prisma.user.findUnique({
           where: { email: normalizedEmail },
           include: {
@@ -99,32 +137,34 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           },
         });
 
-        if (!user) {
-          return null; // Email not found
+        if (!user || user.tenantId !== tenant.tenantId) {
+          await recordAuthAttempt({ kind: 'LOGIN', key: rateKey, tenantId: tenant.tenantId, success: false });
+          return null;
         }
 
-        // 2. Reject inactive accounts
         if (!user.isActive) {
+          await recordAuthAttempt({ kind: 'LOGIN', key: rateKey, tenantId: tenant.tenantId, success: false });
           throw new Error('ACCOUNT_INACTIVE');
         }
 
-        // 3. Verify password hash
         const isValidPassword = await verifyPassword(
           credentials.password as string,
           user.passwordHash
         );
 
         if (!isValidPassword) {
-          return null; // Invalid password
+          await recordAuthAttempt({ kind: 'LOGIN', key: rateKey, tenantId: tenant.tenantId, success: false });
+          return null;
         }
 
-        // 4. Return safe User object (EXCLUDES passwordHash)
+        await recordAuthAttempt({ kind: 'LOGIN', key: rateKey, tenantId: tenant.tenantId, success: true });
+
         return {
           id: user.id,
           email: user.email,
           role: user.role,
           isActive: user.isActive,
-          tenantId: user.tenantId ?? '',
+          tenantId: user.tenantId,
           patientProfileId: user.patientProfile?.id ?? null,
           doctorProfileId: user.doctorProfile?.id ?? null,
         };

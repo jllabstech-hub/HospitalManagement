@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures/test';
 
 test.describe('Global Interactive Search E2E Suite', () => {
   test('Desktop & Mobile Interactive Search flow without Search button', async ({ page }) => {
@@ -36,7 +36,9 @@ test.describe('Global Interactive Search E2E Suite', () => {
 
     // Type query
     await page.fill('input[aria-label="Global interactive hospital search"]', 'Smith');
-    await expect(page.getByText('Dr. Jane Smith').first()).toBeVisible({ timeout: 10000 });
+    const jane = page.getByText('Dr. Jane Smith').first();
+    await jane.scrollIntoViewIfNeeded();
+    await expect(jane).toBeVisible({ timeout: 10000 });
 
     // Verify no horizontal scrollbar / overflow
     const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth);

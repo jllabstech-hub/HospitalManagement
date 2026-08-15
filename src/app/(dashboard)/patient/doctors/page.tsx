@@ -9,7 +9,7 @@ import { APP_CONFIG } from '@/config';
 
 export const metadata: Metadata = {
   title: 'Find a Doctor',
-  description: `Search ${APP_CONFIG.shortName} specialists by name or department and book a 30-minute consultation.`,
+  description: `Search ${APP_CONFIG.shortName} specialists by name or department and book a consultation.`,
 };
 
 interface PageProps {
@@ -38,7 +38,7 @@ export default async function FindDoctorPage({ searchParams }: PageProps) {
     }),
   ]);
 
-  const { doctors, currentPage, totalPages } = doctorSearchResult;
+  const { doctors, currentPage, totalPages, totalCount } = doctorSearchResult;
 
   return (
     <div className="space-y-8">
@@ -49,7 +49,7 @@ export default async function FindDoctorPage({ searchParams }: PageProps) {
         </h1>
         <p className="mt-2 max-w-2xl text-base text-ink-muted">
           Find the Right Doctor — search by specialty, department, or name, then book a
-          30-minute consultation.
+          consultation.
         </p>
       </div>
 
@@ -69,7 +69,12 @@ export default async function FindDoctorPage({ searchParams }: PageProps) {
       ) : (
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
           {doctors.map((doc) => (
-            <DoctorCard key={doc.id} doctor={doc} />
+            <DoctorCard
+              key={doc.id}
+              doctor={doc}
+              href={`/patient/doctors/${doc.id}`}
+              bookHref={`/patient/doctors/${doc.id}`}
+            />
           ))}
         </div>
       )}
@@ -77,7 +82,8 @@ export default async function FindDoctorPage({ searchParams }: PageProps) {
       {doctors.length > 0 && (
         <div className="card-surface flex items-center justify-between p-4 text-xs font-semibold">
           <div>
-            Showing Page <span className="text-ink">{currentPage}</span> of{' '}
+            Found <span className="text-ink">{totalCount}</span> matching doctors · Showing Page{' '}
+            <span className="text-ink">{currentPage}</span> of{' '}
             <span className="text-ink">{totalPages}</span>
           </div>
           <div className="flex space-x-2">

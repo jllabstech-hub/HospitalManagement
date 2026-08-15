@@ -2,44 +2,48 @@
 
 import { z } from 'zod';
 import { prisma } from '@/server/db/client';
+import { requireTenantContext } from '@/server/tenant';
+import { assertRateLimit, recordAuthAttempt } from '@/server/security/rate-limit';
+import { DomainError } from '@/server/errors/domain-error';
+import { headers } from 'next/headers';
 
 export type PublicFormResult = { success: true } | { success: false; error: string };
 
 const ContactMessageSchema = z.object({
-  name: z.string().trim().min(2, 'Name must be at least 2 characters.'),
-  email: z.string().trim().toLowerCase().email('Please enter a valid email address.'),
-  phone: z.string().trim().optional(),
-  subject: z.string().trim().min(3, 'Subject must be at least 3 characters.'),
-  message: z.string().trim().min(10, 'Message must be at least 10 characters.'),
+  name: z.string().trim().min(2).max(120),
+  email: z.string().trim().toLowerCase().email().max(254),
+  phone: z.string().trim().max(32).optional(),
+  subject: z.string().trim().min(3).max(200),
+  message: z.string().trim().min(10).max(4000),
 });
 
 const AppointmentEnquirySchema = z.object({
-  name: z.string().trim().min(2, 'Name must be at least 2 characters.'),
-  email: z.string().trim().toLowerCase().email('Please enter a valid email address.'),
-  phone: z.string().trim().min(6, 'Please enter a valid phone number.'),
+  name: z.string().trim().min(2).max(120),
+  email: z.string().trim().toLowerCase().email().max(254),
+  phone: z.string().trim().min(6).max(32),
   departmentId: z.string().uuid().optional().or(z.literal('')),
   preferredDoctorId: z.string().uuid().optional().or(z.literal('')),
-  preferredDate: z.string().optional(),
-  message: z.string().trim().optional(),
+  preferredDate: z.string().max(32).optional(),
+  message: z.string().trim().max(4000).optional(),
 });
 
 const InternationalEnquirySchema = z.object({
-  name: z.string().trim().min(2, 'Name must be at least 2 characters.'),
-  email: z.string().trim().toLowerCase().email('Please enter a valid email address.'),
-  phone: z.string().trim().optional(),
-  country: z.string().trim().min(2, 'Country is required.'),
-  treatmentInterest: z.string().trim().optional(),
-  preferredDepartment: z.string().trim().optional(),
-  message: z.string().trim().optional(),
+  name: z.string().trim().min(2).max(120),
+  email: z.string().trim().toLowerCase().email().max(254),
+  phone: z.string().trim().max(32).optional(),
+  country: z.string().trim().min(2).max(80),
+  treatmentInterest: z.string().trim().max(200).optional(),
+  preferredDepartment: z.string().trim().max(120).optional(),
+  message: z.string().trim().max(4000).optional(),
 });
 
 const PackageInfoRequestSchema = z.object({
-  name: z.string().trim().min(2, 'Name must be at least 2 characters.'),
-  email: z.string().trim().toLowerCase().email('Please enter a valid email address.'),
-  phone: z.string().trim().optional(),
-  packageSlug: z.string().trim().optional(),
-  packageName: z.string().trim().optional(),
-  message: z.string().trim().optional(),
+  name: z.string().trim().min(2).max(120),
+  email: z.string().trim().toLowerCase().email().max(254),
+  phone: z.string().trim().max(32).optional(),
+  packageSlug: z.string().trim().max(160).optional(),
+  packageName: z.string().trim().max(160).optional(),
+  message: z.string().trim().max(4000).optional(),
 });
 
 function firstZodError(result: z.SafeParseError<unknown>): string {
@@ -52,6 +56,19 @@ function parseOptionalDate(value?: string): Date | null {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
+async function guardPublicForm(tenantId: string): Promise<string> {
+  let ip = 'unknown';
+  try {
+    const headerList = await headers();
+    ip = headerList.get('x-forwarded-for')?.split(',')[0]?.trim() || headerList.get('x-real-ip') || 'unknown';
+  } catch {
+    ip = 'test';
+  }
+  const key = `form:${tenantId}:${ip}`;
+  await assertRateLimit({ kind: 'PUBLIC_FORM', key, tenantId });
+  return key;
+}
+
 export async function submitContactMessageAction(
   rawInput: z.infer<typeof ContactMessageSchema>
 ): Promise<PublicFormResult> {
@@ -61,8 +78,11 @@ export async function submitContactMessageAction(
   }
 
   try {
+    const tenant = await requireTenantContext();
+    const key = await guardPublicForm(tenant.tenantId);
     await prisma.contactMessage.create({
       data: {
+        tenantId: tenant.tenantId,
         name: parsed.data.name,
         email: parsed.data.email,
         phone: parsed.data.phone || null,
@@ -70,8 +90,10 @@ export async function submitContactMessageAction(
         message: parsed.data.message,
       },
     });
+    await recordAuthAttempt({ kind: 'PUBLIC_FORM', key, tenantId: tenant.tenantId, success: true });
     return { success: true };
-  } catch {
+  } catch (error) {
+    if (error instanceof DomainError) return { success: false, error: error.message };
     return { success: false, error: 'Unable to submit your message. Please try again.' };
   }
 }
@@ -89,8 +111,32 @@ export async function submitAppointmentEnquiryAction(
   const preferredDate = parseOptionalDate(parsed.data.preferredDate);
 
   try {
+    const tenant = await requireTenantContext();
+    const key = await guardPublicForm(tenant.tenantId);
+
+    if (departmentId) {
+      const dept = await prisma.department.findFirst({
+        where: { id: departmentId, tenantId: tenant.tenantId },
+        select: { id: true },
+      });
+      if (!dept) {
+        return { success: false, error: 'Selected department is not available.' };
+      }
+    }
+
+    if (preferredDoctorId) {
+      const doctor = await prisma.doctorProfile.findFirst({
+        where: { id: preferredDoctorId, tenantId: tenant.tenantId },
+        select: { id: true },
+      });
+      if (!doctor) {
+        return { success: false, error: 'Selected doctor is not available.' };
+      }
+    }
+
     await prisma.appointmentEnquiry.create({
       data: {
+        tenantId: tenant.tenantId,
         name: parsed.data.name,
         email: parsed.data.email,
         phone: parsed.data.phone,
@@ -100,8 +146,10 @@ export async function submitAppointmentEnquiryAction(
         message: parsed.data.message || null,
       },
     });
+    await recordAuthAttempt({ kind: 'PUBLIC_FORM', key, tenantId: tenant.tenantId, success: true });
     return { success: true };
-  } catch {
+  } catch (error) {
+    if (error instanceof DomainError) return { success: false, error: error.message };
     return { success: false, error: 'Unable to submit your enquiry. Please try again.' };
   }
 }
@@ -115,8 +163,11 @@ export async function submitInternationalEnquiryAction(
   }
 
   try {
+    const tenant = await requireTenantContext();
+    const key = await guardPublicForm(tenant.tenantId);
     await prisma.internationalPatientEnquiry.create({
       data: {
+        tenantId: tenant.tenantId,
         name: parsed.data.name,
         email: parsed.data.email,
         phone: parsed.data.phone || null,
@@ -126,8 +177,10 @@ export async function submitInternationalEnquiryAction(
         message: parsed.data.message || null,
       },
     });
+    await recordAuthAttempt({ kind: 'PUBLIC_FORM', key, tenantId: tenant.tenantId, success: true });
     return { success: true };
-  } catch {
+  } catch (error) {
+    if (error instanceof DomainError) return { success: false, error: error.message };
     return { success: false, error: 'Unable to submit your enquiry. Please try again.' };
   }
 }
@@ -141,8 +194,22 @@ export async function submitPackageInfoRequestAction(
   }
 
   try {
+    const tenant = await requireTenantContext();
+    const key = await guardPublicForm(tenant.tenantId);
+
+    if (parsed.data.packageSlug) {
+      const pkg = await prisma.healthPackage.findFirst({
+        where: { slug: parsed.data.packageSlug, tenantId: tenant.tenantId },
+        select: { id: true },
+      });
+      if (!pkg) {
+        return { success: false, error: 'Selected package is not available.' };
+      }
+    }
+
     await prisma.packageInformationRequest.create({
       data: {
+        tenantId: tenant.tenantId,
         name: parsed.data.name,
         email: parsed.data.email,
         phone: parsed.data.phone || null,
@@ -151,8 +218,10 @@ export async function submitPackageInfoRequestAction(
         message: parsed.data.message || null,
       },
     });
+    await recordAuthAttempt({ kind: 'PUBLIC_FORM', key, tenantId: tenant.tenantId, success: true });
     return { success: true };
-  } catch {
+  } catch (error) {
+    if (error instanceof DomainError) return { success: false, error: error.message };
     return { success: false, error: 'Unable to submit your request. Please try again.' };
   }
 }

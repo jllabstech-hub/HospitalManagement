@@ -5,6 +5,7 @@ import { prisma } from '@/server/db/client';
 import { requireAdmin } from '@/server/security/auth-helpers';
 import { CreateCentreSchema, CreateCentreInput, UpdateCentreSchema, UpdateCentreInput } from './schemas';
 import type { ActionResult } from '@/types/server-action';
+import { prismaErrorCode } from '@/server/db/tenant-ops';
 
 export async function createCentreAction(rawInput: CreateCentreInput): Promise<ActionResult> {
   try {
@@ -24,8 +25,8 @@ export async function createCentreAction(rawInput: CreateCentreInput): Promise<A
     revalidateTag('public-catalog');
     revalidatePath('/admin/centres');
     return { success: true };
-  } catch (error: any) {
-    if (error.code === 'P2002') return { success: false, error: 'A record with this name already exists.' };
+  } catch (error: unknown) {
+    if (prismaErrorCode(error) === 'P2002') return { success: false, error: 'A record with this name already exists.' };
     return { success: false, error: 'Failed to create record.' };
   }
 }
@@ -39,15 +40,16 @@ export async function updateCentreAction(rawInput: UpdateCentreInput): Promise<A
     const { id, ...data } = parsed.data;
     const slug = data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
-    await prisma.centreOfExcellence.update({
+    const updated = await prisma.centreOfExcellence.updateMany({
       where: { id, tenantId: admin.tenantId },
       data: { ...data, slug },
     });
+    if (updated.count !== 1) return { success: false, error: 'Record not found.' };
 
     revalidateTag('public-catalog');
     revalidatePath('/admin/centres');
     return { success: true };
-  } catch (error: any) {
+  } catch {
     return { success: false, error: 'Failed to update record.' };
   }
 }
@@ -55,13 +57,13 @@ export async function updateCentreAction(rawInput: UpdateCentreInput): Promise<A
 export async function deleteCentreAction(id: string): Promise<ActionResult> {
   try {
     const admin = await requireAdmin();
-    await prisma.centreOfExcellence.delete({
+    await prisma.centreOfExcellence.deleteMany({
       where: { id, tenantId: admin.tenantId },
     });
     revalidateTag('public-catalog');
     revalidatePath('/admin/centres');
     return { success: true };
-  } catch (error) {
+  } catch {
     return { success: false, error: 'Failed to delete record.' };
   }
 }

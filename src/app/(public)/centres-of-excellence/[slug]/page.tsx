@@ -6,7 +6,7 @@ import PageHero from '@/components/public/PageHero';
 import DoctorCard from '@/components/doctors/DoctorCard';
 import EmptyState from '@/components/ui/EmptyState';
 import Card from '@/components/ui/Card';
-import { getCentreBySlug, getPublishedCentres } from '@/features/cms/queries/catalog';
+import { getCentreBySlug } from '@/features/cms/queries/catalog';
 import { APP_CONFIG } from '@/config';
 
 interface PageProps {
@@ -14,8 +14,8 @@ interface PageProps {
 }
 
 export async function generateStaticParams() {
-  const centres = await getPublishedCentres();
-  return centres.map((c) => ({ slug: c.slug }));
+  // Host-based multi-tenancy: slugs are resolved at request time.
+  return [];
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {

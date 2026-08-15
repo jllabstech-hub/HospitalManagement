@@ -3,7 +3,10 @@ import { Inter } from 'next/font/google';
 import { APP_CONFIG } from '@/config';
 import { getSiteUrl } from '@/lib/seo';
 import { getTenantBranding } from '@/lib/tenant/branding';
+import { brandingStyleVars } from '@/server/security/branding';
 import './globals.css';
+
+export const dynamic = 'force-dynamic';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -47,26 +50,16 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const branding = await getTenantBranding();
-
-  // Extract custom branding colors if available
-  const primaryColor = branding?.primaryColor || '#0ea5e9';
-  const secondaryColor = branding?.secondaryColor || '#f43f5e';
-  const fontFamily = branding?.fontFamily || 'var(--font-inter)';
+  const cssVars = brandingStyleVars({
+    primaryColor: branding?.primaryColor,
+    secondaryColor: branding?.secondaryColor,
+    fontFamily: branding?.fontFamily,
+  });
 
   return (
     <html lang="en" className={inter.variable}>
       <head>
-        <style dangerouslySetInnerHTML={{
-          __html: `
-            :root {
-              --color-brand-500: ${primaryColor};
-              --color-brand-600: ${primaryColor};
-              --color-brand-700: ${primaryColor};
-              --color-accent-500: ${secondaryColor};
-              --font-sans: ${fontFamily};
-            }
-          `
-        }} />
+        <style dangerouslySetInnerHTML={{ __html: cssVars }} />
       </head>
       <body className="min-h-screen bg-surface-warm font-sans text-ink antialiased">
         {children}

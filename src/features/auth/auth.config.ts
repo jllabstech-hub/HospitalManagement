@@ -1,9 +1,10 @@
 import type { NextAuthConfig } from 'next-auth';
+import { getAuthSecret } from '@/server/security/auth-secret';
 
 export const authConfig: NextAuthConfig = {
   trustHost: true,
-  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || 'dev-super-secret-key-min-32-chars-change-in-prod',
-  providers: [], // Added in index.ts for Node.js runtime
+  secret: getAuthSecret(),
+  providers: [],
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
@@ -30,7 +31,8 @@ export const authConfig: NextAuthConfig = {
   },
   session: {
     strategy: 'jwt',
-    maxAge: 30 * 24 * 60 * 60, // 30 Days
+    maxAge: 8 * 60 * 60,
+    updateAge: 30 * 60,
   },
   pages: {
     signIn: '/login',

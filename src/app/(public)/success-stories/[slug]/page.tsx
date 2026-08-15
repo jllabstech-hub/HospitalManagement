@@ -5,7 +5,6 @@ import Breadcrumbs from '@/components/public/Breadcrumbs';
 import PageHero from '@/components/public/PageHero';
 import {
   getSuccessStoryBySlug,
-  getPublishedSuccessStories,
 } from '@/features/cms/queries/content';
 import { APP_CONFIG } from '@/config';
 
@@ -14,8 +13,8 @@ interface PageProps {
 }
 
 export async function generateStaticParams() {
-  const stories = await getPublishedSuccessStories();
-  return stories.map((s) => ({ slug: s.slug }));
+  // Host-based multi-tenancy: slugs are resolved at request time.
+  return [];
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {

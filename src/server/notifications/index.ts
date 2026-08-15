@@ -1,3 +1,6 @@
+import { NotificationType } from '@prisma/client';
+import { prisma } from '@/server/db/client';
+import { enqueueAppointmentNotification } from './outbox';
 import type {
   AppointmentCancellationParams,
   AppointmentConfirmationParams,
@@ -6,17 +9,37 @@ import type {
   NotificationService,
 } from './types';
 
-class NoopNotificationService implements NotificationService {
+async function enqueueFromAppointment(
+  appointmentId: string,
+  type: NotificationType
+): Promise<void> {
+  const appointment = await prisma.appointment.findFirst({
+    where: { id: appointmentId },
+    select: {
+      tenantId: true,
+      patient: { select: { userId: true } },
+    },
+  });
+  if (!appointment) return;
+  await enqueueAppointmentNotification({
+    tenantId: appointment.tenantId,
+    type,
+    recipientUserId: appointment.patient.userId,
+    appointmentId,
+  });
+}
+
+class OutboxNotificationService implements NotificationService {
   async sendAppointmentConfirmation(params: AppointmentConfirmationParams): Promise<void> {
-    void params;
+    await enqueueFromAppointment(params.appointmentId, NotificationType.APPOINTMENT_CONFIRMED);
   }
 
   async sendAppointmentCancellation(params: AppointmentCancellationParams): Promise<void> {
-    void params;
+    await enqueueFromAppointment(params.appointmentId, NotificationType.APPOINTMENT_CANCELLED);
   }
 
   async sendAppointmentReminder(params: AppointmentReminderParams): Promise<void> {
-    void params;
+    await enqueueFromAppointment(params.appointmentId, NotificationType.APPOINTMENT_REMINDER);
   }
 
   async sendEnquiryAcknowledgement(params: EnquiryAcknowledgementParams): Promise<void> {
@@ -24,4 +47,6 @@ class NoopNotificationService implements NotificationService {
   }
 }
 
-export const notificationService: NotificationService = new NoopNotificationService();
+export const notificationService: NotificationService = new OutboxNotificationService();
+export { processNotificationOutbox } from './worker';
+export { enqueueAppointmentNotification } from './outbox';

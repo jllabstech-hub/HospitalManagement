@@ -4,15 +4,17 @@ import EnquiriesManager from '@/features/cms/components/EnquiriesManager';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 
 export default async function AdminEnquiriesPage() {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const [contactMessages, appointmentEnquiries, internationalEnquiries, packageRequests] =
     await Promise.all([
       prisma.contactMessage.findMany({
+        where: { tenantId: admin.tenantId },
         orderBy: { createdAt: 'desc' },
         take: 50,
       }),
       prisma.appointmentEnquiry.findMany({
+        where: { tenantId: admin.tenantId },
         orderBy: { createdAt: 'desc' },
         take: 50,
         include: {
@@ -21,10 +23,12 @@ export default async function AdminEnquiriesPage() {
         },
       }),
       prisma.internationalPatientEnquiry.findMany({
+        where: { tenantId: admin.tenantId },
         orderBy: { createdAt: 'desc' },
         take: 50,
       }),
       prisma.packageInformationRequest.findMany({
+        where: { tenantId: admin.tenantId },
         orderBy: { createdAt: 'desc' },
         take: 50,
       }),

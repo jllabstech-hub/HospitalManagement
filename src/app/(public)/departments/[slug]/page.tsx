@@ -5,7 +5,7 @@ import Breadcrumbs from '@/components/public/Breadcrumbs';
 import PageHero from '@/components/public/PageHero';
 import DoctorCard from '@/components/doctors/DoctorCard';
 import EmptyState from '@/components/ui/EmptyState';
-import { getDepartmentBySlug, getPublishedDepartments } from '@/features/cms/queries/catalog';
+import { getDepartmentBySlug } from '@/features/cms/queries/catalog';
 import { publicPageMetadata } from '@/lib/seo';
 import { APP_CONFIG } from '@/config';
 
@@ -14,8 +14,8 @@ interface PageProps {
 }
 
 export async function generateStaticParams() {
-  const departments = await getPublishedDepartments();
-  return departments.map((d) => ({ slug: d.slug }));
+  // Host-based multi-tenancy: slugs are resolved at request time.
+  return [];
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {

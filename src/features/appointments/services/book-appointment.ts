@@ -2,33 +2,25 @@ import { AppointmentStatus, Prisma } from '@prisma/client';
 import { prisma } from '@/server/db/client';
 import { parseDateStringToUTCDate, getHospitalTodayDateString } from '@/lib/date-utils';
 import { computeAvailableSlots } from '../domain/slot-engine';
-import { getWeekdayFromDateString, minutesToTimeStr, timeStrToMinutes } from '../domain/time-utils';
+import { getWeekdayFromDateString } from '../domain/time-utils';
 import {
   BookAppointmentResult,
   BookAppointmentSchema,
 } from '../schemas/booking-schema';
-import { notificationService } from '@/services/notifications/NotificationService';
+import { enqueueAppointmentNotification } from '@/server/notifications/outbox';
+import { writeAuditLog } from '@/server/security/audit';
+import { requireTenantContext } from '@/server/tenant';
+import { DEFAULT_TENANT_TIMEZONE } from '@/server/tenant/types';
 
-/**
- * Calculates end time for a 30-minute slot (e.g., '10:30' -> '11:00').
- */
-export function calculateSlotEndTime(startTime: string): string {
-  const startMin = timeStrToMinutes(startTime);
-  const endMin = startMin + 30;
-  return minutesToTimeStr(endMin);
-}
-
-/**
- * Executes server-side transactional appointment booking.
- * Recomputes live slot availability before attempting creation and relies on
- * PostgreSQL partial unique index `unique_active_doctor_slot` as final concurrency defense.
- */
 export async function bookAppointmentTransaction(
   patientProfileId: string,
-  rawInput: unknown
+  rawInput: unknown,
+  actorUserId?: string
 ): Promise<BookAppointmentResult> {
   try {
-    // 1. Zod Validation
+    const tenant = await requireTenantContext();
+    const timezone = tenant.timezone || DEFAULT_TENANT_TIMEZONE;
+
     const parseResult = BookAppointmentSchema.safeParse(rawInput);
     if (!parseResult.success) {
       const firstError = parseResult.error.issues[0]?.message || 'Invalid booking input.';
@@ -37,18 +29,18 @@ export async function bookAppointmentTransaction(
 
     const { doctorId, appointmentDate, startTime } = parseResult.data;
 
-    // 2. Validate Patient Profile Exists & Active in Database
     if (!patientProfileId || typeof patientProfileId !== 'string') {
       return { success: false, code: 'UNAUTHORIZED', message: 'Invalid patient profile.' };
     }
 
-    const patient = await prisma.patientProfile.findUnique({
-      where: { id: patientProfileId },
-      select: { 
-        id: true, 
+    const patient = await prisma.patientProfile.findFirst({
+      where: { id: patientProfileId, tenantId: tenant.tenantId },
+      select: {
+        id: true,
+        tenantId: true,
+        userId: true,
         fullName: true,
-        phoneNumber: true,
-        user: { select: { isActive: true, email: true } } 
+        user: { select: { isActive: true } },
       },
     });
 
@@ -60,18 +52,24 @@ export async function bookAppointmentTransaction(
       };
     }
 
-    // 3. Validate Doctor & Department Active Status
-    const doctor = await prisma.doctorProfile.findUnique({
-      where: { id: doctorId },
+    const doctor = await prisma.doctorProfile.findFirst({
+      where: { id: doctorId, tenantId: tenant.tenantId },
       select: {
         id: true,
+        tenantId: true,
         fullName: true,
-        department: { select: { name: true, isActive: true } },
+        department: { select: { name: true, isActive: true, tenantId: true } },
         user: { select: { isActive: true } },
       },
     });
 
-    if (!doctor || !doctor.user.isActive || !doctor.department.isActive) {
+    if (
+      !doctor ||
+      !doctor.user.isActive ||
+      !doctor.department.isActive ||
+      doctor.tenantId !== patient.tenantId ||
+      doctor.department.tenantId !== tenant.tenantId
+    ) {
       return {
         success: false,
         code: 'DOCTOR_UNAVAILABLE',
@@ -79,8 +77,7 @@ export async function bookAppointmentTransaction(
       };
     }
 
-    // 4. Validate Date (Asia/Kolkata not past)
-    const todayStr = getHospitalTodayDateString();
+    const todayStr = getHospitalTodayDateString(timezone);
     if (appointmentDate < todayStr) {
       return {
         success: false,
@@ -89,24 +86,22 @@ export async function bookAppointmentTransaction(
       };
     }
 
-    // 5. Calculate 30-Minute End Time
-    const endTime = calculateSlotEndTime(startTime);
     const dayOfWeek = getWeekdayFromDateString(appointmentDate);
     const targetUtcDate = parseDateStringToUTCDate(appointmentDate);
 
-    // 6. Re-fetch live schedule data to recompute availability
     const [weeklyAvailability, blockedDates, activeAppts] = await Promise.all([
       prisma.weeklyAvailability.findMany({
-        where: { doctorId, dayOfWeek },
+        where: { doctorId, dayOfWeek, tenantId: tenant.tenantId },
         select: { id: true, dayOfWeek: true, startTime: true, endTime: true, slotDurationMinutes: true },
       }),
       prisma.blockedDate.findMany({
-        where: { doctorId, startDate: { lte: targetUtcDate }, endDate: { gte: targetUtcDate } },
+        where: { doctorId, tenantId: tenant.tenantId, startDate: { lte: targetUtcDate }, endDate: { gte: targetUtcDate } },
         select: { id: true, startDate: true, endDate: true, startTime: true, endTime: true, reason: true },
       }),
       prisma.appointment.findMany({
         where: {
           doctorId,
+          tenantId: tenant.tenantId,
           appointmentDate: targetUtcDate,
           status: { in: [AppointmentStatus.BOOKED, AppointmentStatus.CONFIRMED] },
         },
@@ -114,7 +109,6 @@ export async function bookAppointmentTransaction(
       }),
     ]);
 
-    // Check full-day block flag
     const hasFullDayBlock = blockedDates.some(
       (b) => !b.startTime || !b.endTime || b.startTime.trim() === '' || b.endTime.trim() === ''
     );
@@ -126,9 +120,9 @@ export async function bookAppointmentTransaction(
       };
     }
 
-    // Call pure domain slot engine
     const availableSlots = computeAvailableSlots({
       date: appointmentDate,
+      timezone,
       weeklyAvailability: weeklyAvailability.map((w) => ({
         id: w.id,
         dayOfWeek: w.dayOfWeek,
@@ -147,7 +141,7 @@ export async function bookAppointmentTransaction(
       })),
       activeAppointments: activeAppts.map((a) => ({
         id: a.id,
-        appointmentDate: appointmentDate,
+        appointmentDate,
         startTime: a.startTime,
         endTime: a.endTime,
         status: a.status,
@@ -155,9 +149,8 @@ export async function bookAppointmentTransaction(
       currentDate: todayStr,
     });
 
-    // 7. Verify requested startTime exists in computed available slots
-    const isSlotAvailable = availableSlots.some((s) => s.startTime === startTime);
-    if (!isSlotAvailable) {
+    const matchedSlot = availableSlots.find((s) => s.startTime === startTime);
+    if (!matchedSlot) {
       return {
         success: false,
         code: 'SLOT_UNAVAILABLE',
@@ -165,15 +158,15 @@ export async function bookAppointmentTransaction(
       };
     }
 
-    // 8. Create Appointment with PostgreSQL Concurrency Protection
     try {
       const createdAppt = await prisma.appointment.create({
         data: {
           patientId: patientProfileId,
           doctorId,
+          tenantId: tenant.tenantId,
           appointmentDate: targetUtcDate,
-          startTime,
-          endTime,
+          startTime: matchedSlot.startTime,
+          endTime: matchedSlot.endTime,
           status: AppointmentStatus.BOOKED,
         },
         select: {
@@ -185,19 +178,21 @@ export async function bookAppointmentTransaction(
         },
       });
 
-      // Fire notification in background (don't await to avoid slowing down request)
-      const dateTimeString = `${appointmentDate} at ${startTime}`;
-      // Note: tenantId is null here until fully migrated
-      notificationService.notifyAppointmentBooked(
-        null,
-        patientProfileId,
-        createdAppt.id,
-        patient.fullName,
-        doctor.fullName,
-        dateTimeString,
-        patient.user.email,
-        patient.phoneNumber
-      ).catch(err => console.error('Notification dispatch failed:', err));
+      await writeAuditLog({
+        tenantId: tenant.tenantId,
+        actorUserId: actorUserId ?? patient.userId,
+        action: 'appointment.create',
+        entityType: 'Appointment',
+        entityId: createdAppt.id,
+        after: { status: 'BOOKED', doctorId, appointmentDate, startTime: matchedSlot.startTime },
+      });
+
+      enqueueAppointmentNotification({
+        tenantId: tenant.tenantId,
+        type: 'APPOINTMENT_BOOKED',
+        recipientUserId: patient.userId,
+        appointmentId: createdAppt.id,
+      }).catch(() => undefined);
 
       return {
         success: true,
@@ -213,7 +208,6 @@ export async function bookAppointmentTransaction(
         },
       };
     } catch (dbError: unknown) {
-      // 9. Catch PostgreSQL Constraint Violations (P2002 Unique, P2003 FK)
       if (dbError instanceof Prisma.PrismaClientKnownRequestError) {
         if (dbError.code === 'P2002') {
           return {
@@ -232,8 +226,7 @@ export async function bookAppointmentTransaction(
       }
       throw dbError;
     }
-  } catch (error: unknown) {
-    console.error('bookAppointmentTransaction error:', error);
+  } catch {
     return {
       success: false,
       code: 'SERVER_ERROR',

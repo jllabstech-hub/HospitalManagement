@@ -138,8 +138,8 @@ export async function updateDepartmentAction(
       return { success: false, error: 'Another department is already using this name.' };
     }
 
-    await prisma.department.update({
-      where: { id },
+    const updated = await prisma.department.updateMany({
+      where: { id, tenantId: admin.tenantId },
       data: {
         name: normalizedName,
         description: description || null,
@@ -148,6 +148,9 @@ export async function updateDepartmentAction(
         seoDescription: parsed.data.seoDescription?.trim() || null,
       },
     });
+    if (updated.count !== 1) {
+      return { success: false, error: 'Department not found.' };
+    }
 
     safeRevalidate('/admin/departments');
     safeRevalidate('/admin/dashboard');
@@ -179,10 +182,13 @@ export async function toggleDepartmentStatusAction(id: string): Promise<ActionRe
       return { success: false, error: 'Department not found.' };
     }
 
-    await prisma.department.update({
-      where: { id },
+    const toggled = await prisma.department.updateMany({
+      where: { id, tenantId: admin.tenantId },
       data: { isActive: !existing.isActive },
     });
+    if (toggled.count !== 1) {
+      return { success: false, error: 'Department not found.' };
+    }
 
     safeRevalidate('/admin/departments');
     safeRevalidate('/admin/dashboard');

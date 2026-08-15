@@ -6,7 +6,7 @@ import AdminPageHeader from '@/components/admin/AdminPageHeader';
 export default async function AdminServicePage() {
   const admin = await requireAdmin();
   const rawRecords = await prisma.hospitalService.findMany({
-    where: admin.tenantId ? { tenantId: admin.tenantId } : {},
+    where: { tenantId: admin.tenantId },
     orderBy: { name: 'asc' },
   });
 

@@ -5,6 +5,7 @@ import { prisma } from '@/server/db/client';
 import { requireAdmin } from '@/server/security/auth-helpers';
 import { CreateFaqItemSchema, CreateFaqItemInput, UpdateFaqItemSchema, UpdateFaqItemInput } from './schemas';
 import type { ActionResult } from '@/types/server-action';
+import { prismaErrorCode } from '@/server/db/tenant-ops';
 
 export async function createFaqItemAction(rawInput: CreateFaqItemInput): Promise<ActionResult> {
   try {
@@ -12,14 +13,11 @@ export async function createFaqItemAction(rawInput: CreateFaqItemInput): Promise
     const parsed = CreateFaqItemSchema.safeParse(rawInput);
     if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message };
 
-    const data = parsed.data as any;
-    // Generate slug from title, name, or question if it exists
-    if (data.title && !data.slug) data.slug = data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    if (data.name && !data.slug) data.slug = data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-
     await prisma.faqItem.create({
       data: {
-        ...data,
+        question: parsed.data.question,
+        answer: parsed.data.answer,
+        category: parsed.data.category || null,
         tenantId: admin.tenantId,
       },
     });
@@ -27,8 +25,8 @@ export async function createFaqItemAction(rawInput: CreateFaqItemInput): Promise
     revalidateTag('public-catalog');
     revalidatePath('/admin/faqs');
     return { success: true };
-  } catch (error: any) {
-    if (error.code === 'P2002') return { success: false, error: 'A record with this identifier already exists.' };
+  } catch (error: unknown) {
+    if (prismaErrorCode(error) === 'P2002') return { success: false, error: 'A record with this identifier already exists.' };
     return { success: false, error: 'Failed to create record.' };
   }
 }
@@ -39,19 +37,21 @@ export async function updateFaqItemAction(rawInput: UpdateFaqItemInput): Promise
     const parsed = UpdateFaqItemSchema.safeParse(rawInput);
     if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message };
 
-    const { id, ...data } = parsed.data as any;
-    if (data.title && !data.slug) data.slug = data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    if (data.name && !data.slug) data.slug = data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-
-    await prisma.faqItem.update({
+    const { id, ...data } = parsed.data;
+    const updated = await prisma.faqItem.updateMany({
       where: { id, tenantId: admin.tenantId },
-      data,
+      data: {
+        question: data.question,
+        answer: data.answer,
+        category: data.category || null,
+      },
     });
+    if (updated.count !== 1) return { success: false, error: 'Record not found.' };
 
     revalidateTag('public-catalog');
     revalidatePath('/admin/faqs');
     return { success: true };
-  } catch (error: any) {
+  } catch {
     return { success: false, error: 'Failed to update record.' };
   }
 }
@@ -59,13 +59,14 @@ export async function updateFaqItemAction(rawInput: UpdateFaqItemInput): Promise
 export async function deleteFaqItemAction(id: string): Promise<ActionResult> {
   try {
     const admin = await requireAdmin();
-    await prisma.faqItem.delete({
+    const deleted = await prisma.faqItem.deleteMany({
       where: { id, tenantId: admin.tenantId },
     });
+    if (deleted.count !== 1) return { success: false, error: 'Record not found.' };
     revalidateTag('public-catalog');
     revalidatePath('/admin/faqs');
     return { success: true };
-  } catch (error) {
+  } catch {
     return { success: false, error: 'Failed to delete record.' };
   }
 }

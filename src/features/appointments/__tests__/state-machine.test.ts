@@ -16,6 +16,7 @@ describe('State Machine & Status Transition Specification Tests', () => {
         OR: [
           { doctor: { user: { email: { contains: 'statemach.test' } } } },
           { patient: { user: { email: { contains: 'statemach.test' } } } },
+          { doctor: { department: { name: { contains: 'State Machine Dept' } } } },
         ],
       },
     });
@@ -26,7 +27,13 @@ describe('State Machine & Status Transition Specification Tests', () => {
       where: { doctor: { user: { email: { contains: 'statemach.test' } } } },
     });
     await prisma.doctorProfile.deleteMany({
-      where: { user: { email: { contains: 'statemach.test' } } },
+      where: {
+        OR: [
+          { user: { email: { contains: 'statemach.test' } } },
+          { department: { name: { contains: 'State Machine Dept' } } },
+          { slug: { startsWith: 'state-mach-doc' } },
+        ],
+      },
     });
     await prisma.patientProfile.deleteMany({
       where: { user: { email: { contains: 'statemach.test' } } },

@@ -59,7 +59,7 @@ test.describe('Public website — route smoke & SSR', () => {
   });
 
   test('Public doctor directory lists seeded doctors', async ({ page }) => {
-    await page.goto('/doctors');
+    await page.goto('/doctors?search=Jane');
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     await expect(page.getByText(/Jane Smith|Robert Johnson/i).first()).toBeVisible();
   });

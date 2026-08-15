@@ -17,6 +17,12 @@
 /playwright-report
 /test-results
 /docs/e2e-junit-results.xml
+*.tsbuildinfo
+
+# Local media uploads (never commit binary blobs)
+/public/uploads/*
+!/public/uploads/.gitkeep
+
 
 # Local scratch scripts
 /scratch

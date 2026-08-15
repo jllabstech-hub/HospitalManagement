@@ -3,14 +3,17 @@ import { prisma } from '@/server/db/client';
 import { getHospitalTodayDateString } from '@/lib/date-utils';
 import { getHospitalCurrentTimeHHMM } from '../domain/time-utils';
 import { buildFuzzyAppointmentWhere } from '@/lib/fuzzy-search';
-import { notificationService } from '@/services/notifications/NotificationService';
-
+import { enqueueAppointmentNotification } from '@/server/notifications/outbox';
+import { writeAuditLog } from '@/server/security/audit';
+import { requireTenantContext } from '@/server/tenant';
+import { DEFAULT_TENANT_TIMEZONE } from '@/server/tenant/types';
 
 export interface TransitionStatusInput {
   appointmentId: string;
   actorUser: {
     id: string;
     role: Role;
+    tenantId?: string;
     patientProfileId?: string;
     doctorProfileId?: string;
   };
@@ -25,15 +28,11 @@ export interface ServiceResult<T = void> {
   code?: string;
 }
 
-/**
- * Validates state machine transitions according to approved business rules.
- */
 export function isValidStateTransition(
   currentStatus: AppointmentStatus,
   targetStatus: AppointmentStatus,
   actorRole: Role
 ): boolean {
-  // Terminal states cannot transition out
   if (
     currentStatus === AppointmentStatus.COMPLETED ||
     currentStatus === AppointmentStatus.CANCELLED ||
@@ -42,18 +41,16 @@ export function isValidStateTransition(
     return false;
   }
 
-  // BOOKED transitions
   if (currentStatus === AppointmentStatus.BOOKED) {
     if (targetStatus === AppointmentStatus.CONFIRMED && actorRole === Role.DOCTOR) {
       return true;
     }
     if (targetStatus === AppointmentStatus.CANCELLED) {
-      return true; // Patient, Doctor, or Admin
+      return true;
     }
     return false;
   }
 
-  // CONFIRMED transitions
   if (currentStatus === AppointmentStatus.CONFIRMED) {
     if (targetStatus === AppointmentStatus.COMPLETED && actorRole === Role.DOCTOR) {
       return true;
@@ -70,9 +67,21 @@ export function isValidStateTransition(
   return false;
 }
 
-/**
- * Transitions appointment status with role-based authorization and state machine validation.
- */
+function auditActionForStatus(status: AppointmentStatus): string {
+  switch (status) {
+    case AppointmentStatus.CONFIRMED:
+      return 'appointment.confirm';
+    case AppointmentStatus.CANCELLED:
+      return 'appointment.cancel';
+    case AppointmentStatus.COMPLETED:
+      return 'appointment.complete';
+    case AppointmentStatus.NO_SHOW:
+      return 'appointment.no_show';
+    default:
+      return 'appointment.update';
+  }
+}
+
 export async function transitionAppointmentStatus({
   appointmentId,
   actorUser,
@@ -84,17 +93,21 @@ export async function transitionAppointmentStatus({
       return { success: false, code: 'INVALID_INPUT', error: 'Invalid appointment ID.' };
     }
 
-    const appointment = await prisma.appointment.findUnique({
-      where: { id: appointmentId },
-      include: {
-        doctor: { select: { fullName: true } },
-        patient: { 
-          select: { 
-            fullName: true,
-            phoneNumber: true,
-            user: { select: { email: true } }
-          } 
-        },
+    const tenant = await requireTenantContext();
+    const timezone = tenant.timezone || DEFAULT_TENANT_TIMEZONE;
+
+    const appointment = await prisma.appointment.findFirst({
+      where: { id: appointmentId, tenantId: tenant.tenantId },
+      select: {
+        id: true,
+        tenantId: true,
+        patientId: true,
+        doctorId: true,
+        status: true,
+        appointmentDate: true,
+        startTime: true,
+        patient: { select: { userId: true, tenantId: true } },
+        doctor: { select: { tenantId: true } },
       },
     });
 
@@ -102,7 +115,13 @@ export async function transitionAppointmentStatus({
       return { success: false, code: 'NOT_FOUND', error: 'Appointment not found.' };
     }
 
-    // Authorization & Ownership Verification
+    if (
+      appointment.patient.tenantId !== tenant.tenantId ||
+      appointment.doctor.tenantId !== tenant.tenantId
+    ) {
+      return { success: false, code: 'NOT_FOUND', error: 'Appointment not found.' };
+    }
+
     if (actorUser.role === Role.PATIENT) {
       if (appointment.patientId !== actorUser.patientProfileId) {
         return { success: false, code: 'FORBIDDEN', error: 'You do not have permission to modify this appointment.' };
@@ -111,9 +130,8 @@ export async function transitionAppointmentStatus({
         return { success: false, code: 'FORBIDDEN', error: 'Patients can only cancel appointments.' };
       }
 
-      // Check if appointment is in the past in Asia/Kolkata
-      const todayStr = getHospitalTodayDateString();
-      const currentTimeHHMM = getHospitalCurrentTimeHHMM();
+      const todayStr = getHospitalTodayDateString(timezone);
+      const currentTimeHHMM = getHospitalCurrentTimeHHMM(timezone);
       const apptDateStr = appointment.appointmentDate.toISOString().split('T')[0];
 
       if (apptDateStr < todayStr || (apptDateStr === todayStr && appointment.startTime < currentTimeHHMM)) {
@@ -127,7 +145,6 @@ export async function transitionAppointmentStatus({
       return { success: false, code: 'FORBIDDEN', error: 'Unauthorized role.' };
     }
 
-    // State Machine Transition Validation
     if (!isValidStateTransition(appointment.status, targetStatus, actorUser.role)) {
       return {
         success: false,
@@ -136,62 +153,58 @@ export async function transitionAppointmentStatus({
       };
     }
 
-    // Apply Update
-    const updatedAppt = await prisma.appointment.update({
-      where: { id: appointmentId },
+    const updated = await prisma.appointment.updateMany({
+      where: {
+        id: appointmentId,
+        tenantId: tenant.tenantId,
+        status: appointment.status,
+      },
       data: {
         status: targetStatus,
         cancelledBy: targetStatus === AppointmentStatus.CANCELLED ? actorUser.role : undefined,
         cancellationReason: targetStatus === AppointmentStatus.CANCELLED ? cancellationReason || null : undefined,
       },
-      select: {
-        id: true,
-        status: true,
-        appointmentDate: true,
-        startTime: true,
-      },
     });
 
-    // Fire notifications asynchronously
-    const dateTimeString = `${updatedAppt.appointmentDate.toISOString().split('T')[0]} at ${updatedAppt.startTime}`;
-    if (targetStatus === AppointmentStatus.CONFIRMED) {
-      notificationService.notifyAppointmentConfirmed(
-        null, // tenantId
-        appointment.patientId,
-        appointment.id,
-        appointment.patient.fullName,
-        appointment.doctor.fullName,
-        dateTimeString,
-        appointment.patient.user.email,
-        appointment.patient.phoneNumber
-      ).catch(err => console.error('Notification error:', err));
-    } else if (targetStatus === AppointmentStatus.CANCELLED) {
-      notificationService.notifyAppointmentCancelled(
-        null,
-        appointment.patientId,
-        appointment.id,
-        appointment.patient.fullName,
-        appointment.doctor.fullName,
-        dateTimeString,
-        cancellationReason || 'No reason provided',
-        appointment.patient.user.email,
-        appointment.patient.phoneNumber
-      ).catch(err => console.error('Notification error:', err));
+    if (updated.count !== 1) {
+      return {
+        success: false,
+        code: 'INVALID_TRANSITION',
+        error: 'Appointment was updated by another request. Please refresh and try again.',
+      };
     }
 
-    return { success: true, data: updatedAppt };
-  } catch (error: unknown) {
-    console.error('transitionAppointmentStatus error:', error);
+    await writeAuditLog({
+      tenantId: tenant.tenantId,
+      actorUserId: actorUser.id,
+      action: auditActionForStatus(targetStatus),
+      entityType: 'Appointment',
+      entityId: appointmentId,
+      before: { status: appointment.status },
+      after: { status: targetStatus },
+    });
+
+    if (targetStatus === AppointmentStatus.CONFIRMED || targetStatus === AppointmentStatus.CANCELLED) {
+      enqueueAppointmentNotification({
+        tenantId: tenant.tenantId,
+        type: targetStatus === AppointmentStatus.CONFIRMED ? 'APPOINTMENT_CONFIRMED' : 'APPOINTMENT_CANCELLED',
+        recipientUserId: appointment.patient.userId,
+        appointmentId: appointment.id,
+      }).catch(() => undefined);
+    }
+
+    return { success: true, data: { id: appointmentId, status: targetStatus } };
+  } catch {
     return { success: false, code: 'SERVER_ERROR', error: 'An error occurred while updating the appointment status.' };
   }
 }
 
-/**
- * Retrieves categorized appointments for a patient.
- */
 export async function getPatientAppointments(patientProfileId: string) {
+  const tenant = await requireTenantContext();
+  const timezone = tenant.timezone || DEFAULT_TENANT_TIMEZONE;
+
   const appointments = await prisma.appointment.findMany({
-    where: { patientId: patientProfileId },
+    where: { patientId: patientProfileId, tenantId: tenant.tenantId },
     select: {
       id: true,
       appointmentDate: true,
@@ -212,8 +225,8 @@ export async function getPatientAppointments(patientProfileId: string) {
     orderBy: [{ appointmentDate: 'desc' }, { startTime: 'desc' }],
   });
 
-  const todayStr = getHospitalTodayDateString();
-  const currentTimeStr = getHospitalCurrentTimeHHMM();
+  const todayStr = getHospitalTodayDateString(timezone);
+  const currentTimeStr = getHospitalCurrentTimeHHMM(timezone);
 
   const formattedAppts = appointments.map((a) => {
     const dateStr = a.appointmentDate.toISOString().split('T')[0];
@@ -224,9 +237,7 @@ export async function getPatientAppointments(patientProfileId: string) {
   const upcoming = formattedAppts.filter(
     (a) => !a.isPast && (a.status === AppointmentStatus.BOOKED || a.status === AppointmentStatus.CONFIRMED)
   );
-
   const cancelled = formattedAppts.filter((a) => a.status === AppointmentStatus.CANCELLED);
-
   const past = formattedAppts.filter(
     (a) => a.status === AppointmentStatus.COMPLETED || a.status === AppointmentStatus.NO_SHOW || (a.isPast && a.status !== AppointmentStatus.CANCELLED)
   );
@@ -234,12 +245,12 @@ export async function getPatientAppointments(patientProfileId: string) {
   return { upcoming, past, cancelled, all: formattedAppts };
 }
 
-/**
- * Retrieves detailed appointment by ID for patient ownership.
- */
 export async function getPatientAppointmentDetail(patientProfileId: string, appointmentId: string) {
-  const appt = await prisma.appointment.findUnique({
-    where: { id: appointmentId },
+  const tenant = await requireTenantContext();
+  const timezone = tenant.timezone || DEFAULT_TENANT_TIMEZONE;
+
+  const appt = await prisma.appointment.findFirst({
+    where: { id: appointmentId, tenantId: tenant.tenantId, patientId: patientProfileId },
     select: {
       id: true,
       patientId: true,
@@ -263,27 +274,26 @@ export async function getPatientAppointmentDetail(patientProfileId: string, appo
     },
   });
 
-  if (!appt || appt.patientId !== patientProfileId) {
+  if (!appt) {
     return null;
   }
 
   const dateStr = appt.appointmentDate.toISOString().split('T')[0];
-  const todayStr = getHospitalTodayDateString();
-  const currentTimeStr = getHospitalCurrentTimeHHMM();
+  const todayStr = getHospitalTodayDateString(timezone);
+  const currentTimeStr = getHospitalCurrentTimeHHMM(timezone);
   const isPast = dateStr < todayStr || (dateStr === todayStr && appt.startTime < currentTimeStr);
   const isCancellable = !isPast && (appt.status === AppointmentStatus.BOOKED || appt.status === AppointmentStatus.CONFIRMED);
 
   return { ...appt, dateStr, isPast, isCancellable };
 }
 
-/**
- * Retrieves doctor's daily appointments with date and status filters.
- */
 export async function getDoctorAppointments(
   doctorProfileId: string,
   params: { dateStr?: string; status?: string; page?: number; limit?: number }
 ) {
-  const targetDateStr = params.dateStr || getHospitalTodayDateString();
+  const tenant = await requireTenantContext();
+  const timezone = tenant.timezone || DEFAULT_TENANT_TIMEZONE;
+  const targetDateStr = params.dateStr || getHospitalTodayDateString(timezone);
   const targetUtcDate = new Date(Date.parse(`${targetDateStr}T00:00:00.000Z`));
   const page = Math.max(1, params.page || 1);
   const limit = Math.max(1, Math.min(50, params.limit || 10));
@@ -291,6 +301,7 @@ export async function getDoctorAppointments(
 
   const whereClause: Prisma.AppointmentWhereInput = {
     doctorId: doctorProfileId,
+    tenantId: tenant.tenantId,
     appointmentDate: targetUtcDate,
   };
 
@@ -324,7 +335,7 @@ export async function getDoctorAppointments(
       take: limit,
     }),
     prisma.appointment.findMany({
-      where: { doctorId: doctorProfileId, appointmentDate: targetUtcDate },
+      where: { doctorId: doctorProfileId, tenantId: tenant.tenantId, appointmentDate: targetUtcDate },
       select: { status: true },
     }),
   ]);
@@ -339,7 +350,6 @@ export async function getDoctorAppointments(
     dateStr: targetDateStr,
   }));
 
-  // Summary counts for target date
   const counts = {
     total: allDayAppts.length,
     booked: allDayAppts.filter((a) => a.status === AppointmentStatus.BOOKED).length,
@@ -359,12 +369,10 @@ export async function getDoctorAppointments(
   };
 }
 
-/**
- * Retrieves detailed appointment by ID for doctor ownership.
- */
 export async function getDoctorAppointmentDetail(doctorProfileId: string, appointmentId: string) {
-  const appt = await prisma.appointment.findUnique({
-    where: { id: appointmentId },
+  const tenant = await requireTenantContext();
+  const appt = await prisma.appointment.findFirst({
+    where: { id: appointmentId, tenantId: tenant.tenantId, doctorId: doctorProfileId },
     select: {
       id: true,
       doctorId: true,
@@ -388,7 +396,7 @@ export async function getDoctorAppointmentDetail(doctorProfileId: string, appoin
     },
   });
 
-  if (!appt || appt.doctorId !== doctorProfileId) {
+  if (!appt) {
     return null;
   }
 
@@ -396,9 +404,6 @@ export async function getDoctorAppointmentDetail(doctorProfileId: string, appoin
   return { ...appt, dateStr };
 }
 
-/**
- * System-wide paginated appointment query for Admin.
- */
 export async function getAdminAppointments(params: {
   page?: number;
   limit?: number;
@@ -408,14 +413,15 @@ export async function getAdminAppointments(params: {
   status?: string;
   dateStr?: string;
 }) {
+  const tenant = await requireTenantContext();
   const page = Math.max(1, params.page || 1);
   const limit = Math.max(1, Math.min(50, params.limit || 20));
   const skip = (page - 1) * limit;
 
-  const whereClause: Prisma.AppointmentWhereInput = {};
+  const whereClause: Prisma.AppointmentWhereInput = { tenantId: tenant.tenantId };
 
   if (params.departmentId) {
-    whereClause.doctor = { departmentId: params.departmentId };
+    whereClause.doctor = { departmentId: params.departmentId, tenantId: tenant.tenantId };
   }
 
   if (params.doctorId) {

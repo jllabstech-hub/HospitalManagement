@@ -8,7 +8,6 @@ import EmptyState from '@/components/ui/EmptyState';
 import Card from '@/components/ui/Card';
 import {
   getSpecialityBySlug,
-  getPublishedSpecialities,
 } from '@/features/cms/queries/catalog';
 import { APP_CONFIG } from '@/config';
 
@@ -17,8 +16,8 @@ interface PageProps {
 }
 
 export async function generateStaticParams() {
-  const items = await getPublishedSpecialities();
-  return items.map((s) => ({ slug: s.slug }));
+  // Host-based multi-tenancy: slugs are resolved at request time.
+  return [];
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {

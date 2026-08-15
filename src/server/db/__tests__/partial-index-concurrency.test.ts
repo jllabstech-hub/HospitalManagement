@@ -6,19 +6,23 @@ describe('Database Partial Unique Index Verification (Requirement 26)', () => {
   let testDoctorId: string;
   let testPatient1Id: string;
   let testPatient2Id: string;
+  let testTenantId: string;
 
   beforeEach(async () => {
     // Clear appointments table for a clean test state
     await prisma.appointment.deleteMany();
 
-    // Fetch existing doctor and patients from seed data
     const doctor = await prisma.doctorProfile.findFirst();
-    const patients = await prisma.patientProfile.findMany({ take: 2 });
-
     expect(doctor).not.toBeNull();
+    const patients = await prisma.patientProfile.findMany({
+      where: { tenantId: doctor!.tenantId },
+      take: 2,
+    });
+
     expect(patients.length).toBeGreaterThanOrEqual(2);
 
     testDoctorId = doctor!.id;
+    testTenantId = doctor!.tenantId;
     testPatient1Id = patients[0].id;
     testPatient2Id = patients[1].id;
   });
@@ -27,6 +31,7 @@ describe('Database Partial Unique Index Verification (Requirement 26)', () => {
     // 1. Create first appointment in BOOKED status
     await prisma.appointment.create({
       data: {
+        tenantId: testTenantId,
         patientId: testPatient1Id,
         doctorId: testDoctorId,
         appointmentDate: new Date('2026-08-15'),
@@ -40,7 +45,8 @@ describe('Database Partial Unique Index Verification (Requirement 26)', () => {
     await expect(
       prisma.appointment.create({
         data: {
-          patientId: testPatient2Id,
+          tenantId: testTenantId,
+        patientId: testPatient2Id,
           doctorId: testDoctorId,
           appointmentDate: new Date('2026-08-15'),
           startTime: '10:00:00',
@@ -55,6 +61,7 @@ describe('Database Partial Unique Index Verification (Requirement 26)', () => {
     // 1. Create first appointment in BOOKED status
     await prisma.appointment.create({
       data: {
+        tenantId: testTenantId,
         patientId: testPatient1Id,
         doctorId: testDoctorId,
         appointmentDate: new Date('2026-08-15'),
@@ -68,7 +75,8 @@ describe('Database Partial Unique Index Verification (Requirement 26)', () => {
     await expect(
       prisma.appointment.create({
         data: {
-          patientId: testPatient2Id,
+          tenantId: testTenantId,
+        patientId: testPatient2Id,
           doctorId: testDoctorId,
           appointmentDate: new Date('2026-08-15'),
           startTime: '10:00:00',
@@ -83,6 +91,7 @@ describe('Database Partial Unique Index Verification (Requirement 26)', () => {
     // 1. Create appointment in CANCELLED status
     await prisma.appointment.create({
       data: {
+        tenantId: testTenantId,
         patientId: testPatient1Id,
         doctorId: testDoctorId,
         appointmentDate: new Date('2026-08-15'),
@@ -97,6 +106,7 @@ describe('Database Partial Unique Index Verification (Requirement 26)', () => {
     // 2. Create new appointment on same slot in BOOKED status - MUST SUCCEED
     const newBooking = await prisma.appointment.create({
       data: {
+        tenantId: testTenantId,
         patientId: testPatient2Id,
         doctorId: testDoctorId,
         appointmentDate: new Date('2026-08-15'),
@@ -114,6 +124,7 @@ describe('Database Partial Unique Index Verification (Requirement 26)', () => {
     // 1. Create appointment in NO_SHOW status
     await prisma.appointment.create({
       data: {
+        tenantId: testTenantId,
         patientId: testPatient1Id,
         doctorId: testDoctorId,
         appointmentDate: new Date('2026-08-15'),
@@ -126,6 +137,7 @@ describe('Database Partial Unique Index Verification (Requirement 26)', () => {
     // 2. Create new appointment on same slot in BOOKED status - MUST SUCCEED
     const newBooking = await prisma.appointment.create({
       data: {
+        tenantId: testTenantId,
         patientId: testPatient2Id,
         doctorId: testDoctorId,
         appointmentDate: new Date('2026-08-15'),

@@ -20,7 +20,7 @@ interface PageProps {
 }
 
 export default async function AdminAppointmentsMasterPage({ searchParams }: PageProps) {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const resolvedParams = await searchParams;
 
   const page = parseInt(resolvedParams.page || '1', 10);
@@ -32,8 +32,8 @@ export default async function AdminAppointmentsMasterPage({ searchParams }: Page
   const dateStr = resolvedParams.date || '';
 
   const [departments, doctors, result] = await Promise.all([
-    prisma.department.findMany({ select: { id: true, name: true }, orderBy: { name: 'asc' } }),
-    prisma.doctorProfile.findMany({ select: { id: true, fullName: true }, orderBy: { fullName: 'asc' } }),
+    prisma.department.findMany({ where: { tenantId: admin.tenantId }, select: { id: true, name: true }, orderBy: { name: 'asc' } }),
+    prisma.doctorProfile.findMany({ where: { tenantId: admin.tenantId }, select: { id: true, fullName: true }, orderBy: { fullName: 'asc' } }),
     getAdminAppointments({
       page,
       limit,

@@ -1,22 +1,30 @@
 /**
  * Date and Time utilities for Hospital Appointment Management System.
- * Timezone: Asia/Kolkata (NEXT_PUBLIC_HOSPITAL_TIMEZONE)
+ * Prefer passing the current tenant timezone. HospitalProfile.timezone is authoritative.
  */
+
+import { DEFAULT_TENANT_TIMEZONE } from '@/server/tenant/types';
 
 export const HOSPITAL_TIMEZONE =
-  process.env.NEXT_PUBLIC_HOSPITAL_TIMEZONE || 'Asia/Kolkata';
+  process.env.NEXT_PUBLIC_HOSPITAL_TIMEZONE || DEFAULT_TENANT_TIMEZONE;
+
+export function resolveTimezone(timezone?: string | null): string {
+  const candidate = timezone?.trim();
+  if (candidate) return candidate;
+  return HOSPITAL_TIMEZONE;
+}
 
 /**
- * Returns today's date string in YYYY-MM-DD format according to Asia/Kolkata timezone.
+ * Returns today's date string in YYYY-MM-DD format according to the given timezone.
  */
-export function getHospitalTodayDateString(): string {
+export function getHospitalTodayDateString(timezone?: string | null): string {
   const formatter = new Intl.DateTimeFormat('en-CA', {
-    timeZone: HOSPITAL_TIMEZONE,
+    timeZone: resolveTimezone(timezone),
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
   });
-  return formatter.format(new Date()); // Formats as YYYY-MM-DD
+  return formatter.format(new Date());
 }
 
 /**

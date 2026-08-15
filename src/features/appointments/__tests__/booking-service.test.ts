@@ -192,8 +192,7 @@ describe('Transactional Appointment Booking Service & Validation Suite', () => {
     });
     expect(resNonGrid.success).toBe(false);
     if (!resNonGrid.success) {
-      expect(resNonGrid.code).toBe('VALIDATION_ERROR');
-      expect(resNonGrid.message).toContain('30-minute grid');
+      expect(resNonGrid.code).toBe('SLOT_UNAVAILABLE');
     }
   });
 

@@ -1,4 +1,5 @@
 import { IConsentManagerAdapter } from '../../core/interfaces';
+import { logger } from '@/lib/logger';
 
 export class AbdmConsentAdapter implements IConsentManagerAdapter {
   private isMock: boolean;
@@ -9,21 +10,22 @@ export class AbdmConsentAdapter implements IConsentManagerAdapter {
 
   async requestConsent(patientId: string, purpose: string): Promise<string> {
     if (this.isMock) {
-      console.log(`[ABDM MOCK] Requesting consent for patient ${patientId}. Purpose: ${purpose}`);
+      void patientId;
+      void purpose;
+      logger.info({ event: 'abdm.mock.request_consent' }, 'ABDM mock consent request');
       return `mock-consent-req-${Date.now()}`;
     }
 
-    // TODO: Milestone 3 - Implement /v1/consent-requests/init API
     throw new Error('Not implemented for production. Requires NHA certification.');
   }
 
   async checkConsentStatus(consentRequestId: string): Promise<'GRANTED' | 'DENIED' | 'PENDING'> {
     if (this.isMock) {
-      console.log(`[ABDM MOCK] Checking status for consent req ${consentRequestId}`);
+      void consentRequestId;
+      logger.info({ event: 'abdm.mock.check_consent' }, 'ABDM mock consent status check');
       return 'GRANTED';
     }
 
-    // TODO: Milestone 3 - Implement /v1/consent-requests/status API
     throw new Error('Not implemented for production. Requires NHA certification.');
   }
 }

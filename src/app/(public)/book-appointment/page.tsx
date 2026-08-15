@@ -69,11 +69,6 @@ export default async function BookAppointmentPage({ searchParams }: PageProps) {
 
   const step = params.step ?? (doctorId ? 'doctor' : targetDepartmentId ? 'doctors' : 'department');
 
-  const patientBookingHref = (id: string) =>
-    isPatient
-      ? `/patient/doctors/${id}`
-      : `/login?callbackUrl=${encodeURIComponent(`/patient/doctors/${id}`)}`;
-
   return (
     <>
       <PageHero

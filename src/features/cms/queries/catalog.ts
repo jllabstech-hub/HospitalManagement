@@ -2,7 +2,8 @@ import { Prisma } from '@prisma/client';
 import { unstable_cache } from 'next/cache';
 import { prisma } from '@/server/db/client';
 import { ACTIVE_PUBLISHED_FILTER, PUBLISHED_FILTER } from '@/features/cms/constants';
-import { publicDoctorListSelect, publicDoctorWhere } from '@/features/cms/queries/doctors-public';
+import { publicDoctorListSelect, publicDoctorWhereFor } from '@/features/cms/queries/doctors-public';
+import { requireTenantContext } from '@/server/tenant';
 
 const departmentListSelect = {
   id: true,
@@ -18,22 +19,25 @@ const departmentListSelect = {
   seoDescription: true,
 } as const;
 
-const departmentDetailSelect = {
-  ...departmentListSelect,
-  fullDescription: true,
-  _count: {
-    select: {
-      doctors: {
-        where: publicDoctorWhere,
+function departmentDetailSelectFor(tenantId: string) {
+  const doctorWhere = publicDoctorWhereFor(tenantId);
+  return {
+    ...departmentListSelect,
+    fullDescription: true,
+    _count: {
+      select: {
+        doctors: {
+          where: doctorWhere,
+        },
       },
     },
-  },
-  doctors: {
-    where: publicDoctorWhere,
-    select: publicDoctorListSelect,
-    orderBy: [{ isFeatured: 'desc' }, { displayOrder: 'asc' }, { fullName: 'asc' }],
-  },
-} satisfies Prisma.DepartmentSelect;
+    doctors: {
+      where: doctorWhere,
+      select: publicDoctorListSelect,
+      orderBy: [{ isFeatured: 'desc' as const }, { displayOrder: 'asc' as const }, { fullName: 'asc' as const }],
+    },
+  } satisfies Prisma.DepartmentSelect;
+}
 
 const specialityListSelect = {
   id: true,
@@ -123,9 +127,10 @@ const insurancePartnerSelect = {
 } as const;
 
 export async function getPublishedDepartments() {
+  const { tenantId } = await requireTenantContext();
   const fetchDepartments = async () => {
     const depts = await prisma.department.findMany({
-      where: ACTIVE_PUBLISHED_FILTER,
+      where: { ...ACTIVE_PUBLISHED_FILTER, tenantId },
       select: departmentListSelect,
       orderBy: [{ isFeatured: 'desc' }, { displayOrder: 'asc' }, { name: 'asc' }],
     });
@@ -142,8 +147,8 @@ export async function getPublishedDepartments() {
   try {
     return await unstable_cache(
       fetchDepartments,
-      ['published-departments-list'],
-      { revalidate: 300, tags: ['public-departments'] }
+      ['published-departments-list', tenantId],
+      { revalidate: 300, tags: [`public-departments-${tenantId}`] }
     )();
   } catch {
     return fetchDepartments();
@@ -152,16 +157,18 @@ export async function getPublishedDepartments() {
 
 export async function getDepartmentBySlug(slug: string) {
   if (!slug?.trim()) return null;
+  const { tenantId } = await requireTenantContext();
 
   return prisma.department.findFirst({
-    where: { slug: slug.trim(), ...ACTIVE_PUBLISHED_FILTER },
-    select: departmentDetailSelect,
+    where: { slug: slug.trim(), tenantId, ...ACTIVE_PUBLISHED_FILTER },
+    select: departmentDetailSelectFor(tenantId),
   });
 }
 
 export async function getPublishedSpecialities() {
+  const { tenantId } = await requireTenantContext();
   const specs = await prisma.speciality.findMany({
-    where: ACTIVE_PUBLISHED_FILTER,
+    where: { ...ACTIVE_PUBLISHED_FILTER, tenantId },
     select: specialityListSelect,
     orderBy: [{ isFeatured: 'desc' }, { displayOrder: 'asc' }, { name: 'asc' }],
   });
@@ -177,9 +184,10 @@ export async function getPublishedSpecialities() {
 
 export async function getSpecialityBySlug(slug: string) {
   if (!slug?.trim()) return null;
+  const { tenantId } = await requireTenantContext();
 
   return prisma.speciality.findFirst({
-    where: { slug: slug.trim(), ...ACTIVE_PUBLISHED_FILTER },
+    where: { slug: slug.trim(), tenantId, ...ACTIVE_PUBLISHED_FILTER },
     select: {
       ...specialityListSelect,
       fullDescription: true,
@@ -192,7 +200,7 @@ export async function getSpecialityBySlug(slug: string) {
         },
       },
       doctors: {
-        where: { doctor: publicDoctorWhere },
+        where: { doctor: publicDoctorWhereFor(tenantId) },
         select: {
           doctor: {
             select: publicDoctorListSelect,
@@ -200,7 +208,7 @@ export async function getSpecialityBySlug(slug: string) {
         },
       },
       articles: {
-        where: PUBLISHED_FILTER,
+        where: { ...PUBLISHED_FILTER, tenantId },
         select: {
           id: true,
           title: true,
@@ -217,8 +225,9 @@ export async function getSpecialityBySlug(slug: string) {
 }
 
 export async function getPublishedCentres() {
+  const { tenantId } = await requireTenantContext();
   return prisma.centreOfExcellence.findMany({
-    where: ACTIVE_PUBLISHED_FILTER,
+    where: { ...ACTIVE_PUBLISHED_FILTER, tenantId },
     select: centreListSelect,
     orderBy: [{ isFeatured: 'desc' }, { displayOrder: 'asc' }, { name: 'asc' }],
   });
@@ -226,15 +235,16 @@ export async function getPublishedCentres() {
 
 export async function getCentreBySlug(slug: string) {
   if (!slug?.trim()) return null;
+  const { tenantId } = await requireTenantContext();
 
   return prisma.centreOfExcellence.findFirst({
-    where: { slug: slug.trim(), ...ACTIVE_PUBLISHED_FILTER },
+    where: { slug: slug.trim(), tenantId, ...ACTIVE_PUBLISHED_FILTER },
     select: {
       ...centreListSelect,
       fullDescription: true,
       clinicalFocus: true,
       specialities: {
-        where: { speciality: ACTIVE_PUBLISHED_FILTER },
+        where: { speciality: { ...ACTIVE_PUBLISHED_FILTER, tenantId } },
         select: {
           speciality: {
             select: {
@@ -248,7 +258,7 @@ export async function getCentreBySlug(slug: string) {
         },
       },
       doctors: {
-        where: { doctor: publicDoctorWhere },
+        where: { doctor: publicDoctorWhereFor(tenantId) },
         select: {
           doctor: {
             select: publicDoctorListSelect,
@@ -256,7 +266,7 @@ export async function getCentreBySlug(slug: string) {
         },
       },
       services: {
-        where: { service: ACTIVE_PUBLISHED_FILTER },
+        where: { service: { ...ACTIVE_PUBLISHED_FILTER, tenantId } },
         select: {
           service: {
             select: serviceListSelect,
@@ -268,8 +278,9 @@ export async function getCentreBySlug(slug: string) {
 }
 
 export async function getPublishedServices() {
+  const { tenantId } = await requireTenantContext();
   return prisma.hospitalService.findMany({
-    where: ACTIVE_PUBLISHED_FILTER,
+    where: { ...ACTIVE_PUBLISHED_FILTER, tenantId },
     select: serviceListSelect,
     orderBy: [{ displayOrder: 'asc' }, { name: 'asc' }],
   });
@@ -277,9 +288,10 @@ export async function getPublishedServices() {
 
 export async function getServiceBySlug(slug: string) {
   if (!slug?.trim()) return null;
+  const { tenantId } = await requireTenantContext();
 
   return prisma.hospitalService.findFirst({
-    where: { slug: slug.trim(), ...ACTIVE_PUBLISHED_FILTER },
+    where: { slug: slug.trim(), tenantId, ...ACTIVE_PUBLISHED_FILTER },
     select: {
       ...serviceListSelect,
       fullDescription: true,
@@ -288,8 +300,9 @@ export async function getServiceBySlug(slug: string) {
 }
 
 export async function getPublishedPackages() {
+  const { tenantId } = await requireTenantContext();
   return prisma.healthPackage.findMany({
-    where: ACTIVE_PUBLISHED_FILTER,
+    where: { ...ACTIVE_PUBLISHED_FILTER, tenantId },
     select: packageListSelect,
     orderBy: [{ displayOrder: 'asc' }, { name: 'asc' }],
   });
@@ -297,9 +310,10 @@ export async function getPublishedPackages() {
 
 export async function getPackageBySlug(slug: string) {
   if (!slug?.trim()) return null;
+  const { tenantId } = await requireTenantContext();
 
   return prisma.healthPackage.findFirst({
-    where: { slug: slug.trim(), ...ACTIVE_PUBLISHED_FILTER },
+    where: { slug: slug.trim(), tenantId, ...ACTIVE_PUBLISHED_FILTER },
     select: {
       ...packageListSelect,
       detailedDescription: true,
@@ -311,31 +325,36 @@ export async function getPackageBySlug(slug: string) {
 }
 
 export async function getPublishedFaqs() {
+  const { tenantId } = await requireTenantContext();
   return prisma.faqItem.findMany({
-    where: PUBLISHED_FILTER,
+    where: { ...PUBLISHED_FILTER, tenantId },
     select: faqSelect,
     orderBy: [{ displayOrder: 'asc' }, { question: 'asc' }],
   });
 }
 
 export async function getPublishedResources() {
+  const { tenantId } = await requireTenantContext();
   return prisma.patientResource.findMany({
-    where: ACTIVE_PUBLISHED_FILTER,
+    where: { ...ACTIVE_PUBLISHED_FILTER, tenantId },
     select: resourceSelect,
     orderBy: [{ displayOrder: 'asc' }, { title: 'asc' }],
   });
 }
 
 export async function getPublishedInsurancePartners() {
+  const { tenantId } = await requireTenantContext();
   return prisma.insurancePartner.findMany({
-    where: ACTIVE_PUBLISHED_FILTER,
+    where: { ...ACTIVE_PUBLISHED_FILTER, tenantId },
     select: insurancePartnerSelect,
     orderBy: [{ displayOrder: 'asc' }, { name: 'asc' }],
   });
 }
 
 export async function getInternationalPageContent() {
+  const { tenantId } = await requireTenantContext();
   return prisma.internationalPageContent.findFirst({
+    where: { tenantId },
     select: {
       id: true,
       title: true,
@@ -352,8 +371,9 @@ export async function getInternationalPageContent() {
 }
 
 export async function getEnabledHomepageSections() {
+  const { tenantId } = await requireTenantContext();
   return prisma.homepageSection.findMany({
-    where: { isEnabled: true },
+    where: { isEnabled: true, tenantId },
     select: {
       id: true,
       sectionType: true,

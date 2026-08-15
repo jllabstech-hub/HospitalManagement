@@ -3,7 +3,6 @@ import {
   Role,
   AppointmentStatus,
   ContentStatus,
-  HomepageSectionType,
 } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
@@ -16,16 +15,21 @@ const prisma = new PrismaClient().$extends({
     $allModels: {
       async create({ model, args, query }) {
         if (tenantIdForExtension && !EXCLUDED_MODELS.includes(model as string)) {
-          (args.data as any).tenantId = tenantIdForExtension;
+          const data = args.data as Record<string, unknown>;
+          data.tenantId = tenantIdForExtension;
         }
         return query(args);
       },
       async createMany({ model, args, query }) {
         if (tenantIdForExtension && !EXCLUDED_MODELS.includes(model as string)) {
           if (Array.isArray(args.data)) {
-            args.data = args.data.map(d => ({ ...d, tenantId: tenantIdForExtension } as any));
+            args.data = args.data.map((d) => {
+              const record = d as Record<string, unknown>;
+              return { ...record, tenantId: tenantIdForExtension };
+            }) as typeof args.data;
           } else {
-            (args.data as any).tenantId = tenantIdForExtension;
+            const data = args.data as Record<string, unknown>;
+            data.tenantId = tenantIdForExtension;
           }
         }
         return query(args);
@@ -35,6 +39,10 @@ const prisma = new PrismaClient().$extends({
 });
 
 async function cleanDatabase() {
+  await prisma.auditLog.deleteMany();
+  await prisma.authAttempt.deleteMany();
+  await prisma.otpChallenge.deleteMany();
+  await prisma.notification.deleteMany();
   await prisma.packageInformationRequest.deleteMany();
   await prisma.internationalPatientEnquiry.deleteMany();
   await prisma.contactMessage.deleteMany();
@@ -73,8 +81,10 @@ async function cleanDatabase() {
 async function seedHospital(prefix: string, domain: string, defaultPasswordHash: string) {
   const tenant = await prisma.hospitalProfile.create({
     data: {
-      hospitalName: `${prefix} Hospital`,
+      hospitalName: prefix === 'Alpha' ? 'CarePulse Super Speciality Hospital' : `${prefix} Hospital`,
       customDomain: domain,
+      subdomain: prefix === 'Alpha' ? 'carepulse' : `${prefix.toLowerCase()}`,
+      timezone: 'Asia/Kolkata',
       primaryColor: prefix === 'Alpha' ? '#0ea5e9' : '#10b981',
       isActive: true,
     },
@@ -102,6 +112,7 @@ async function seedHospital(prefix: string, domain: string, defaultPasswordHash:
         slug: name.toLowerCase(),
         isActive: true,
         contentStatus: ContentStatus.PUBLISHED,
+        tenantId: tenant.id,
       }
     });
     departments.push(dept);
@@ -126,21 +137,23 @@ async function seedHospital(prefix: string, domain: string, defaultPasswordHash:
       }
     });
 
+    const isJane = prefix === 'Alpha' && i === 1;
+    const isRobert = prefix === 'Alpha' && i === 2;
     const doc = await prisma.doctorProfile.create({
       data: {
         userId: user.id,
-        fullName: `Dr. ${prefix} Doc ${i}`,
-        slug: `dr-${prefix.toLowerCase()}-doc-${i}`,
+        fullName: isJane ? 'Dr. Jane Smith' : isRobert ? 'Dr. Robert Johnson' : `Dr. ${prefix} Doc ${i}`,
+        slug: isJane ? 'dr-jane-smith' : isRobert ? 'dr-robert-johnson' : `dr-${prefix.toLowerCase()}-doc-${i}`,
         phoneNumber: `+91 90000 0000${i}`,
-        qualification: 'MBBS',
-        departmentId: departments[i % departments.length].id,
+        qualification: isJane ? 'MBBS, MD' : 'MBBS',
+        departmentId: isJane ? departments[0].id : departments[i % departments.length].id,
         contentStatus: ContentStatus.PUBLISHED,
         tenantId: tenant.id
       }
     });
 
-    // Availability
-    for (let day = 1; day <= 5; day++) {
+    // Availability every day so E2E can discover a future slot regardless of weekday.
+    for (let day = 0; day <= 6; day++) {
       await prisma.weeklyAvailability.create({
         data: {
           doctorId: doc.id,
@@ -155,6 +168,37 @@ async function seedHospital(prefix: string, domain: string, defaultPasswordHash:
 
     doctors.push(doc);
   }
+
+  await prisma.speciality.create({
+    data: {
+      name: `${prefix} Exclusive Care`,
+      slug: `${prefix.toLowerCase()}-exclusive-care`,
+      shortDescription: `Care unique to ${prefix}`,
+      isActive: true,
+      contentStatus: ContentStatus.PUBLISHED,
+      tenantId: tenant.id,
+    },
+  });
+  await prisma.hospitalService.create({
+    data: {
+      name: `${prefix} Lab Service`,
+      slug: `${prefix.toLowerCase()}-lab-service`,
+      shortDescription: 'Tenant-scoped diagnostics',
+      isActive: true,
+      contentStatus: ContentStatus.PUBLISHED,
+      tenantId: tenant.id,
+    },
+  });
+  await prisma.healthPackage.create({
+    data: {
+      name: `${prefix} Wellness Package`,
+      slug: `${prefix.toLowerCase()}-wellness-package`,
+      description: 'Tenant-scoped package',
+      isActive: true,
+      contentStatus: ContentStatus.PUBLISHED,
+      tenantId: tenant.id,
+    },
+  });
 
   // Patients (10)
   const patients = [];
@@ -188,34 +232,220 @@ async function seedHospital(prefix: string, domain: string, defaultPasswordHash:
     patients.push(pat);
   }
 
-  // Appointments
-  const statuses = [
-    AppointmentStatus.BOOKED,
-    AppointmentStatus.CONFIRMED,
-    AppointmentStatus.COMPLETED,
-    AppointmentStatus.CANCELLED,
-    AppointmentStatus.NO_SHOW,
-  ];
+  // Appointments are omitted from deterministic E2E/unit seeds so slot
+  // discovery does not depend on leftover 10:00 bookings.
+  if (process.env.E2E_TEST_MODE !== 'true' && process.env.SEED_SAMPLE_APPOINTMENTS === 'true') {
+    const statuses = [
+      AppointmentStatus.BOOKED,
+      AppointmentStatus.CONFIRMED,
+      AppointmentStatus.COMPLETED,
+      AppointmentStatus.CANCELLED,
+      AppointmentStatus.NO_SHOW,
+    ];
 
-  for (let i = 0; i < 20; i++) {
-    await prisma.appointment.create({
-      data: {
-        patientId: patients[i % patients.length].id,
-        doctorId: doctors[i % doctors.length].id,
-        appointmentDate: new Date(Date.now() + (i * 86400000)),
-        startTime: '10:00:00',
-        endTime: '10:30:00',
-        status: statuses[i % statuses.length],
-        tenantId: tenant.id
-      }
-    });
+    for (let i = 0; i < 20; i++) {
+      await prisma.appointment.create({
+        data: {
+          patientId: patients[i % patients.length].id,
+          doctorId: doctors[i % doctors.length].id,
+          appointmentDate: new Date(Date.now() + (i * 86400000)),
+          startTime: '16:00:00',
+          endTime: '16:30:00',
+          status: statuses[i % statuses.length],
+          tenantId: tenant.id
+        }
+      });
+    }
   }
 }
 
+async function ensureDemoPublicContent(tenantId: string) {
+  tenantIdForExtension = tenantId;
+  const published = { contentStatus: ContentStatus.PUBLISHED, isActive: true, tenantId };
+
+  await prisma.speciality.upsert({
+    where: { tenantId_slug: { tenantId, slug: 'interventional-cardiology' } },
+    update: { ...published, name: 'Interventional Cardiology' },
+    create: {
+      ...published,
+      name: 'Interventional Cardiology',
+      slug: 'interventional-cardiology',
+      shortDescription: 'Cath lab, angioplasty, and heart-failure care.',
+    },
+  });
+
+  await prisma.centreOfExcellence.upsert({
+    where: { tenantId_slug: { tenantId, slug: 'heart-vascular-centre' } },
+    update: { ...published, name: 'Heart & Vascular Centre' },
+    create: {
+      ...published,
+      name: 'Heart & Vascular Centre',
+      slug: 'heart-vascular-centre',
+      shortDescription: 'Dedicated cardiac care with 24/7 cath lab coverage.',
+    },
+  });
+
+  await prisma.hospitalService.upsert({
+    where: { tenantId_slug: { tenantId, slug: 'outpatient-consultations' } },
+    update: { ...published, name: 'Outpatient Consultations' },
+    create: {
+      ...published,
+      name: 'Outpatient Consultations',
+      slug: 'outpatient-consultations',
+      shortDescription: 'Consultant OPD appointments across major specialities.',
+    },
+  });
+
+  await prisma.healthPackage.upsert({
+    where: { tenantId_slug: { tenantId, slug: 'essential-heart-screening' } },
+    update: { ...published, name: 'Essential Heart Screening' },
+    create: {
+      ...published,
+      name: 'Essential Heart Screening',
+      slug: 'essential-heart-screening',
+      description: 'ECG, lipid profile, cardiac consultation and TMT.',
+    },
+  });
+
+  await prisma.healthArticle.upsert({
+    where: { tenantId_slug: { tenantId, slug: 'understanding-heart-health-demo' } },
+    update: {
+      title: 'Understanding Heart Health',
+      content: 'Demo article on heart health for the public library.',
+      contentStatus: ContentStatus.PUBLISHED,
+      publishedAt: new Date(),
+    },
+    create: {
+      tenantId,
+      title: 'Understanding Heart Health',
+      slug: 'understanding-heart-health-demo',
+      content: 'Demo article on heart health for the public library.',
+      contentStatus: ContentStatus.PUBLISHED,
+      publishedAt: new Date(),
+    },
+  });
+
+  await prisma.newsArticle.upsert({
+    where: { tenantId_slug: { tenantId, slug: 'new-cardiac-cath-lab-demo' } },
+    update: {
+      title: 'New Cardiac Cath Lab',
+      content: 'Demo news update about the cardiac catheterization lab.',
+      contentStatus: ContentStatus.PUBLISHED,
+      publishedAt: new Date(),
+    },
+    create: {
+      tenantId,
+      title: 'New Cardiac Cath Lab',
+      slug: 'new-cardiac-cath-lab-demo',
+      content: 'Demo news update about the cardiac catheterization lab.',
+      contentStatus: ContentStatus.PUBLISHED,
+      publishedAt: new Date(),
+    },
+  });
+
+  await prisma.successStory.upsert({
+    where: { tenantId_slug: { tenantId, slug: 'cardiac-recovery-success-demo' } },
+    update: {
+      title: 'Cardiac Recovery Success',
+      content: 'Demo recovery journey for public success stories.',
+      contentStatus: ContentStatus.PUBLISHED,
+      publishedAt: new Date(),
+    },
+    create: {
+      tenantId,
+      title: 'Cardiac Recovery Success',
+      slug: 'cardiac-recovery-success-demo',
+      content: 'Demo recovery journey for public success stories.',
+      patientDisplayName: 'Demo Patient',
+      isAnonymizedDemo: true,
+      contentStatus: ContentStatus.PUBLISHED,
+      publishedAt: new Date(),
+    },
+  });
+
+  await prisma.hospitalLocation.upsert({
+    where: { tenantId_slug: { tenantId, slug: 'carepulse-main-campus' } },
+    update: { ...published, name: 'CarePulse Main Campus' },
+    create: {
+      ...published,
+      name: 'CarePulse Main Campus',
+      slug: 'carepulse-main-campus',
+      address: '124 CarePulse Avenue, Outer Ring Road',
+      city: 'Bengaluru',
+      state: 'Karnataka',
+      isPrimary: true,
+    },
+  });
+
+  await prisma.leadershipMember.upsert({
+    where: { tenantId_slug: { tenantId, slug: 'dr-ananya-rao' } },
+    update: { ...published, name: 'Dr Ananya Rao', designation: 'Medical Director' },
+    create: {
+      ...published,
+      name: 'Dr Ananya Rao',
+      slug: 'dr-ananya-rao',
+      designation: 'Medical Director',
+      shortBio: 'Leads clinical governance and patient safety.',
+    },
+  });
+
+  const jane = await prisma.doctorProfile.findFirst({
+    where: { tenantId, user: { email: 'dr.smith@hospital.com' } },
+  });
+  if (jane) {
+    await prisma.doctorProfile.update({
+      where: { id: jane.id },
+      data: {
+        fullName: 'Dr. Jane Smith',
+        slug: 'dr-jane-smith',
+        publicDisplayName: 'Dr. Jane Smith',
+        contentStatus: ContentStatus.PUBLISHED,
+        qualification: jane.qualification || 'MBBS, MD',
+      },
+    });
+  }
+  const robert = await prisma.doctorProfile.findFirst({
+    where: { tenantId, user: { email: 'dr.johnson@hospital.com' } },
+  });
+  if (robert) {
+    await prisma.doctorProfile.update({
+      where: { id: robert.id },
+      data: {
+        fullName: 'Dr. Robert Johnson',
+        slug: 'dr-robert-johnson',
+        publicDisplayName: 'Dr. Robert Johnson',
+        contentStatus: ContentStatus.PUBLISHED,
+      },
+    });
+  }
+  await prisma.department.updateMany({
+    where: { tenantId, name: { equals: 'Cardiology', mode: 'insensitive' } },
+    data: { contentStatus: ContentStatus.PUBLISHED, isActive: true },
+  });
+
+  const orphanDoctors = await prisma.user.findMany({
+    where: { role: Role.DOCTOR, doctorProfile: { is: null } },
+    select: { id: true },
+  });
+  if (orphanDoctors.length > 0) {
+    await prisma.user.deleteMany({ where: { id: { in: orphanDoctors.map((u) => u.id) } } });
+  }
+
+  console.log('Ensured demo public CMS content for tenant', tenantId);
+}
+
 async function main() {
+  if (process.env.NODE_ENV === 'production' && process.env.ALLOW_DESTRUCTIVE_SEED !== 'true') {
+    throw new Error('Refusing to run seed in production. Set ALLOW_DESTRUCTIVE_SEED=true only for disposable environments.');
+  }
+
   const alreadySeeded = await prisma.user.findFirst({ where: { email: 'admin@hospital.com' } });
-  if (alreadySeeded) {
-    console.log('Database already seeded. Skipping to preserve data.');
+  if (alreadySeeded && process.env.ALLOW_DESTRUCTIVE_SEED !== 'true') {
+    console.log('Database already seeded. Skipping destructive reset.');
+    const tenantId = alreadySeeded.tenantId;
+    if (tenantId) {
+      await ensureDemoPublicContent(tenantId);
+    }
     return;
   }
 
@@ -226,6 +456,11 @@ async function main() {
 
   await seedHospital('Alpha', 'hospital-a.com', defaultPasswordHash);
   await seedHospital('Beta', 'hospital-b.com', defaultPasswordHash);
+
+  const alphaAdmin = await prisma.user.findFirst({ where: { email: 'admin@hospital.com' } });
+  if (alphaAdmin?.tenantId) {
+    await ensureDemoPublicContent(alphaAdmin.tenantId);
+  }
 
   console.log('Seed complete.');
 }

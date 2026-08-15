@@ -3,6 +3,7 @@ import {
   getHospitalTodayDateString,
   formatDateToYYYYMMDD,
   doTimeWindowsOverlap,
+  resolveTimezone,
 } from '@/lib/date-utils';
 import {
   ComputeSlotsInput,
@@ -17,25 +18,21 @@ import {
 } from './time-utils';
 
 /**
- * Pure domain function to compute available 30-minute appointment slots for a given doctor date.
+ * Pure domain function to compute available appointment slots for a given doctor date.
  *
- * Formula:
- * Available Slots = WeeklyAvailability - BlockedDate exceptions - Active Appointments (BOOKED/CONFIRMED) - Past/In-Progress Slots
- *
- * Properties:
- * - Pure, deterministic, zero database, zero auth, zero React dependency.
- * - Half-open interval convention: [start, end).
- * - Fixed 30-minute grid starts (00:00, 00:30, ..., 23:30).
+ * Slot length is taken from WeeklyAvailability.slotDurationMinutes (default 30).
+ * Available Slots = WeeklyAvailability - BlockedDate exceptions - Active Appointments - Past slots
  */
 export function computeAvailableSlots(input: ComputeSlotsInput): AvailableSlot[] {
   const { date, weeklyAvailability, blockedDates, activeAppointments } = input;
+  const timezone = resolveTimezone(input.timezone);
 
   // Defensive validation: Validate date format
   if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
     return [];
   }
 
-  const currentDate = input.currentDate || getHospitalTodayDateString();
+  const currentDate = input.currentDate || getHospitalTodayDateString(timezone);
 
   // Rule 1: Past date has 0 available slots
   if (date < currentDate) {
@@ -70,7 +67,7 @@ export function computeAvailableSlots(input: ComputeSlotsInput): AvailableSlot[]
     }
   }
 
-  // Rule 3: Resolve Weekday in Asia/Kolkata
+  // Rule 3: Resolve Weekday from the civil date (YYYY-MM-DD is timezone-independent).
   let dayOfWeek: number;
   try {
     dayOfWeek = getWeekdayFromDateString(date);
@@ -123,14 +120,19 @@ export function computeAvailableSlots(input: ComputeSlotsInput): AvailableSlot[]
   // Rule 5: Calculate today's current time boundary if target date is today
   const isToday = date === currentDate;
   const currentTimeStr = isToday
-    ? input.currentTime || getHospitalCurrentTimeHHMM()
+    ? input.currentTime || getHospitalCurrentTimeHHMM(timezone)
     : '00:00';
   const currentTimeMin = isToday ? timeStrToMinutes(currentTimeStr) : 0;
 
   const generatedSlotsMap = new Map<string, AvailableSlot>();
 
-  // Rule 6: Generate 30-minute grid slots for matching availability windows
+  // Rule 6: Generate slots using each window's configured duration
   for (const window of matchingAvailability) {
+    const duration =
+      window.slotDurationMinutes && window.slotDurationMinutes > 0
+        ? window.slotDurationMinutes
+        : 30;
+
     const wStartStr = normalizeTimeToHHMM(window.startTime);
     const wEndStr = normalizeTimeToHHMM(window.endTime);
 
@@ -141,18 +143,17 @@ export function computeAvailableSlots(input: ComputeSlotsInput): AvailableSlot[]
       continue; // Invalid range, skip defensively
     }
 
-    // Align start to 30-minute grid boundary (e.g. 09:00, 09:30)
-    let slotStartMin = Math.ceil(wStartMin / 30) * 30;
+    let slotStartMin = wStartMin;
 
-    while (slotStartMin + 30 <= wEndMin) {
-      const slotEndMin = slotStartMin + 30;
+    while (slotStartMin + duration <= wEndMin) {
+      const slotEndMin = slotStartMin + duration;
       const slotStartStr = minutesToTimeStr(slotStartMin);
       const slotEndStr = minutesToTimeStr(slotEndMin);
 
       // Check Past/In-Progress time rule for today:
       // A slot starting before current time (slotStartMin < currentTimeMin) is excluded.
       if (isToday && slotStartMin < currentTimeMin) {
-        slotStartMin += 30;
+        slotStartMin += duration;
         continue;
       }
 
@@ -162,7 +163,7 @@ export function computeAvailableSlots(input: ComputeSlotsInput): AvailableSlot[]
       );
 
       if (isBlocked) {
-        slotStartMin += 30;
+        slotStartMin += duration;
         continue;
       }
 
@@ -172,7 +173,7 @@ export function computeAvailableSlots(input: ComputeSlotsInput): AvailableSlot[]
       );
 
       if (isOccupied) {
-        slotStartMin += 30;
+        slotStartMin += duration;
         continue;
       }
 
@@ -181,9 +182,10 @@ export function computeAvailableSlots(input: ComputeSlotsInput): AvailableSlot[]
         date,
         startTime: slotStartStr,
         endTime: slotEndStr,
+        slotDurationMinutes: duration,
       });
 
-      slotStartMin += 30;
+      slotStartMin += duration;
     }
   }
 

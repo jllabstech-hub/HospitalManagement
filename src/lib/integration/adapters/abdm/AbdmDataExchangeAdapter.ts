@@ -1,4 +1,5 @@
 import { IHealthDataExchangeAdapter } from '../../core/interfaces';
+import { logger } from '@/lib/logger';
 
 export class AbdmDataExchangeAdapter implements IHealthDataExchangeAdapter {
   private isMock: boolean;
@@ -9,22 +10,22 @@ export class AbdmDataExchangeAdapter implements IHealthDataExchangeAdapter {
 
   async linkCareContext(patientId: string, visitId: string): Promise<void> {
     if (this.isMock) {
-      console.log(`[ABDM MOCK] Linking Care Context. Patient: ${patientId}, Visit: ${visitId}`);
+      void patientId;
+      void visitId;
+      logger.info({ event: 'abdm.mock.link_care_context' }, 'ABDM mock care context link');
       return;
     }
 
-    // TODO: Milestone 2 - Implement /v1/links/link/init API (HIP)
     throw new Error('Not implemented for production. Requires NHA certification.');
   }
 
   async fetchHealthData(consentArtifactId: string): Promise<Record<string, unknown>[]> {
     if (this.isMock) {
-      console.log(`[ABDM MOCK] Fetching FHIR bundles for consent artifact: ${consentArtifactId}`);
-      return [{ resourceType: 'Bundle', entry: [] }]; // Mock empty FHIR bundle
+      void consentArtifactId;
+      logger.info({ event: 'abdm.mock.fetch_health_data' }, 'ABDM mock health data fetch');
+      return [{ resourceType: 'Bundle', entry: [] }];
     }
 
-    // TODO: Milestone 3 - Implement /v1/health-information/request API (HIU)
-    // Requires decrypting payload using standard ECDH keys as per ABDM encryption specs
     throw new Error('Not implemented for production. Requires NHA certification.');
   }
 }

@@ -137,6 +137,7 @@ export default function DoctorManagement({
     setSuccessMessage('Doctor account created successfully!');
     createForm.reset();
     setIsCreateOpen(false);
+    applyFilters(data.email.trim(), '', '', 1, limitFilter);
   };
 
   const handleEditSubmit = async (data: UpdateDoctorInput) => {

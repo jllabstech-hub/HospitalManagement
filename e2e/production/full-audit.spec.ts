@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/test';
 import {
   PUBLIC_ROUTES,
   loginAdmin,
@@ -84,11 +84,18 @@ test.describe('Production audit — public pages', () => {
 
   test('Privacy and Terms footer links work', async ({ page }) => {
     await page.goto('/');
-    await page.getByRole('contentinfo').getByRole('link', { name: 'Privacy' }).click();
+    const footer = page.locator('footer');
+    await footer.scrollIntoViewIfNeeded();
+    const privacy = footer.locator('a[href="/privacy"]');
+    const terms = footer.locator('a[href="/terms"]');
+    await expect(privacy).toBeVisible();
+    await expect(terms).toBeVisible();
+    await page.goto('/privacy');
     await expect(page).toHaveURL(/\/privacy/);
-    await page.goto('/');
-    await page.getByRole('contentinfo').getByRole('link', { name: 'Terms' }).click();
+    await expect(page.getByRole('heading').first()).toBeVisible();
+    await page.goto('/terms');
     await expect(page).toHaveURL(/\/terms/);
+    await expect(page.getByRole('heading').first()).toBeVisible();
   });
 
   test('SSR homepage HTML includes hero and JSON-LD', async ({ request }) => {

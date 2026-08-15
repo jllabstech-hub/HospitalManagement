@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import Breadcrumbs from '@/components/public/Breadcrumbs';
 import PageHero from '@/components/public/PageHero';
-import { getNewsBySlug, getPublishedNews } from '@/features/cms/queries/content';
+import { getNewsBySlug } from '@/features/cms/queries/content';
 import { APP_CONFIG } from '@/config';
 
 interface PageProps {
@@ -11,8 +11,8 @@ interface PageProps {
 }
 
 export async function generateStaticParams() {
-  const { news } = await getPublishedNews({ limit: 100 });
-  return news.map((n) => ({ slug: n.slug }));
+  // Host-based multi-tenancy: slugs are resolved at request time.
+  return [];
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {

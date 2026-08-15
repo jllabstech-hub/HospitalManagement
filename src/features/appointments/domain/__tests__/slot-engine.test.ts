@@ -32,6 +32,7 @@ describe('Phase 5A: Pure Appointment Slot Computation Engine', () => {
       date: TEST_DATE,
       startTime: '09:00',
       endTime: '09:30',
+      slotDurationMinutes: 30,
     });
   });
 

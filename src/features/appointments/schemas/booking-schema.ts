@@ -1,10 +1,9 @@
 import { z } from 'zod';
-import { getHospitalTodayDateString } from '@/lib/date-utils';
 
 /**
  * Zod schema for patient appointment booking input.
- * Strictly validates doctorId, appointmentDate, and 30-minute grid startTime.
  * Client-submitted patientId, status, or endTime are strictly forbidden/ignored.
+ * End time is always taken from the tenant slot engine.
  */
 export const BookAppointmentSchema = z.object({
   doctorId: z
@@ -13,15 +12,11 @@ export const BookAppointmentSchema = z.object({
 
   appointmentDate: z
     .string({ required_error: 'Appointment date is required.' })
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format. Expected YYYY-MM-DD.')
-    .refine((dateStr) => {
-      const todayStr = getHospitalTodayDateString();
-      return dateStr >= todayStr;
-    }, { message: 'Cannot book appointments for past dates.' }),
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format. Expected YYYY-MM-DD.'),
 
   startTime: z
     .string({ required_error: 'Start time is required.' })
-    .regex(/^([01]\d|2[0-3]):(00|30)$/, 'Start time must be on an exact 30-minute grid (e.g. 09:00, 09:30, 10:00).'),
+    .regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Start time must be in HH:mm format.'),
 });
 
 export type BookAppointmentInput = z.infer<typeof BookAppointmentSchema>;

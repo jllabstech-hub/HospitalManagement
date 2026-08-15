@@ -4,6 +4,7 @@ export interface AvailableSlot {
   date: string;
   startTime: string;
   endTime: string;
+  slotDurationMinutes?: number;
 }
 
 export interface WeeklyAvailabilityItem {
@@ -43,13 +44,16 @@ export interface ComputeSlotsInput {
   activeAppointments: ActiveAppointmentItem[];
   /**
    * Optional override for current hospital time in HH:mm format.
-   * If provided when date is today, slots ending on or before this time are excluded.
-   * If omitted, defaults to current Asia/Kolkata hospital time.
+   * If omitted, defaults to the tenant timezone current time.
    */
   currentTime?: string;
   /**
    * Optional override for current hospital date in YYYY-MM-DD format.
-   * If omitted, defaults to current Asia/Kolkata hospital date.
+   * If omitted, defaults to the tenant timezone current date.
    */
   currentDate?: string;
+  /**
+   * IANA timezone used when currentDate/currentTime are omitted.
+   */
+  timezone?: string;
 }

@@ -1,7 +1,7 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures/test';
 
 test.describe('Authentication & Role-Based Authorization E2E Suite', () => {
-  const timestamp = Date.now();
+    const timestamp = `${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`;
   const testPatientEmail = `e2e.patient.${timestamp}@example.com`;
 
   test('TEST 1 & 2: Patient Registration and Login Flow', async ({ page }) => {
