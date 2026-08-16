@@ -4,6 +4,7 @@ import Breadcrumbs from '@/components/public/Breadcrumbs';
 import PageHero from '@/components/public/PageHero';
 import EmptyState from '@/components/ui/EmptyState';
 import Card from '@/components/ui/Card';
+import CmsRecordImage from '@/components/cms/CmsRecordImage';
 import { getPublishedNews } from '@/features/cms/queries/content';
 import { APP_CONFIG } from '@/config';
 
@@ -66,7 +67,9 @@ export default async function NewsPage({ searchParams }: PageProps) {
             <>
               <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {result.news.map((item) => (
-                  <Card key={item.id} hover className="flex h-full flex-col">
+                  <Card key={item.id} hover padding="none" className="flex h-full flex-col overflow-hidden">
+                    <CmsRecordImage src={item.coverImageUrl} fallbackTitle={item.title} alt={item.title} className="rounded-t-card" />
+                    <div className="flex h-full flex-col p-6">
                     {item.category && (
                       <span className="text-[10px] font-semibold uppercase tracking-wider text-brand-600">
                         {item.category}
@@ -82,6 +85,7 @@ export default async function NewsPage({ searchParams }: PageProps) {
                     >
                       Read more →
                     </Link>
+                    </div>
                   </Card>
                 ))}
               </div>

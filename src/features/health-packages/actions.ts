@@ -6,6 +6,7 @@ import { requireAdmin } from '@/server/security/auth-helpers';
 import { CreateHealthPackageSchema, CreateHealthPackageInput, UpdateHealthPackageSchema, UpdateHealthPackageInput } from './schemas';
 import type { ActionResult } from '@/types/server-action';
 import { prismaErrorCode } from '@/server/db/tenant-ops';
+import { sanitizeCmsImageUrl } from '@/features/cms-images/urls';
 
 function slugify(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -21,6 +22,7 @@ export async function createHealthPackageAction(rawInput: CreateHealthPackageInp
       data: {
         name: parsed.data.name,
         description: parsed.data.shortDescription || null,
+        imageUrl: sanitizeCmsImageUrl(parsed.data.imageUrl),
         slug: slugify(parsed.data.name),
         tenantId: admin.tenantId,
       },
@@ -47,6 +49,7 @@ export async function updateHealthPackageAction(rawInput: UpdateHealthPackageInp
       data: {
         name: data.name,
         description: data.shortDescription || null,
+        imageUrl: sanitizeCmsImageUrl(data.imageUrl),
         slug: slugify(data.name),
       },
     });

@@ -52,6 +52,8 @@ export default defineConfig({
       NEXT_PUBLIC_APP_URL: 'http://localhost:5001',
       AUTH_SECRET: 'e2e-auth-secret-key-min-32-chars-xxxx',
       NEXTAUTH_SECRET: 'e2e-auth-secret-key-min-32-chars-xxxx',
+      STORAGE_PROVIDER: 'local',
+      IMAGE_GENERATION_PROVIDER: 'mock',
     },
   },
 });

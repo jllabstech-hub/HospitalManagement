@@ -4,6 +4,7 @@ import Breadcrumbs from '@/components/public/Breadcrumbs';
 import PageHero from '@/components/public/PageHero';
 import EmptyState from '@/components/ui/EmptyState';
 import Card from '@/components/ui/Card';
+import CmsRecordImage from '@/components/cms/CmsRecordImage';
 import { getPublishedCentres } from '@/features/cms/queries/catalog';
 import { APP_CONFIG } from '@/config';
 
@@ -37,7 +38,9 @@ export default async function CentresPage() {
           ) : (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {centres.map((centre) => (
-                <Card key={centre.id} hover className="flex h-full flex-col">
+                <Card key={centre.id} hover padding="none" className="flex h-full flex-col overflow-hidden">
+                  <CmsRecordImage src={centre.heroImageUrl} fallbackTitle={centre.name} alt={`${centre.name} centre of excellence`} className="rounded-t-card" />
+                  <div className="flex h-full flex-col p-6">
                   <h2 className="text-lg font-semibold text-ink">{centre.name}</h2>
                   <p className="mt-2 flex-1 text-sm text-ink-muted line-clamp-3">
                     {centre.shortDescription ?? 'Coordinated specialist outpatient care.'}
@@ -48,6 +51,7 @@ export default async function CentresPage() {
                   >
                     Explore centre →
                   </Link>
+                  </div>
                 </Card>
               ))}
             </div>

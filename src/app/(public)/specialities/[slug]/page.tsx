@@ -6,6 +6,7 @@ import PageHero from '@/components/public/PageHero';
 import DoctorCard from '@/components/doctors/DoctorCard';
 import EmptyState from '@/components/ui/EmptyState';
 import Card from '@/components/ui/Card';
+import CmsRecordImage from '@/components/cms/CmsRecordImage';
 import {
   getSpecialityBySlug,
 } from '@/features/cms/queries/catalog';
@@ -53,6 +54,13 @@ export default async function SpecialityDetailPage({ params }: PageProps) {
               { label: spec.name },
             ]}
             className="mb-8"
+          />
+
+          <CmsRecordImage
+            src={spec.imageUrl}
+            fallbackTitle={spec.name}
+            alt={`${spec.name} and specialist care`}
+            className="mb-8 rounded-card border border-[#dde5e9]"
           />
 
           {spec.fullDescription && (

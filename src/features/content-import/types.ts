@@ -30,6 +30,7 @@ export type PreviewItem = {
   excerpt?: string;
   question?: string;
   answer?: string;
+  imageUrl?: string;
 };
 
 export type HospitalProfileDraft = {
@@ -46,6 +47,7 @@ export type HospitalProfileDraft = {
   workingHours?: string;
   mission?: string;
   vision?: string;
+  heroImageUrl?: string;
 };
 
 export type InternationalDraft = {

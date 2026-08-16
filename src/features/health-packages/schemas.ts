@@ -3,6 +3,7 @@ import { z } from 'zod';
 export const CreateHealthPackageSchema = z.object({
   name: z.string().trim().min(1, { message: 'Required field.' }),
   shortDescription: z.string().trim().optional().or(z.literal('')),
+  imageUrl: z.string().trim().max(2000).optional().or(z.literal('')),
 });
 
 export type CreateHealthPackageInput = z.infer<typeof CreateHealthPackageSchema>;

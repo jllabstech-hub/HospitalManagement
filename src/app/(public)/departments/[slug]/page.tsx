@@ -6,6 +6,7 @@ import PageHero from '@/components/public/PageHero';
 import DoctorCard from '@/components/doctors/DoctorCard';
 import EmptyState from '@/components/ui/EmptyState';
 import { getDepartmentBySlug } from '@/features/cms/queries/catalog';
+import CmsRecordImage from '@/components/cms/CmsRecordImage';
 import { publicPageMetadata } from '@/lib/seo';
 import { APP_CONFIG } from '@/config';
 
@@ -51,6 +52,13 @@ export default async function DepartmentDetailPage({ params }: PageProps) {
               { label: dept.name },
             ]}
             className="mb-8"
+          />
+
+          <CmsRecordImage
+            src={dept.imageUrl}
+            fallbackTitle={dept.name}
+            alt={`${dept.name} hospital department`}
+            className="mb-8 rounded-card border border-[#dde5e9]"
           />
 
           {dept.fullDescription && (

@@ -6,6 +6,7 @@ import { requireAdmin } from '@/server/security/auth-helpers';
 import { CreateNewsArticleSchema, CreateNewsArticleInput, UpdateNewsArticleSchema, UpdateNewsArticleInput } from './schemas';
 import type { ActionResult } from '@/types/server-action';
 import { prismaErrorCode } from '@/server/db/tenant-ops';
+import { sanitizeCmsImageUrl } from '@/features/cms-images/urls';
 
 function slugify(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -22,6 +23,7 @@ export async function createNewsArticleAction(rawInput: CreateNewsArticleInput):
         title: parsed.data.title,
         excerpt: parsed.data.excerpt || null,
         content: parsed.data.content,
+        coverImageUrl: sanitizeCmsImageUrl(parsed.data.coverImageUrl),
         slug: slugify(parsed.data.title),
         tenantId: admin.tenantId,
       },
@@ -49,6 +51,7 @@ export async function updateNewsArticleAction(rawInput: UpdateNewsArticleInput):
         title: data.title,
         excerpt: data.excerpt || null,
         content: data.content,
+        coverImageUrl: sanitizeCmsImageUrl(data.coverImageUrl),
         slug: slugify(data.title),
       },
     });

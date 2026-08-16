@@ -5,6 +5,8 @@ import { slugify } from '@/lib/slug';
 import { writeAuditLog } from '@/server/security/audit';
 import { itemSlug } from './normalize';
 import { looksLikeForeignHospitalCopy } from '@/features/cms/foreign-hospital-copy';
+import { matchStockImage } from '@/features/cms-images/stock-catalog';
+import { sanitizeCmsImageUrl } from '@/features/cms-images/urls';
 import type {
   CrawlPreview,
   ImportCategory,
@@ -35,6 +37,15 @@ function fillIfEmpty(current: string | null | undefined, incoming?: string | nul
   if (incoming && incoming.trim() && (!current || !current.trim())) return incoming.trim();
   if (incoming && incoming.trim().length > (current?.length || 0) + 40) return incoming.trim();
   return undefined;
+}
+
+function imageForItem(item: PreviewItem): string | null {
+  return sanitizeCmsImageUrl(item.imageUrl) || matchStockImage(item.name, item.description).url;
+}
+
+function fillImageIfEmpty(current: string | null | undefined, item: PreviewItem): string | undefined {
+  if (current?.trim()) return undefined;
+  return imageForItem(item) || undefined;
 }
 
 export async function importPreviewToCms(input: {
@@ -83,6 +94,9 @@ export async function importPreviewToCms(input: {
             workingHours: fillIfEmpty(existing.workingHours, incoming.workingHours),
             mission: fillIfEmpty(existing.mission, incoming.mission),
             vision: fillIfEmpty(existing.vision, incoming.vision),
+            heroImageUrl: existing.heroImageUrl?.trim()
+              ? undefined
+              : sanitizeCmsImageUrl(incoming.heroImageUrl) || undefined,
           };
           const patch = Object.fromEntries(Object.entries(data).filter(([, value]) => value !== undefined));
           if (Object.keys(patch).length === 0) {
@@ -107,6 +121,7 @@ export async function importPreviewToCms(input: {
           data: {
             description: fillIfEmpty(existing.description, item.description) ?? existing.description,
             shortDescription: fillIfEmpty(existing.shortDescription, item.description) ?? existing.shortDescription,
+            imageUrl: fillImageIfEmpty(existing.imageUrl, item) ?? existing.imageUrl,
             contentStatus: ContentStatus.PUBLISHED,
             isActive: true,
           },
@@ -122,6 +137,7 @@ export async function importPreviewToCms(input: {
           slug: finalSlug,
           description: item.description || null,
           shortDescription: item.description || null,
+          imageUrl: imageForItem(item),
           contentStatus: ContentStatus.PUBLISHED,
           isActive: true,
           tenantId: input.tenantId,
@@ -140,6 +156,7 @@ export async function importPreviewToCms(input: {
           data: {
             shortDescription: fillIfEmpty(existing.shortDescription, item.description) ?? existing.shortDescription,
             fullDescription: fillIfEmpty(existing.fullDescription, item.description) ?? existing.fullDescription,
+            imageUrl: fillImageIfEmpty(existing.imageUrl, item) ?? existing.imageUrl,
             contentStatus: ContentStatus.PUBLISHED,
             isActive: true,
           },
@@ -155,6 +172,7 @@ export async function importPreviewToCms(input: {
           slug: finalSlug,
           shortDescription: item.description || null,
           fullDescription: item.description || null,
+          imageUrl: imageForItem(item),
           contentStatus: ContentStatus.PUBLISHED,
           isActive: true,
           tenantId: input.tenantId,
@@ -178,6 +196,7 @@ export async function importPreviewToCms(input: {
           data: {
             shortDescription: fillIfEmpty(existing.shortDescription, item.description) ?? existing.shortDescription,
             fullDescription: fillIfEmpty(existing.fullDescription, item.description) ?? existing.fullDescription,
+            heroImageUrl: fillImageIfEmpty(existing.heroImageUrl, item) ?? existing.heroImageUrl,
             contentStatus: ContentStatus.PUBLISHED,
             isActive: true,
           },
@@ -193,6 +212,7 @@ export async function importPreviewToCms(input: {
           slug: finalSlug,
           shortDescription: item.description || null,
           fullDescription: item.description || null,
+          heroImageUrl: imageForItem(item),
           contentStatus: ContentStatus.PUBLISHED,
           isActive: true,
           tenantId: input.tenantId,
@@ -216,6 +236,7 @@ export async function importPreviewToCms(input: {
           data: {
             shortDescription: fillIfEmpty(existing.shortDescription, item.description) ?? existing.shortDescription,
             fullDescription: fillIfEmpty(existing.fullDescription, item.description) ?? existing.fullDescription,
+            imageUrl: fillImageIfEmpty(existing.imageUrl, item) ?? existing.imageUrl,
             contentStatus: ContentStatus.PUBLISHED,
             isActive: true,
           },
@@ -231,6 +252,7 @@ export async function importPreviewToCms(input: {
           slug: finalSlug,
           shortDescription: item.description || null,
           fullDescription: item.description || null,
+          imageUrl: imageForItem(item),
           contentStatus: ContentStatus.PUBLISHED,
           isActive: true,
           tenantId: input.tenantId,
@@ -257,6 +279,7 @@ export async function importPreviewToCms(input: {
             duration: fillIfEmpty(existing.duration, item.duration) ?? existing.duration,
             eligibility: fillIfEmpty(existing.eligibility, item.eligibility) ?? existing.eligibility,
             includedItems: fillIfEmpty(existing.includedItems, item.includedItems) ?? existing.includedItems,
+            imageUrl: fillImageIfEmpty(existing.imageUrl, item) ?? existing.imageUrl,
             ...(price && !existing.price ? { price, isDemoPricing: false } : {}),
             contentStatus: ContentStatus.PUBLISHED,
             isActive: true,
@@ -275,6 +298,7 @@ export async function importPreviewToCms(input: {
           duration: item.duration || null,
           eligibility: item.eligibility || null,
           includedItems: item.includedItems || null,
+          imageUrl: imageForItem(item),
           price: price ?? null,
           isDemoPricing: false,
           contentStatus: ContentStatus.PUBLISHED,
@@ -343,6 +367,7 @@ export async function importPreviewToCms(input: {
           where: { id: existing.id, tenantId: input.tenantId },
           data: {
             description: fillIfEmpty(existing.description, item.description) ?? existing.description,
+            imageUrl: fillImageIfEmpty(existing.imageUrl, item) ?? existing.imageUrl,
             contentStatus: ContentStatus.PUBLISHED,
             isActive: true,
           },
@@ -358,6 +383,7 @@ export async function importPreviewToCms(input: {
           slug: finalSlug,
           description: item.description || null,
           category: item.category || null,
+          imageUrl: imageForItem(item),
           contentStatus: ContentStatus.PUBLISHED,
           isActive: true,
           tenantId: input.tenantId,
@@ -597,6 +623,7 @@ async function upsertArticles(
             data: {
               excerpt: fillIfEmpty(existing.excerpt, item.excerpt) ?? existing.excerpt,
               content: existing.content.length >= content.length ? existing.content : content,
+              coverImageUrl: fillImageIfEmpty(existing.coverImageUrl, item) ?? existing.coverImageUrl,
               contentStatus: ContentStatus.PUBLISHED,
               publishedAt: existing.publishedAt ?? new Date(),
             },
@@ -612,6 +639,7 @@ async function upsertArticles(
               slug: finalSlug,
               excerpt: item.excerpt || null,
               content,
+              coverImageUrl: imageForItem(item),
               contentStatus: ContentStatus.PUBLISHED,
               publishedAt: new Date(),
               tenantId,
@@ -629,6 +657,7 @@ async function upsertArticles(
             data: {
               excerpt: fillIfEmpty(existing.excerpt, item.excerpt) ?? existing.excerpt,
               content: existing.content.length >= content.length ? existing.content : content,
+              coverImageUrl: fillImageIfEmpty(existing.coverImageUrl, item) ?? existing.coverImageUrl,
               contentStatus: ContentStatus.PUBLISHED,
               publishedAt: existing.publishedAt ?? new Date(),
             },
@@ -644,6 +673,7 @@ async function upsertArticles(
               slug: finalSlug,
               excerpt: item.excerpt || null,
               content,
+              coverImageUrl: imageForItem(item),
               contentStatus: ContentStatus.PUBLISHED,
               publishedAt: new Date(),
               tenantId,

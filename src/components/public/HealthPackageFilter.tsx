@@ -3,12 +3,14 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Card from '@/components/ui/Card';
+import CmsRecordImage from '@/components/cms/CmsRecordImage';
 
 export interface PackageItem {
   id: string;
   name: string;
   slug: string;
   description: string | null;
+  imageUrl?: string | null;
   price: number | { toNumber?: () => number } | null;
   currency: string | null;
   duration: string | null;
@@ -65,8 +67,11 @@ export default function HealthPackageFilter({ packages }: Props) {
           <Card
             key={pkg.id}
             hover
-            className="flex h-full flex-col bg-white p-6 border border-[#dde5e9] shadow-soft hover:shadow-card animate-fade-in-up"
+            padding="none"
+            className="flex h-full flex-col overflow-hidden bg-white border border-[#dde5e9] shadow-soft hover:shadow-card animate-fade-in-up"
           >
+            <CmsRecordImage src={pkg.imageUrl} fallbackTitle={pkg.name} alt={`${pkg.name} health check package`} />
+            <div className="flex h-full flex-col p-6">
             <div className="flex items-center justify-between">
               <span className="rounded bg-brand-100 px-2.5 py-0.5 text-[10px] font-bold text-brand-800 uppercase tracking-wider">
                 Preventive Health Check
@@ -108,6 +113,7 @@ export default function HealthPackageFilter({ packages }: Props) {
                   Demo Pricing — For Illustration Only
                 </p>
               )}
+            </div>
             </div>
           </Card>
         ))}

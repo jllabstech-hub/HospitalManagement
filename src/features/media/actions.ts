@@ -5,6 +5,7 @@ import { prisma } from '@/server/db/client';
 import { requireAdmin } from '@/server/security/auth-helpers';
 import { writeAuditLog } from '@/server/security/audit';
 import { getStorageProvider } from '@/server/storage';
+import { isMediaAssetReferenced } from '@/features/cms-images/references';
 
 export type ActionResult = { success: true } | { success: false; error: string };
 
@@ -31,10 +32,17 @@ export async function deleteMediaAssetAction(id: string): Promise<ActionResult> 
     const admin = await requireAdmin();
     const asset = await prisma.mediaAsset.findFirst({
       where: { id, tenantId: admin.tenantId },
-      select: { id: true, storageKey: true },
+      select: { id: true, storageKey: true, url: true },
     });
     if (!asset) {
       return { success: false, error: 'Media asset not found.' };
+    }
+
+    if (await isMediaAssetReferenced(admin.tenantId, asset.url)) {
+      return {
+        success: false,
+        error: 'This image is still used by CMS content and cannot be deleted.',
+      };
     }
 
     await deleteStorageObjectIdempotent(asset.storageKey);

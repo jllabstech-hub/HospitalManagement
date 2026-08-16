@@ -11,6 +11,7 @@ import {
 } from './html';
 import { canonicalName, dedupeFaqs, dedupeItems, parsePrice } from './normalize';
 import { looksLikeForeignHospitalCopy } from '@/features/cms/foreign-hospital-copy';
+import { isDisplayableCmsImageUrl } from '@/features/cms-images/urls';
 import type { CrawlPreview, HospitalProfileDraft, InternationalDraft, PreviewItem } from './types';
 
 export function emptyPreview(): CrawlPreview {
@@ -61,13 +62,13 @@ export function extractPage(url: string, html: string): CrawlPreview {
 
   const listItems = extractNamedCards(html, url, kind);
   if (isCatalogLeaf(url, kind)) {
-    assignList(preview, kind, extractLeafItem(html, kind));
+    assignList(preview, kind, extractLeafItem(html, kind, url));
   } else {
     assignList(preview, kind, listItems);
   }
 
   if (kind === 'packages') {
-    const packageSeed = isCatalogLeaf(url, kind) ? extractLeafItem(html, kind) : listItems;
+    const packageSeed = isCatalogLeaf(url, kind) ? extractLeafItem(html, kind, url) : listItems;
     preview.packages = extractPackages(html, packageSeed);
   }
 
@@ -81,7 +82,7 @@ export function extractPage(url: string, html: string): CrawlPreview {
     };
   }
   if (kind === 'articles' || kind === 'news') {
-    const article = extractArticle(html);
+    const article = extractArticle(html, url);
     if (article) {
       if (kind === 'news') preview.news = [article];
       else preview.articles = [article];
@@ -115,13 +116,18 @@ function isCatalogLeaf(url: string, kind: PageKind): boolean {
   }
 }
 
-function extractLeafItem(html: string, kind: PageKind): PreviewItem[] {
+function extractLeafItem(html: string, kind: PageKind, pageUrl: string): PreviewItem[] {
   const $ = loadHtml(html);
   const heading = canonicalName($('h1').first().text() || extractTitle(html));
   if (!isLikelyItemName(heading, kind)) return [];
   const description = clip(extractMainText(html, 1200), 800);
   if (looksLikeForeignHospitalCopy(heading, description)) return [];
-  return [{ name: heading, description: description || undefined, price: parsePrice(description) }];
+  return [{
+    name: heading,
+    description: description || undefined,
+    price: parsePrice(description),
+    imageUrl: extractPageImage(html, pageUrl),
+  }];
 }
 
 function assignList(preview: CrawlPreview, kind: PageKind, items: PreviewItem[]) {
@@ -171,6 +177,7 @@ function extractNamedCards(html: string, pageUrl: string, kind: PageKind): Previ
     items.push({
       name: text,
       description: clip(description, 800) || undefined,
+      imageUrl: nearbyImage($, el, pageUrl),
     });
     void href;
     void pageUrl;
@@ -185,6 +192,39 @@ function extractNamedCards(html: string, pageUrl: string, kind: PageKind): Previ
   }
 
   return dedupeItems(items);
+}
+
+function extractPageImage(html: string, pageUrl: string): string | undefined {
+  const $ = loadHtml(html);
+  const meta =
+    $('meta[property="og:image"]').attr('content') ||
+    $('meta[name="twitter:image"]').attr('content') ||
+    $('link[rel="image_src"]').attr('href');
+  const fromMeta = normalizeAssetUrl(meta, pageUrl);
+  if (fromMeta) return fromMeta;
+
+  const src =
+    $('main img, article img, .hero img, img').first().attr('src') ||
+    $('main img, article img, img').first().attr('data-src');
+  return normalizeAssetUrl(src, pageUrl);
+}
+
+function nearbyImage($: ReturnType<typeof loadHtml>, el: unknown, pageUrl: string): string | undefined {
+  const node = $(el as never);
+  const src =
+    node.find('img').first().attr('src') ||
+    node.closest('article, .card, li, figure, section').find('img').first().attr('src');
+  return normalizeAssetUrl(src, pageUrl);
+}
+
+function normalizeAssetUrl(src: string | undefined, pageUrl: string): string | undefined {
+  if (!src?.trim() || src.startsWith('data:')) return undefined;
+  try {
+    const resolved = new URL(src, pageUrl || 'https://images.unsplash.com').toString();
+    return isDisplayableCmsImageUrl(resolved) ? resolved : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 function isLikelyItemName(text: string, kind: PageKind): boolean {
@@ -279,7 +319,7 @@ function extractPackages(html: string, fallback: PreviewItem[]): PreviewItem[] {
   return dedupeItems(items);
 }
 
-function extractArticle(html: string): PreviewItem | null {
+function extractArticle(html: string, pageUrl: string): PreviewItem | null {
   const title = extractTitle(html);
   const content = extractMainText(html, CRAWL_LIMITS.maxArticleChars);
   if (title.length < 8 || content.length < 80) return null;
@@ -289,6 +329,7 @@ function extractArticle(html: string): PreviewItem | null {
     excerpt: clip(content, 240),
     content,
     description: clip(content, 800),
+    imageUrl: extractPageImage(html, pageUrl),
   };
 }
 
@@ -333,6 +374,7 @@ function extractHospitalProfile(html: string, url: string): HospitalProfileDraft
     addressLine1: typeof address?.streetAddress === 'string' ? address.streetAddress : undefined,
     city: typeof address?.addressLocality === 'string' ? address.addressLocality : undefined,
     state: typeof address?.addressRegion === 'string' ? address.addressRegion : undefined,
+    heroImageUrl: extractPageImage(html, url),
   };
 }
 

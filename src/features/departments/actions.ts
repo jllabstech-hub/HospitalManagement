@@ -11,6 +11,7 @@ import {
 } from './schemas';
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { slugify } from '@/lib/slug';
+import { sanitizeCmsImageUrl } from '@/features/cms-images/urls';
 
 export type ActionResult<T = undefined> =
   | { success: true; data?: T }
@@ -79,7 +80,7 @@ export async function createDepartmentAction(
         slug,
         description: description || null,
         shortDescription: description || null,
-        imageUrl: parsed.data.imageUrl?.trim() || null,
+        imageUrl: sanitizeCmsImageUrl(parsed.data.imageUrl),
         seoTitle: parsed.data.seoTitle?.trim() || null,
         seoDescription: parsed.data.seoDescription?.trim() || null,
         isActive: true,
@@ -143,7 +144,7 @@ export async function updateDepartmentAction(
       data: {
         name: normalizedName,
         description: description || null,
-        imageUrl: parsed.data.imageUrl?.trim() || null,
+        imageUrl: sanitizeCmsImageUrl(parsed.data.imageUrl),
         seoTitle: parsed.data.seoTitle?.trim() || null,
         seoDescription: parsed.data.seoDescription?.trim() || null,
       },

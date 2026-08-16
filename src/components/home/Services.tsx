@@ -1,6 +1,7 @@
 import SectionHeader from '@/components/ui/SectionHeader';
 import Card from '@/components/ui/Card';
 import Link from 'next/link';
+import CmsRecordImage from '@/components/cms/CmsRecordImage';
 
 interface ServicesProps {
   services?: Array<{
@@ -8,6 +9,7 @@ interface ServicesProps {
     name: string;
     slug: string;
     shortDescription?: string | null;
+    imageUrl?: string | null;
   }>;
 }
 
@@ -17,12 +19,13 @@ export default function Services({ services }: ServicesProps) {
         title: s.name,
         detail: s.shortDescription || 'Outpatient medical and diagnostic service.',
         slug: s.slug,
+        imageUrl: s.imageUrl,
       }))
     : [
-        { title: 'Outpatient Consultations', detail: 'Book fixed 30-minute slots with active hospital specialists.', slug: '' },
-        { title: 'Doctor Discovery', detail: 'Search by name, qualification, or medical department.', slug: '' },
-        { title: 'Appointment Management', detail: 'Track upcoming visits, history, and cancellations in one place.', slug: '' },
-        { title: 'Secure Patient Portal', detail: 'Role-based access for patients, doctors, and administrators.', slug: '' },
+        { title: 'Outpatient Consultations', detail: 'Book fixed 30-minute slots with active hospital specialists.', slug: '', imageUrl: undefined as string | undefined },
+        { title: 'Doctor Discovery', detail: 'Search by name, qualification, or medical department.', slug: '', imageUrl: undefined },
+        { title: 'Appointment Management', detail: 'Track upcoming visits, history, and cancellations in one place.', slug: '', imageUrl: undefined },
+        { title: 'Secure Patient Portal', detail: 'Role-based access for patients, doctors, and administrators.', slug: '', imageUrl: undefined },
       ];
 
   return (
@@ -35,7 +38,9 @@ export default function Services({ services }: ServicesProps) {
         />
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {displayServices.map((service) => (
-            <Card key={service.title} className="h-full bg-surface-warm flex flex-col justify-between">
+            <Card key={service.title} padding="none" className="h-full bg-surface-warm flex flex-col justify-between overflow-hidden">
+              <CmsRecordImage src={service.imageUrl} fallbackTitle={service.title} alt={`${service.title} hospital service`} />
+              <div className="flex h-full flex-col p-6">
               <div>
                 <h3 className="text-base font-semibold text-ink">{service.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-ink-muted">{service.detail}</p>
@@ -47,6 +52,7 @@ export default function Services({ services }: ServicesProps) {
                   </Link>
                 </div>
               )}
+              </div>
             </Card>
           ))}
         </div>

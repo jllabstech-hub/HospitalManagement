@@ -4,6 +4,7 @@ import Breadcrumbs from '@/components/public/Breadcrumbs';
 import PageHero from '@/components/public/PageHero';
 import EmptyState from '@/components/ui/EmptyState';
 import Card from '@/components/ui/Card';
+import CmsRecordImage from '@/components/cms/CmsRecordImage';
 import { getPublishedArticles } from '@/features/cms/queries/content';
 import { APP_CONFIG } from '@/config';
 
@@ -66,7 +67,9 @@ export default async function HealthLibraryPage({ searchParams }: PageProps) {
             <>
               <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {result.articles.map((article) => (
-                  <Card key={article.id} hover className="flex h-full flex-col">
+                  <Card key={article.id} hover padding="none" className="flex h-full flex-col overflow-hidden">
+                    <CmsRecordImage src={article.coverImageUrl} fallbackTitle={article.title} alt={article.title} className="rounded-t-card" />
+                    <div className="flex h-full flex-col p-6">
                     {article.speciality && (
                       <span className="text-[10px] font-semibold uppercase tracking-wider text-brand-600">
                         {article.speciality.name}
@@ -84,6 +87,7 @@ export default async function HealthLibraryPage({ searchParams }: PageProps) {
                     >
                       Read article →
                     </Link>
+                    </div>
                   </Card>
                 ))}
               </div>

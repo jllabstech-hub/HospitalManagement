@@ -1,12 +1,25 @@
 import { withSentryConfig } from '@sentry/nextjs';
 
+const mediaCdnHost = (process.env.MEDIA_CDN_HOST || '').replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+const imgSrc = [
+  "'self'",
+  'data:',
+  'blob:',
+  'https://images.unsplash.com',
+  'https://*.amazonaws.com',
+  'https://storage.googleapis.com',
+  mediaCdnHost ? `https://${mediaCdnHost}` : '',
+]
+  .filter(Boolean)
+  .join(' ');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   eslint: {
     ignoreDuringBuilds: false,
   },
-  serverExternalPackages: ['pino', 'pino-pretty', 'thread-stream', '@aws-sdk/client-s3', 'ws', '@neondatabase/serverless', '@prisma/adapter-neon'],
+  serverExternalPackages: ['pino', 'pino-pretty', 'thread-stream', '@aws-sdk/client-s3', 'ws', '@neondatabase/serverless', '@prisma/adapter-neon', 'sharp'],
   images: {
     remotePatterns: [
       {
@@ -58,7 +71,7 @@ const nextConfig = {
               "default-src 'self'",
               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.sentry.io",
               "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: blob: https://images.unsplash.com https://*.amazonaws.com https://storage.googleapis.com",
+              "img-src " + imgSrc,
               "font-src 'self' data:",
               "connect-src 'self' https://*.sentry.io",
               "frame-ancestors 'self'",

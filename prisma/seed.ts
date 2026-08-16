@@ -5,6 +5,7 @@ import {
   ContentStatus,
 } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import { matchStockImage } from '../src/features/cms-images/stock-catalog';
 
 let tenantIdForExtension: string | undefined;
 
@@ -474,7 +475,99 @@ async function ensureDemoPublicContent(tenantId: string) {
     await prisma.user.deleteMany({ where: { id: { in: orphanDoctors.map((u) => u.id) } } });
   }
 
+  await fillMissingCatalogImages(tenantId);
+
   console.log('Ensured demo public CMS content for tenant', tenantId);
+}
+
+async function fillMissingCatalogImages(tenantId: string) {
+  const specialities = await prisma.speciality.findMany({
+    where: { tenantId, OR: [{ imageUrl: null }, { imageUrl: '' }] },
+    select: { id: true, name: true, shortDescription: true },
+  });
+  for (const row of specialities) {
+    await prisma.speciality.update({
+      where: { id: row.id },
+      data: { imageUrl: matchStockImage(row.name, row.shortDescription).url },
+    });
+  }
+
+  const departments = await prisma.department.findMany({
+    where: { tenantId, OR: [{ imageUrl: null }, { imageUrl: '' }] },
+    select: { id: true, name: true, description: true },
+  });
+  for (const row of departments) {
+    await prisma.department.update({
+      where: { id: row.id },
+      data: { imageUrl: matchStockImage(row.name, row.description).url },
+    });
+  }
+
+  const centres = await prisma.centreOfExcellence.findMany({
+    where: { tenantId, OR: [{ heroImageUrl: null }, { heroImageUrl: '' }] },
+    select: { id: true, name: true, shortDescription: true },
+  });
+  for (const row of centres) {
+    await prisma.centreOfExcellence.update({
+      where: { id: row.id },
+      data: { heroImageUrl: matchStockImage(row.name, row.shortDescription).url },
+    });
+  }
+
+  const services = await prisma.hospitalService.findMany({
+    where: { tenantId, OR: [{ imageUrl: null }, { imageUrl: '' }] },
+    select: { id: true, name: true, shortDescription: true },
+  });
+  for (const row of services) {
+    await prisma.hospitalService.update({
+      where: { id: row.id },
+      data: { imageUrl: matchStockImage(row.name, row.shortDescription).url },
+    });
+  }
+
+  const packages = await prisma.healthPackage.findMany({
+    where: { tenantId, OR: [{ imageUrl: null }, { imageUrl: '' }] },
+    select: { id: true, name: true, description: true },
+  });
+  for (const row of packages) {
+    await prisma.healthPackage.update({
+      where: { id: row.id },
+      data: { imageUrl: matchStockImage(row.name, row.description).url },
+    });
+  }
+
+  const facilities = await prisma.facility.findMany({
+    where: { tenantId, OR: [{ imageUrl: null }, { imageUrl: '' }] },
+    select: { id: true, name: true, description: true },
+  });
+  for (const row of facilities) {
+    await prisma.facility.update({
+      where: { id: row.id },
+      data: { imageUrl: matchStockImage(row.name, row.description).url },
+    });
+  }
+
+  const articles = await prisma.healthArticle.findMany({
+    where: { tenantId, OR: [{ coverImageUrl: null }, { coverImageUrl: '' }] },
+    select: { id: true, title: true, excerpt: true },
+  });
+  for (const row of articles) {
+    await prisma.healthArticle.update({
+      where: { id: row.id },
+      data: { coverImageUrl: matchStockImage(row.title, row.excerpt).url },
+    });
+  }
+
+  const news = await prisma.newsArticle.findMany({
+    where: { tenantId, OR: [{ coverImageUrl: null }, { coverImageUrl: '' }] },
+    select: { id: true, title: true, excerpt: true },
+  });
+  for (const row of news) {
+    await prisma.newsArticle.update({
+      where: { id: row.id },
+      data: { coverImageUrl: matchStockImage(row.title, row.excerpt).url },
+    });
+  }
 }
 
 async function ensureTenantHostnames() {

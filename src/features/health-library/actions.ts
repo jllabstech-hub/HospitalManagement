@@ -7,6 +7,7 @@ import { CreateHealthArticleSchema, CreateHealthArticleInput, UpdateHealthArticl
 import type { ActionResult } from '@/types/server-action';
 import { prismaErrorCode } from '@/server/db/tenant-ops';
 import { writeAuditLog } from '@/server/security/audit';
+import { sanitizeCmsImageUrl } from '@/features/cms-images/urls';
 
 function slugFromTitle(title: string): string {
   return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -23,6 +24,7 @@ export async function createHealthArticleAction(rawInput: CreateHealthArticleInp
         title: parsed.data.title,
         excerpt: parsed.data.excerpt || null,
         content: parsed.data.content,
+        coverImageUrl: sanitizeCmsImageUrl(parsed.data.coverImageUrl),
         slug: slugFromTitle(parsed.data.title),
         tenantId: admin.tenantId,
       },
@@ -57,6 +59,7 @@ export async function updateHealthArticleAction(rawInput: UpdateHealthArticleInp
         title: data.title,
         excerpt: data.excerpt || null,
         content: data.content,
+        coverImageUrl: sanitizeCmsImageUrl(data.coverImageUrl),
         slug: slugFromTitle(data.title),
       },
     });

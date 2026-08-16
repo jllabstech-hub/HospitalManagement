@@ -3,12 +3,14 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import SectionHeader from '@/components/ui/SectionHeader';
+import CmsRecordImage from '@/components/cms/CmsRecordImage';
 
 interface Speciality {
   id: string;
   name: string;
   slug: string;
   shortDescription: string | null;
+  imageUrl?: string | null;
   icon?: string | null;
 }
 
@@ -17,6 +19,7 @@ interface Dept {
   name: string;
   slug?: string;
   description: string | null;
+  imageUrl?: string | null;
 }
 
 interface Props {
@@ -33,6 +36,7 @@ export default function Specialities({ specialities, departments }: Props) {
           slug: s.slug,
           href: `/specialities/${s.slug}`,
           description: s.shortDescription || 'Comprehensive tertiary care and specialized consultations.',
+          imageUrl: s.imageUrl,
         }))
       : departments.map((d) => ({
           id: d.id,
@@ -40,6 +44,7 @@ export default function Specialities({ specialities, departments }: Props) {
           slug: d.slug ?? 'department',
           href: d.slug ? `/departments/${d.slug}` : '/departments',
           description: d.description || 'Specialized clinical services and senior consultant outpatient OPD.',
+          imageUrl: d.imageUrl,
         }));
 
   const [activeTabId, setActiveTabId] = useState<string>(items[0]?.id ?? '');
@@ -84,15 +89,15 @@ export default function Specialities({ specialities, departments }: Props) {
         {/* Selected Speciality Spotlight Card with Animations */}
         {activeItem && (
           <div className="mt-6 rounded-card border border-brand-200 bg-white p-6 sm:p-8 shadow-card animate-fade-in-up">
-            <div className="grid gap-6 lg:grid-cols-12 items-center">
-              <div className="lg:col-span-8 space-y-3">
-                <span className="rounded-full bg-brand-100 px-3 py-1 text-[11px] font-bold text-brand-800 uppercase tracking-wider">
+            <div className="grid items-center gap-6 lg:grid-cols-12">
+              <div className="space-y-3 lg:col-span-7">
+                <span className="rounded-full bg-brand-100 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-brand-800">
                   Featured Department
                 </span>
                 <h3 className="font-display text-2xl font-bold text-ink">{activeItem.name}</h3>
                 <p className="text-sm leading-relaxed text-ink-muted">{activeItem.description}</p>
 
-                <div className="grid sm:grid-cols-2 gap-3 pt-2">
+                <div className="grid gap-3 pt-2 sm:grid-cols-2">
                   <div className="flex items-center gap-2 text-xs font-semibold text-ink">
                     <span className="text-emerald-600">✓</span> 24/7 OPD & Emergency Care
                   </div>
@@ -108,7 +113,13 @@ export default function Specialities({ specialities, departments }: Props) {
                 </div>
               </div>
 
-              <div className="lg:col-span-4 flex flex-col sm:flex-row lg:flex-col gap-3 justify-center">
+              <div className="flex flex-col gap-3 lg:col-span-5">
+                <CmsRecordImage
+                  src={activeItem.imageUrl}
+                  fallbackTitle={activeItem.name}
+                  alt={`${activeItem.name} and specialist care`}
+                  className="rounded-xl border border-[#dde5e9]"
+                />
                 <Link
                   href={`/book-appointment?speciality=${activeItem.slug}`}
                   className="btn-primary !w-full justify-center !py-3 shadow-soft hover:scale-105"

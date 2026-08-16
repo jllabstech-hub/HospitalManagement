@@ -11,6 +11,7 @@ import {
 } from './schemas';
 import type { ActionResult } from '@/types/server-action';
 import { prismaErrorCode } from '@/server/db/tenant-ops';
+import { sanitizeCmsImageUrl } from '@/features/cms-images/urls';
 
 function slugify(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -27,6 +28,7 @@ export async function createFacilityAction(rawInput: CreateFacilityInput): Promi
         name: parsed.data.name,
         category: parsed.data.category || null,
         description: parsed.data.description || null,
+        imageUrl: sanitizeCmsImageUrl(parsed.data.imageUrl),
         slug: slugify(parsed.data.name),
         tenantId: admin.tenantId,
       },
@@ -55,6 +57,7 @@ export async function updateFacilityAction(rawInput: UpdateFacilityInput): Promi
         name: data.name,
         category: data.category || null,
         description: data.description || null,
+        imageUrl: sanitizeCmsImageUrl(data.imageUrl),
         slug: slugify(data.name),
       },
     });

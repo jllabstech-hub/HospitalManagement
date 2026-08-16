@@ -42,6 +42,23 @@ export function buildFuzzyDepartmentWhere(search: string): Prisma.DepartmentWher
   return { AND };
 }
 
+export function buildFuzzySpecialityWhere(search: string): Prisma.SpecialityWhereInput {
+  if (!search || !search.trim()) return {};
+
+  const tokens = search.trim().split(/\s+/).filter(Boolean);
+  if (tokens.length === 0) return {};
+
+  const AND: Prisma.SpecialityWhereInput[] = tokens.map((token) => ({
+    OR: [
+      { name: { contains: token, mode: 'insensitive' } },
+      { shortDescription: { contains: token, mode: 'insensitive' } },
+      { fullDescription: { contains: token, mode: 'insensitive' } },
+    ],
+  }));
+
+  return { AND };
+}
+
 export function buildFuzzyAppointmentWhere(search: string): Prisma.AppointmentWhereInput {
   if (!search || !search.trim()) return {};
 

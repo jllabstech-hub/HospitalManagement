@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import Breadcrumbs from '@/components/public/Breadcrumbs';
 import PageHero from '@/components/public/PageHero';
 import { getNewsBySlug } from '@/features/cms/queries/content';
+import CmsRecordImage from '@/components/cms/CmsRecordImage';
 import { APP_CONFIG } from '@/config';
 
 interface PageProps {
@@ -42,6 +43,13 @@ export default async function NewsDetailPage({ params }: PageProps) {
               { label: item.title },
             ]}
             className="mb-8"
+          />
+
+          <CmsRecordImage
+            src={item.coverImageUrl}
+            fallbackTitle={item.title}
+            alt={item.title}
+            className="mb-8 rounded-card border border-[#dde5e9]"
           />
 
           <div className="card-surface p-6 sm:p-8">

@@ -6,6 +6,7 @@ import PageHero from '@/components/public/PageHero';
 import DoctorCard from '@/components/doctors/DoctorCard';
 import EmptyState from '@/components/ui/EmptyState';
 import Card from '@/components/ui/Card';
+import CmsRecordImage from '@/components/cms/CmsRecordImage';
 import { getCentreBySlug } from '@/features/cms/queries/catalog';
 import { APP_CONFIG } from '@/config';
 
@@ -54,6 +55,13 @@ export default async function CentreDetailPage({ params }: PageProps) {
               { label: centre.name },
             ]}
             className="mb-8"
+          />
+
+          <CmsRecordImage
+            src={centre.heroImageUrl}
+            fallbackTitle={centre.name}
+            alt={`${centre.name} centre of excellence`}
+            className="mb-8 rounded-card border border-[#dde5e9]"
           />
 
           {(centre.fullDescription || centre.clinicalFocus) && (

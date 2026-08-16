@@ -23,6 +23,8 @@ function withProductionEnv(overrides: Record<string, string | undefined>, fn: ()
     'SHOW_DEMO_CREDENTIALS',
     'RATE_LIMIT_DISABLED',
     'STORAGE_PROVIDER',
+    'IMAGE_GENERATION_PROVIDER',
+    'AI_GATEWAY_API_KEY',
   ];
   const snapshot: Record<string, string | undefined> = {};
   for (const key of keys) snapshot[key] = process.env[key];
@@ -44,6 +46,8 @@ function withProductionEnv(overrides: Record<string, string | undefined>, fn: ()
     delete process.env.SHOW_DEMO_CREDENTIALS;
     delete process.env.RATE_LIMIT_DISABLED;
     delete process.env.STORAGE_PROVIDER;
+    delete process.env.IMAGE_GENERATION_PROVIDER;
+    delete process.env.AI_GATEWAY_API_KEY;
     for (const [key, value] of Object.entries(overrides)) {
       if (value === undefined) delete process.env[key];
       else process.env[key] = value;
@@ -104,6 +108,9 @@ describe('Production Auth & Config Guard Tests', () => {
     });
     withProductionEnv({ SHOW_DEMO_CREDENTIALS: 'true' }, () => {
       expect(() => validateProductionConfig()).toThrow('SHOW_DEMO_CREDENTIALS is strictly forbidden');
+    });
+    withProductionEnv({ IMAGE_GENERATION_PROVIDER: 'mock' }, () => {
+      expect(() => validateProductionConfig()).toThrow('IMAGE_GENERATION_PROVIDER=mock is strictly forbidden');
     });
   });
 

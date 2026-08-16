@@ -6,6 +6,7 @@ import { requireAdmin } from '@/server/security/auth-helpers';
 import { CreateSpecialitySchema, CreateSpecialityInput, UpdateSpecialitySchema, UpdateSpecialityInput } from './schemas';
 import type { ActionResult } from '@/types/server-action';
 import { prismaErrorCode } from '@/server/db/tenant-ops';
+import { sanitizeCmsImageUrl } from '@/features/cms-images/urls';
 
 export async function createSpecialityAction(rawInput: CreateSpecialityInput): Promise<ActionResult> {
   try {
@@ -14,9 +15,11 @@ export async function createSpecialityAction(rawInput: CreateSpecialityInput): P
     if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message };
 
     const slug = parsed.data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const { imageUrl, ...rest } = parsed.data;
     await prisma.speciality.create({
       data: {
-        ...parsed.data,
+        ...rest,
+        imageUrl: sanitizeCmsImageUrl(imageUrl),
         slug,
         tenantId: admin.tenantId,
       },
@@ -37,12 +40,12 @@ export async function updateSpecialityAction(rawInput: UpdateSpecialityInput): P
     const parsed = UpdateSpecialitySchema.safeParse(rawInput);
     if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message };
 
-    const { id, ...data } = parsed.data;
+    const { id, imageUrl, ...data } = parsed.data;
     const slug = data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
     const updated = await prisma.speciality.updateMany({
       where: { id, tenantId: admin.tenantId },
-      data: { ...data, slug },
+      data: { ...data, imageUrl: sanitizeCmsImageUrl(imageUrl), slug },
     });
     if (updated.count !== 1) return { success: false, error: 'Record not found.' };
 

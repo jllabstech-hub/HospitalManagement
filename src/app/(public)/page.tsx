@@ -91,6 +91,7 @@ export default async function HomePage() {
     name: d.name,
     slug: d.slug,
     description: d.shortDescription ?? d.description,
+    imageUrl: d.imageUrl,
   }));
 
   return (

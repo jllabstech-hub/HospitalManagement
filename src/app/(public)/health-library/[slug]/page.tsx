@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import Breadcrumbs from '@/components/public/Breadcrumbs';
 import PageHero from '@/components/public/PageHero';
 import { getArticleBySlug } from '@/features/cms/queries/content';
+import CmsRecordImage from '@/components/cms/CmsRecordImage';
 import { APP_CONFIG } from '@/config';
 
 interface PageProps {
@@ -46,6 +47,13 @@ export default async function HealthLibraryDetailPage({ params }: PageProps) {
               { label: article.title },
             ]}
             className="mb-8"
+          />
+
+          <CmsRecordImage
+            src={article.coverImageUrl}
+            fallbackTitle={article.title}
+            alt={article.title}
+            className="mb-8 rounded-card border border-[#dde5e9]"
           />
 
           <p className="mb-6 rounded-button bg-amber-50 px-4 py-3 text-xs text-amber-800">

@@ -110,8 +110,16 @@ export function validateProductionConfig(): void {
     errors.push('RATE_LIMIT_DISABLED is strictly forbidden in production.');
   }
 
+  if (process.env.IMAGE_GENERATION_PROVIDER === 'mock') {
+    errors.push('IMAGE_GENERATION_PROVIDER=mock is strictly forbidden in production.');
+  }
+
   if (process.env.STORAGE_PROVIDER === 'local') {
     errors.push('STORAGE_PROVIDER=local is strictly forbidden in production.');
+  }
+
+  if (!process.env.AI_GATEWAY_API_KEY && process.env.VERCEL !== '1') {
+    warnings.push('AI_GATEWAY_API_KEY is missing; CMS image generation will stay disabled until AI Gateway is configured.');
   }
 
   if (warnings.length > 0) {

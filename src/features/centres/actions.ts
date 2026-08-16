@@ -6,6 +6,7 @@ import { requireAdmin } from '@/server/security/auth-helpers';
 import { CreateCentreSchema, CreateCentreInput, UpdateCentreSchema, UpdateCentreInput } from './schemas';
 import type { ActionResult } from '@/types/server-action';
 import { prismaErrorCode } from '@/server/db/tenant-ops';
+import { sanitizeCmsImageUrl } from '@/features/cms-images/urls';
 
 export async function createCentreAction(rawInput: CreateCentreInput): Promise<ActionResult> {
   try {
@@ -14,9 +15,11 @@ export async function createCentreAction(rawInput: CreateCentreInput): Promise<A
     if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message };
 
     const slug = parsed.data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const { heroImageUrl, ...rest } = parsed.data;
     await prisma.centreOfExcellence.create({
       data: {
-        ...parsed.data,
+        ...rest,
+        heroImageUrl: sanitizeCmsImageUrl(heroImageUrl),
         slug,
         tenantId: admin.tenantId,
       },
@@ -37,12 +40,12 @@ export async function updateCentreAction(rawInput: UpdateCentreInput): Promise<A
     const parsed = UpdateCentreSchema.safeParse(rawInput);
     if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message };
 
-    const { id, ...data } = parsed.data;
+    const { id, heroImageUrl, ...data } = parsed.data;
     const slug = data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
     const updated = await prisma.centreOfExcellence.updateMany({
       where: { id, tenantId: admin.tenantId },
-      data: { ...data, slug },
+      data: { ...data, heroImageUrl: sanitizeCmsImageUrl(heroImageUrl), slug },
     });
     if (updated.count !== 1) return { success: false, error: 'Record not found.' };
 

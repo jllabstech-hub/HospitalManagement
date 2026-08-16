@@ -5,79 +5,86 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { CreateCentreSchema, CreateCentreInput, UpdateCentreSchema, UpdateCentreInput } from '../schemas';
 import { createCentreAction, updateCentreAction, deleteCentreAction } from '../actions';
 import Button from '@/components/ui/Button';
-import { cmsRecordLabel, type CmsListRecord } from '@/features/cms/management-types';
+import { cmsRecordDescription, cmsRecordImageUrl, cmsRecordLabel, type CmsListRecord } from '@/features/cms/management-types';
+import CmsImageRecordList from '@/features/cms-images/components/CmsImageRecordList';
+import CmsImagePicker from '@/features/cms-images/components/CmsImagePicker';
+
+const emptyForm = { name: '', shortDescription: '', clinicalFocus: '', heroImageUrl: '' };
 
 export default function CentreManagement({ initialData }: { initialData: CmsListRecord[] }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState('');
-  
-  const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<CreateCentreInput | UpdateCentreInput>({
+
+  const { register, handleSubmit, reset, setValue, watch, formState: { isSubmitting } } = useForm<CreateCentreInput | UpdateCentreInput>({
     resolver: zodResolver(editingId ? UpdateCentreSchema : CreateCentreSchema),
-    defaultValues: { name: '', shortDescription: '', clinicalFocus: '' },
+    defaultValues: emptyForm,
   });
+
+  const editing = initialData.find((item) => item.id === editingId) ?? null;
 
   const onSubmit = async (data: CreateCentreInput) => {
     setError('');
-    let res;
-    if (editingId) {
-      res = await updateCentreAction({ ...data, id: editingId });
-    } else {
-      res = await createCentreAction(data);
-    }
+    const res = editingId
+      ? await updateCentreAction({ ...data, id: editingId })
+      : await createCentreAction(data);
     if (res.success) {
       setEditingId(null);
-      reset({ name: '', shortDescription: '', clinicalFocus: '' });
+      reset(emptyForm);
     } else {
       setError(res.error || 'Operation failed');
     }
   };
 
-  const editRecord = (record: CmsListRecord) => {
-    setEditingId(record.id);
-    reset({ ...record } as unknown as CreateCentreInput);
-  };
-
-  const deleteRecord = async (id: string) => {
-    if (confirm('Are you sure you want to delete this record?')) {
-      await deleteCentreAction(id);
-    }
-  };
-
   return (
     <div className="space-y-8">
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-4 border rounded bg-white">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 rounded border bg-white p-4">
         <h3 className="font-bold">{editingId ? 'Edit' : 'Create'} Centre</h3>
         {error && <p className="text-red-500">{error}</p>}
         <div>
           <label className="block text-sm">Name</label>
-          <input {...register('name')} className="border p-2 w-full" />
+          <input {...register('name')} className="w-full border p-2" />
         </div>
-        
         <div>
           <label className="block text-sm">Short Description</label>
-          <input {...register('shortDescription')} className="border p-2 w-full" />
+          <input {...register('shortDescription')} className="w-full border p-2" />
         </div>
         <div>
           <label className="block text-sm">Clinical Focus</label>
-          <input {...register('clinicalFocus')} className="border p-2 w-full" />
+          <input {...register('clinicalFocus')} className="w-full border p-2" />
         </div>
+        <CmsImagePicker
+          label="Centre image"
+          description="This image appears on Centres of Excellence pages."
+          value={watch('heroImageUrl')}
+          onChange={(url) => setValue('heroImageUrl', url)}
+          title={watch('name')}
+          contentType="CENTRE"
+          recordId={editing?.id}
+        />
         <div className="flex gap-2">
           <Button type="submit" loading={isSubmitting}>{editingId ? 'Update' : 'Create'}</Button>
-          {editingId && <Button variant="outline" onClick={() => { setEditingId(null); reset(); }}>Cancel</Button>}
+          {editingId && <Button variant="outline" onClick={() => { setEditingId(null); reset(emptyForm); }}>Cancel</Button>}
         </div>
       </form>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {initialData.map((item) => (
-          <div key={item.id} className="p-4 border rounded bg-white">
-            <h4 className="font-bold">{cmsRecordLabel(item)}</h4>
-            <div className="mt-4 flex gap-2">
-              <button onClick={() => editRecord(item)} className="text-brand-600 text-sm">Edit</button>
-              <button onClick={() => deleteRecord(item.id)} className="text-red-600 text-sm">Delete</button>
-            </div>
-          </div>
-        ))}
-      </div>
+      <CmsImageRecordList
+        contentType="CENTRE"
+        records={initialData.map((item) => ({
+          id: item.id,
+          title: cmsRecordLabel(item),
+          description: cmsRecordDescription(item),
+          imageUrl: cmsRecordImageUrl(item),
+        }))}
+        onEdit={(id) => {
+          const record = initialData.find((item) => item.id === id);
+          if (!record) return;
+          setEditingId(record.id);
+          reset({ ...record, heroImageUrl: cmsRecordImageUrl(record) || '' } as unknown as CreateCentreInput);
+        }}
+        onDelete={async (id) => {
+          if (confirm('Are you sure you want to delete this record?')) await deleteCentreAction(id);
+        }}
+      />
     </div>
   );
 }

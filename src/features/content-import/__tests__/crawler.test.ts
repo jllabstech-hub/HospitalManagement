@@ -144,6 +144,14 @@ describe('content extraction and sanitization', () => {
     expect(preview.specialities.some((item) => item.name === 'Cardiology')).toBe(true);
   });
 
+  it('extracts a displayable speciality image from og:image', () => {
+    const preview = extractPage(
+      'https://hospital.test/specialities/cardiology',
+      `<html><head><meta property="og:image" content="https://images.unsplash.com/photo-1631217868264-e5b90bb7e305?auto=format&fit=crop&w=1600&q=80" /></head><body><h1>Cardiology</h1><p>Specialised care for conditions affecting the heart and blood vessels.</p></body></html>`
+    );
+    expect(preview.specialities[0]?.imageUrl).toContain('images.unsplash.com');
+  });
+
   it('maps specialities from headings', () => {
     const preview = extractPage(
       'https://hospital.test/specialities',

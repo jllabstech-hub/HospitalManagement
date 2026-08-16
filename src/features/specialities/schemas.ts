@@ -5,6 +5,7 @@ export const CreateSpecialitySchema = z.object({
   shortDescription: z.string().trim().optional().or(z.literal('')),
   fullDescription: z.string().trim().optional().or(z.literal('')),
   seoTitle: z.string().trim().optional().or(z.literal('')),
+  imageUrl: z.string().trim().max(2000).optional().or(z.literal('')),
 });
 
 export type CreateSpecialityInput = z.infer<typeof CreateSpecialitySchema>;

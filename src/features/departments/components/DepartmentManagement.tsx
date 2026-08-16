@@ -20,7 +20,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import InteractiveSearchInput from '@/components/shared/InteractiveSearchInput';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 
-import ImageUploadPicker from '@/components/shared/ImageUploadPicker';
+import CmsImagePicker from '@/features/cms-images/components/CmsImagePicker';
+import { fillMissingCmsImagesFromCatalogAction } from '@/features/cms-images/actions';
 
 interface DepartmentItem {
   id: string;
@@ -71,6 +72,7 @@ export default function DepartmentManagement({
   const [serverError, setServerError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [departmentRows, setDepartmentRows] = useState(departments);
+  const [fillingImages, setFillingImages] = useState(false);
 
   useEffect(() => {
     setDepartmentRows(departments);
@@ -79,7 +81,7 @@ export default function DepartmentManagement({
   // Form hook for Create
   const createForm = useForm<CreateDepartmentInput>({
     resolver: zodResolver(CreateDepartmentSchema),
-    defaultValues: { name: '', description: '' },
+    defaultValues: { name: '', description: '', imageUrl: '' },
   });
 
   // Form hook for Edit
@@ -161,6 +163,25 @@ export default function DepartmentManagement({
         description="Manage hospital medical departments and specialties."
         frontendPath="/departments"
       >
+        <button
+          type="button"
+          disabled={fillingImages || departmentRows.every((dept) => dept.imageUrl)}
+          onClick={async () => {
+            setFillingImages(true);
+            setServerError(null);
+            const result = await fillMissingCmsImagesFromCatalogAction({ contentType: 'DEPARTMENT' });
+            setFillingImages(false);
+            if (!result.success) {
+              setServerError(result.error || 'Unable to attach images.');
+              return;
+            }
+            setSuccessMessage(`Attached ${result.data?.attached ?? 0} relevant department images.`);
+            router.refresh();
+          }}
+          className="btn-secondary"
+        >
+          {fillingImages ? 'Filling images...' : 'Fill missing images'}
+        </button>
         <button
           onClick={() => {
             setServerError(null);
@@ -357,6 +378,14 @@ export default function DepartmentManagement({
                 )}
               </div>
 
+              <CmsImagePicker
+                label="Department cover image"
+                description="Upload, browse the library, or pick a relevant medical photo. This image appears on /departments."
+                value={createForm.watch('imageUrl')}
+                onChange={(url) => createForm.setValue('imageUrl', url)}
+                title={createForm.watch('name')}
+              />
+
               <div>
                 <label className="mb-1 block text-xs font-semibold text-ink">SEO Title (Optional)</label>
                 <input
@@ -416,11 +445,14 @@ export default function DepartmentManagement({
                 )}
               </div>
 
-              <ImageUploadPicker
-                label="Department Cover Image"
-                description="Upload or select an asset for public department banners."
+              <CmsImagePicker
+                label="Department cover image"
+                description="Upload, browse the library, or pick a relevant medical photo. This image appears on /departments."
                 value={editForm.watch('imageUrl')}
                 onChange={(url) => editForm.setValue('imageUrl', url)}
+                title={editForm.watch('name')}
+                contentType="DEPARTMENT"
+                recordId={editingDept.id}
               />
 
               <div>

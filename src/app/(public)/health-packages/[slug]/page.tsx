@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import Breadcrumbs from '@/components/public/Breadcrumbs';
 import PageHero from '@/components/public/PageHero';
 import PackageInfoRequestForm from '@/features/cms/components/PackageInfoRequestForm';
+import CmsRecordImage from '@/components/cms/CmsRecordImage';
 import { getPackageBySlug } from '@/features/cms/queries/catalog';
 import { APP_CONFIG } from '@/config';
 
@@ -50,6 +51,12 @@ export default async function HealthPackageDetailPage({ params }: PageProps) {
 
           <div className="grid gap-10 lg:grid-cols-3">
             <div className="lg:col-span-2 space-y-6">
+              <CmsRecordImage
+                src={pkg.imageUrl}
+                fallbackTitle={pkg.name}
+                alt={`${pkg.name} health check package`}
+                className="rounded-card border border-[#dde5e9]"
+              />
               <div className="card-surface p-6 sm:p-8">
                 {formatPrice(pkg.price, pkg.currency) && (
                   <p className="text-2xl font-semibold text-brand-800">

@@ -4,6 +4,7 @@ import Breadcrumbs from '@/components/public/Breadcrumbs';
 import PageHero from '@/components/public/PageHero';
 import EmptyState from '@/components/ui/EmptyState';
 import Card from '@/components/ui/Card';
+import CmsRecordImage from '@/components/cms/CmsRecordImage';
 import { getPublishedSpecialities } from '@/features/cms/queries/catalog';
 import { APP_CONFIG } from '@/config';
 
@@ -39,7 +40,9 @@ export default async function SpecialitiesPage() {
           ) : (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {specialities.map((spec) => (
-                <Card key={spec.id} hover className="flex h-full flex-col">
+                <Card key={spec.id} hover padding="none" className="flex h-full flex-col overflow-hidden">
+                  <CmsRecordImage src={spec.imageUrl} fallbackTitle={spec.name} alt={`${spec.name} and specialist care`} className="rounded-t-card" />
+                  <div className="flex h-full flex-col p-6">
                   {spec.department && (
                     <span className="text-[10px] font-semibold uppercase tracking-wider text-brand-600">
                       {spec.department.name}
@@ -55,6 +58,7 @@ export default async function SpecialitiesPage() {
                   >
                     Learn more →
                   </Link>
+                  </div>
                 </Card>
               ))}
             </div>

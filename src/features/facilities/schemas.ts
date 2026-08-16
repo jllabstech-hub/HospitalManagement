@@ -4,6 +4,7 @@ export const CreateFacilitySchema = z.object({
   name: z.string().trim().min(2, { message: 'Name must be at least 2 characters.' }),
   category: z.string().trim().optional().or(z.literal('')),
   description: z.string().trim().optional().or(z.literal('')),
+  imageUrl: z.string().trim().max(2000).optional().or(z.literal('')),
 });
 
 export type CreateFacilityInput = z.infer<typeof CreateFacilitySchema>;

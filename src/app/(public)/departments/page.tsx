@@ -4,6 +4,7 @@ import Breadcrumbs from '@/components/public/Breadcrumbs';
 import PageHero from '@/components/public/PageHero';
 import EmptyState from '@/components/ui/EmptyState';
 import Card from '@/components/ui/Card';
+import CmsRecordImage from '@/components/cms/CmsRecordImage';
 import { getPublishedDepartments } from '@/features/cms/queries/catalog';
 import { APP_CONFIG } from '@/config';
 
@@ -39,7 +40,9 @@ export default async function DepartmentsPage() {
           ) : (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {departments.map((dept) => (
-                <Card key={dept.id} hover className="flex h-full flex-col">
+                <Card key={dept.id} hover padding="none" className="flex h-full flex-col overflow-hidden">
+                  <CmsRecordImage src={dept.imageUrl} fallbackTitle={dept.name} alt={`${dept.name} hospital department`} className="rounded-t-card" />
+                  <div className="flex h-full flex-col p-6">
                   <h2 className="text-lg font-semibold text-ink">{dept.name}</h2>
                   <p className="mt-2 flex-1 text-sm text-ink-muted line-clamp-3">
                     {dept.shortDescription ?? dept.description ?? 'Specialist outpatient care.'}
@@ -54,6 +57,7 @@ export default async function DepartmentsPage() {
                     >
                       Find doctors
                     </Link>
+                  </div>
                   </div>
                 </Card>
               ))}

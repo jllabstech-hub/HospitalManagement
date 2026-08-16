@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { upsertHospitalProfileAction } from '@/features/cms/actions/admin-cms';
 import ImageUploadPicker from '@/components/shared/ImageUploadPicker';
+import CmsImagePicker from '@/features/cms-images/components/CmsImagePicker';
 import { BusyLabel } from '@/components/ui/Spinner';
 
 export interface HospitalProfileFormData {
@@ -160,12 +161,17 @@ export default function HospitalProfileForm({ profile }: Props) {
       <div className="card-surface space-y-6 p-6">
         <h2 className="font-display text-base font-bold text-ink">3. Logo, hero & branding</h2>
         <div className="grid gap-6 md:grid-cols-2">
-          <ImageUploadPicker
-            label="Homepage Hero Banner Image"
-            description="Main banner image displayed at the top of the homepage (/)."
-            value={form.heroImageUrl}
-            onChange={(url) => updateField('heroImageUrl', url)}
-          />
+          <div className="space-y-3">
+            <CmsImagePicker
+              label="Homepage hero banner image"
+              description="Main banner image displayed at the top of the homepage."
+              value={form.heroImageUrl}
+              onChange={(url) => updateField('heroImageUrl', url)}
+              title={form.hospitalName || 'Hospital'}
+              contentType="HOSPITAL_HERO"
+              recordId={form.id}
+            />
+          </div>
           <ImageUploadPicker
             label="Hospital Primary Logo"
             description="Brand logo displayed in the top header navbar and footer."

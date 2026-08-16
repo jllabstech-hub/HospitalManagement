@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import Breadcrumbs from '@/components/public/Breadcrumbs';
 import PageHero from '@/components/public/PageHero';
 import { getServiceBySlug } from '@/features/cms/queries/catalog';
+import CmsRecordImage from '@/components/cms/CmsRecordImage';
 import { APP_CONFIG } from '@/config';
 
 interface PageProps {
@@ -46,6 +47,13 @@ export default async function ServiceDetailPage({ params }: PageProps) {
               { label: service.name },
             ]}
             className="mb-8"
+          />
+
+          <CmsRecordImage
+            src={service.imageUrl}
+            fallbackTitle={service.name}
+            alt={`${service.name} hospital service`}
+            className="mb-8 rounded-card border border-[#dde5e9]"
           />
 
           <div className="card-surface p-6 sm:p-8">

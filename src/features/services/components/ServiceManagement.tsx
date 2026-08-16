@@ -5,79 +5,86 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { CreateServiceSchema, CreateServiceInput, UpdateServiceSchema, UpdateServiceInput } from '../schemas';
 import { createServiceAction, updateServiceAction, deleteServiceAction } from '../actions';
 import Button from '@/components/ui/Button';
-import { cmsRecordLabel, type CmsListRecord } from '@/features/cms/management-types';
+import { cmsRecordDescription, cmsRecordImageUrl, cmsRecordLabel, type CmsListRecord } from '@/features/cms/management-types';
+import CmsImageRecordList from '@/features/cms-images/components/CmsImageRecordList';
+import CmsImagePicker from '@/features/cms-images/components/CmsImagePicker';
+
+const emptyForm = { name: '', shortDescription: '', fullDescription: '', imageUrl: '' };
 
 export default function ServiceManagement({ initialData }: { initialData: CmsListRecord[] }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState('');
-  
-  const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<CreateServiceInput | UpdateServiceInput>({
+
+  const { register, handleSubmit, reset, setValue, watch, formState: { isSubmitting } } = useForm<CreateServiceInput | UpdateServiceInput>({
     resolver: zodResolver(editingId ? UpdateServiceSchema : CreateServiceSchema),
-    defaultValues: { name: '', shortDescription: '', fullDescription: '' },
+    defaultValues: emptyForm,
   });
+
+  const editing = initialData.find((item) => item.id === editingId) ?? null;
 
   const onSubmit = async (data: CreateServiceInput) => {
     setError('');
-    let res;
-    if (editingId) {
-      res = await updateServiceAction({ ...data, id: editingId });
-    } else {
-      res = await createServiceAction(data);
-    }
+    const res = editingId
+      ? await updateServiceAction({ ...data, id: editingId })
+      : await createServiceAction(data);
     if (res.success) {
       setEditingId(null);
-      reset({ name: '', shortDescription: '', fullDescription: '' });
+      reset(emptyForm);
     } else {
       setError(res.error || 'Operation failed');
     }
   };
 
-  const editRecord = (record: CmsListRecord) => {
-    setEditingId(record.id);
-    reset({ ...record } as unknown as CreateServiceInput);
-  };
-
-  const deleteRecord = async (id: string) => {
-    if (confirm('Are you sure you want to delete this record?')) {
-      await deleteServiceAction(id);
-    }
-  };
-
   return (
     <div className="space-y-8">
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-4 border rounded bg-white">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 rounded border bg-white p-4">
         <h3 className="font-bold">{editingId ? 'Edit' : 'Create'} Service</h3>
         {error && <p className="text-red-500">{error}</p>}
         <div>
           <label className="block text-sm">Name</label>
-          <input {...register('name')} className="border p-2 w-full" />
+          <input {...register('name')} className="w-full border p-2" />
         </div>
-        
         <div>
           <label className="block text-sm">Short Description</label>
-          <input {...register('shortDescription')} className="border p-2 w-full" />
+          <input {...register('shortDescription')} className="w-full border p-2" />
         </div>
         <div>
           <label className="block text-sm">Full Description</label>
-          <input {...register('fullDescription')} className="border p-2 w-full" />
+          <input {...register('fullDescription')} className="w-full border p-2" />
         </div>
+        <CmsImagePicker
+          label="Service image"
+          description="This image appears on public service listings."
+          value={watch('imageUrl')}
+          onChange={(url) => setValue('imageUrl', url)}
+          title={watch('name')}
+          contentType="SERVICE"
+          recordId={editing?.id}
+        />
         <div className="flex gap-2">
           <Button type="submit" loading={isSubmitting}>{editingId ? 'Update' : 'Create'}</Button>
-          {editingId && <Button variant="outline" onClick={() => { setEditingId(null); reset(); }}>Cancel</Button>}
+          {editingId && <Button variant="outline" onClick={() => { setEditingId(null); reset(emptyForm); }}>Cancel</Button>}
         </div>
       </form>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {initialData.map((item) => (
-          <div key={item.id} className="p-4 border rounded bg-white">
-            <h4 className="font-bold">{cmsRecordLabel(item)}</h4>
-            <div className="mt-4 flex gap-2">
-              <button onClick={() => editRecord(item)} className="text-brand-600 text-sm">Edit</button>
-              <button onClick={() => deleteRecord(item.id)} className="text-red-600 text-sm">Delete</button>
-            </div>
-          </div>
-        ))}
-      </div>
+      <CmsImageRecordList
+        contentType="SERVICE"
+        records={initialData.map((item) => ({
+          id: item.id,
+          title: cmsRecordLabel(item),
+          description: cmsRecordDescription(item),
+          imageUrl: cmsRecordImageUrl(item),
+        }))}
+        onEdit={(id) => {
+          const record = initialData.find((item) => item.id === id);
+          if (!record) return;
+          setEditingId(record.id);
+          reset({ ...record, imageUrl: cmsRecordImageUrl(record) || '' } as unknown as CreateServiceInput);
+        }}
+        onDelete={async (id) => {
+          if (confirm('Are you sure you want to delete this record?')) await deleteServiceAction(id);
+        }}
+      />
     </div>
   );
 }
