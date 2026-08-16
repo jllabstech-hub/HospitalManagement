@@ -7,6 +7,7 @@ interface BrandLogoProps {
   variant?: 'light' | 'dark';
   size?: 'sm' | 'md' | 'lg';
   showTagline?: boolean;
+  stacked?: boolean;
   className?: string;
 }
 
@@ -15,46 +16,68 @@ export default function BrandLogo({
   variant = 'dark',
   size = 'md',
   showTagline = false,
+  stacked = false,
   className,
 }: BrandLogoProps) {
-  const markSize = size === 'lg' ? 'h-11 w-11' : size === 'sm' ? 'h-8 w-8' : 'h-9 w-9';
-  const titleSize = size === 'lg' ? 'text-xl' : size === 'sm' ? 'text-sm' : 'text-base';
+  const markSize = size === 'lg' ? 'h-11 w-11' : size === 'sm' ? 'h-8 w-8' : stacked ? 'h-10 w-10' : 'h-9 w-9';
+  const titleSize = size === 'lg' ? 'text-xl' : size === 'sm' ? 'text-sm' : stacked ? 'text-[17px] leading-none' : 'text-base';
   const isLight = variant === 'light';
 
   const content = (
-    <span className={cn('inline-flex min-w-0 max-w-full items-center gap-2 sm:gap-3', className)}>
+    <span className={cn('inline-flex min-w-0 max-w-full items-center gap-2.5 sm:gap-3', className)}>
       <span
         className={cn(
-          'relative flex shrink-0 items-center justify-center rounded-xl',
+          'relative flex shrink-0 items-center justify-center rounded-[10px]',
           markSize,
-          isLight ? 'bg-white/15 ring-1 ring-white/25' : 'bg-brand-700 text-white shadow-soft'
+          isLight ? 'bg-white/15 ring-1 ring-white/25' : 'bg-brand-800 text-white'
         )}
         aria-hidden
       >
-        <svg viewBox="0 0 32 32" className="h-[58%] w-[58%]" fill="none">
+        <svg viewBox="0 0 32 32" className="h-[52%] w-[52%]" fill="none">
           <path
-            d="M16 6v20M6 16h20"
+            d="M16 7v18M7 16h18"
             stroke="currentColor"
-            strokeWidth="3.2"
+            strokeWidth="3.4"
             strokeLinecap="round"
           />
-          <circle cx="16" cy="16" r="12" stroke="currentColor" strokeWidth="1.5" opacity="0.35" />
         </svg>
       </span>
-      <span className="min-w-0 truncate text-left">
-        <span
-          className={cn(
-            'block truncate font-display font-semibold tracking-tight',
-            titleSize,
-            isLight ? 'text-white' : 'text-ink'
-          )}
-        >
-          {APP_CONFIG.shortName}
-          <span className={cn('font-medium', isLight ? 'text-brand-100' : 'text-brand-600')}>
-            {' '}
-            Hospital
+      <span className={cn('min-w-0 text-left', !stacked && 'truncate')}>
+        {stacked ? (
+          <>
+            <span
+              className={cn(
+                'block truncate font-display font-semibold tracking-tight',
+                titleSize,
+                isLight ? 'text-white' : 'text-brand-900'
+              )}
+            >
+              {APP_CONFIG.shortName}
+            </span>
+            <span
+              className={cn(
+                'mt-0.5 block text-[13px] font-medium tracking-wide',
+                isLight ? 'text-brand-100/85' : 'text-ink-muted'
+              )}
+            >
+              Hospital
+            </span>
+          </>
+        ) : (
+          <span
+            className={cn(
+              'block truncate font-display font-semibold tracking-tight',
+              titleSize,
+              isLight ? 'text-white' : 'text-ink'
+            )}
+          >
+            {APP_CONFIG.shortName}
+            <span className={cn('font-medium', isLight ? 'text-brand-100' : 'text-brand-600')}>
+              {' '}
+              Hospital
+            </span>
           </span>
-        </span>
+        )}
         {showTagline && (
           <span
             className={cn(

@@ -12,15 +12,13 @@ export function buildTenantNav(input: {
   centres: TenantNavLink[];
 }): NavItemData[] {
   const hospitalName = input.hospitalName?.trim() || 'the hospital';
-  const specialityItems = input.specialities.slice(0, 6).map((spec) => ({
+  const specialityItems = input.specialities.map((spec) => ({
     href: `/specialities/${spec.slug}`,
     title: spec.name,
-    description: spec.shortDescription || undefined,
   }));
-  const centreItems = input.centres.slice(0, 6).map((centre) => ({
+  const centreItems = input.centres.map((centre) => ({
     href: `/centres-of-excellence/${centre.slug}`,
     title: centre.name,
-    description: centre.shortDescription || undefined,
   }));
 
   return [

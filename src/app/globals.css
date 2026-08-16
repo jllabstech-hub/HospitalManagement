@@ -179,7 +179,56 @@
 
 #site-nav-progress .site-nav-progress-bar {
   height: 100%;
-  background: #38bdf8;
-  box-shadow: 0 0 12px rgba(56, 189, 248, 0.95), 0 0 6px #7dd3fc;
+  background-image: linear-gradient(
+    90deg,
+    #38bdf8 0%,
+    #7dd3fc 22%,
+    #fde047 48%,
+    #60a5fa 74%,
+    #2563eb 100%
+  );
+  background-size: 200% 100%;
+  animation: site-nav-progress-flow 1.15s linear infinite;
+  box-shadow:
+    0 0 10px rgba(56, 189, 248, 0.75),
+    0 0 8px rgba(250, 204, 21, 0.45),
+    0 0 6px rgba(37, 99, 235, 0.5);
   transform-origin: left center;
+}
+
+@keyframes site-nav-progress-flow {
+  from {
+    background-position: 0% 50%;
+  }
+  to {
+    background-position: 200% 50%;
+  }
+}
+
+.site-menu-scroll {
+  max-height: min(20rem, 55vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 8px;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: #4a96a8 #eef3f5;
+}
+
+.site-menu-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.site-menu-scroll::-webkit-scrollbar-track {
+  background: #eef3f5;
+  border-radius: 999px;
+}
+
+.site-menu-scroll::-webkit-scrollbar-thumb {
+  background: #4a96a8;
+  border-radius: 999px;
+}
+
+.site-menu-scroll::-webkit-scrollbar-thumb:hover {
+  background: #2a7a8c;
 }
