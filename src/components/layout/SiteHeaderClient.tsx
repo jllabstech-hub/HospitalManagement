@@ -162,7 +162,8 @@ export default function SiteHeaderClient({
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full">
+    <>
+    <header className="fixed inset-x-0 top-0 z-50 w-full">
       <div
         className={cn(
           'relative w-full border-b border-[#e4e7e4] transition-shadow duration-300',
@@ -439,5 +440,7 @@ export default function SiteHeaderClient({
 
       <SearchOverlay isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </header>
+    <div className="h-[4.75rem] shrink-0" aria-hidden="true" />
+    </>
   );
 }
