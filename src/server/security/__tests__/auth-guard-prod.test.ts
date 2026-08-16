@@ -10,6 +10,8 @@ function withProductionEnv(overrides: Record<string, string | undefined>, fn: ()
     'MEDIA_BUCKET',
     'METRICS_TOKEN',
     'NEXTAUTH_URL',
+    'AUTH_URL',
+    'VERCEL_URL',
     'RESEND_API_KEY',
     'ALLOW_DESTRUCTIVE_SEED',
     'ALLOW_DEV_TENANT_FALLBACK',
@@ -31,6 +33,7 @@ function withProductionEnv(overrides: Record<string, string | undefined>, fn: ()
     process.env.METRICS_TOKEN = 'metrics-token-123';
     process.env.NEXTAUTH_URL = 'https://hospital.example';
     process.env.RESEND_API_KEY = 're_test';
+    delete process.env.VERCEL_URL;
     delete process.env.ALLOW_DESTRUCTIVE_SEED;
     delete process.env.ALLOW_DEV_TENANT_FALLBACK;
     delete process.env.E2E_TEST_MODE;
@@ -61,10 +64,30 @@ describe('Production Auth & Config Guard Tests', () => {
     });
   });
 
-  it('rejects production runtime without MEDIA_BUCKET', () => {
-    withProductionEnv({ MEDIA_BUCKET: undefined }, () => {
-      expect(() => validateProductionConfig()).toThrow('MEDIA_BUCKET is missing');
-    });
+  it('boots without optional media, metrics, and notification credentials', () => {
+    withProductionEnv(
+      {
+        MEDIA_BUCKET: undefined,
+        METRICS_TOKEN: undefined,
+        RESEND_API_KEY: undefined,
+      },
+      () => {
+        expect(() => validateProductionConfig()).not.toThrow();
+      }
+    );
+  });
+
+  it('accepts VERCEL_URL when NEXTAUTH_URL is unset', () => {
+    withProductionEnv(
+      {
+        NEXTAUTH_URL: undefined,
+        VERCEL_URL: 'hospital-management-jllabs.vercel.app',
+      },
+      () => {
+        expect(() => validateProductionConfig()).not.toThrow();
+        expect(process.env.NEXTAUTH_URL).toBe('https://hospital-management-jllabs.vercel.app');
+      }
+    );
   });
 
   it('rejects E2E_TEST_MODE, mock sessions, and demo auth in production', () => {

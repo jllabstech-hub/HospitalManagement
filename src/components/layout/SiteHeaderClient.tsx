@@ -216,7 +216,7 @@ export default function SiteHeaderClient({
                         : singleItems.length > 4
                           ? 2
                           : 1;
-                    const visualColumns = isMultiGroup
+                    const visualColumns: Array<{ title?: string; items: DropdownSubItem[] }> = isMultiGroup
                       ? columns.map((col) => ({ title: col.title, items: col.items }))
                       : splitIntoColumns(singleItems, visualCount).map((items) => ({ items }));
 

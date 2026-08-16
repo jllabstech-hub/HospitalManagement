@@ -19,8 +19,24 @@ function hasAppUrl(): boolean {
   return Boolean(
     process.env.AUTH_URL ||
       process.env.NEXTAUTH_URL ||
-      process.env.NEXT_PUBLIC_APP_URL
+      process.env.NEXT_PUBLIC_APP_URL ||
+      process.env.VERCEL_URL
   );
+}
+
+function applyVercelAppUrlFallback(): void {
+  if (
+    process.env.AUTH_URL ||
+    process.env.NEXTAUTH_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    !process.env.VERCEL_URL
+  ) {
+    return;
+  }
+  const host = process.env.VERCEL_URL.replace(/^https?:\/\//, '');
+  const url = `https://${host}`;
+  process.env.NEXTAUTH_URL = url;
+  process.env.AUTH_URL = url;
 }
 
 /**
@@ -36,7 +52,10 @@ export function validateProductionConfig(): void {
     return;
   }
 
+  applyVercelAppUrlFallback();
+
   const errors: string[] = [];
+  const warnings: string[] = [];
 
   const authSecret = (process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || '').trim();
   if (!authSecret || authSecret.length < 32 || WEAK_SECRETS.has(authSecret)) {
@@ -47,20 +66,20 @@ export function validateProductionConfig(): void {
     errors.push('DATABASE_URL is missing.');
   }
 
+  if (!hasAppUrl()) {
+    errors.push('NEXTAUTH_URL, AUTH_URL, NEXT_PUBLIC_APP_URL, or VERCEL_URL is missing.');
+  }
+
   if (!process.env.MEDIA_BUCKET) {
-    errors.push('MEDIA_BUCKET is missing (object storage is required in production).');
+    warnings.push('MEDIA_BUCKET is missing; media uploads will stay disabled until object storage is configured.');
   }
 
   if (!process.env.METRICS_TOKEN) {
-    errors.push('METRICS_TOKEN is missing.');
-  }
-
-  if (!hasAppUrl()) {
-    errors.push('NEXTAUTH_URL, AUTH_URL, or NEXT_PUBLIC_APP_URL is missing.');
+    warnings.push('METRICS_TOKEN is missing; the metrics endpoint will stay unauthorized.');
   }
 
   if (!hasNotificationCredentials()) {
-    errors.push('Notification provider credentials are missing (configure Resend/SMTP and/or Twilio).');
+    warnings.push('Notification provider credentials are missing (configure Resend and/or Twilio when email/SMS is needed).');
   }
 
   if (process.env.ALLOW_DESTRUCTIVE_SEED === 'true') {
@@ -93,6 +112,12 @@ export function validateProductionConfig(): void {
 
   if (process.env.STORAGE_PROVIDER === 'local') {
     errors.push('STORAGE_PROVIDER=local is strictly forbidden in production.');
+  }
+
+  if (warnings.length > 0) {
+    console.warn(
+      `[PRODUCTION CONFIG WARNING] Optional services are not fully configured:\n- ${warnings.join('\n- ')}`
+    );
   }
 
   if (errors.length > 0) {
