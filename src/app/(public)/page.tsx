@@ -1,7 +1,4 @@
 import type { Metadata } from 'next';
-import SiteHeader from '@/components/layout/SiteHeader';
-import SiteFooter from '@/components/layout/SiteFooter';
-import FloatingActionDock from '@/components/public/FloatingActionDock';
 import Hero from '@/components/home/Hero';
 import TrustStats from '@/components/home/TrustStats';
 import AboutSection from '@/components/home/AboutSection';
@@ -97,24 +94,19 @@ export default async function HomePage() {
   }));
 
   return (
-    <div className="flex min-h-screen flex-col relative">
+    <>
       <JsonLd data={[medicalOrganizationLd, breadcrumbLd]} />
-      <SiteHeader profile={profile} />
-      <main className="flex-1">
-        <Hero profile={profile} />
-        <TrustStats />
-        <AboutSection profile={profile} />
-        <ExcellenceSection centres={centres} departments={deptForHome} />
-        <FeaturedDoctors doctors={doctorResult.doctors} />
-        <Specialities specialities={specialities} departments={deptForHome} />
-        <Services services={services} />
-        <AppointmentCTA />
-        <Testimonials testimonials={testimonials} />
-        <TrustSection />
-        <ContactSection profile={profile} />
-      </main>
-      <SiteFooter profile={profile} />
-      <FloatingActionDock emergencyPhone={profile?.emergencyPhone} />
-    </div>
+      <Hero profile={profile} />
+      <TrustStats />
+      <AboutSection profile={profile} />
+      <ExcellenceSection centres={centres} departments={deptForHome} />
+      <FeaturedDoctors doctors={doctorResult.doctors} />
+      <Specialities specialities={specialities} departments={deptForHome} />
+      <Services services={services} />
+      <AppointmentCTA />
+      <Testimonials testimonials={testimonials} />
+      <TrustSection />
+      <ContactSection profile={profile} />
+    </>
   );
 }

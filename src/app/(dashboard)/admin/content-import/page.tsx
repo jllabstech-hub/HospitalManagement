@@ -9,7 +9,7 @@ export default async function AdminContentImportPage() {
     <div className="space-y-6">
       <AdminPageHeader
         title="Populate Hospital Content"
-        description="Crawl a public hospital website and import common CMS content for this hospital. Doctors are managed separately."
+        description="Crawl this hospital's existing public website and import CMS content. Doctors are managed separately."
         frontendPath="/departments"
       />
       <ContentImportClient />

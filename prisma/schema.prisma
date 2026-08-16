@@ -318,6 +318,9 @@ model HospitalProfile {
   instagramUrl                  String?
   linkedinUrl                   String?
 
+  // Public site footer columns and legal links (contact fields stay on this model).
+  footerConfig                  Json?
+
   mission                       String?
   vision                        String?
   values                        String?

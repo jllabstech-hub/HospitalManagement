@@ -152,6 +152,22 @@ describe('content extraction and sanitization', () => {
     expect(preview.specialities.map((item) => item.name)).toEqual(expect.arrayContaining(['Orthopaedics', 'Cardiology']));
   });
 
+  it('does not extract competitor hospital specialities', () => {
+    const preview = extractPage(
+      'https://hospital.test/specialities/angioedema-clinic',
+      `<html><body><h1>Angioedema Clinic | Specialized Swelling Disorder Care – Manipal Hospitals India</h1><p>English Angioedema Clinic at Manipal Hospitals India.</p></body></html>`
+    );
+    expect(preview.specialities).toHaveLength(0);
+  });
+
+  it('does not extract Aster treatment chrome as a speciality', () => {
+    const preview = extractPage(
+      'https://hospital.test/specialities/awake-craniotomy',
+      `<html><body><h1>Awake Craniotomy</h1><p>Awake Craniotomy Overview Doctors Health Condition Why Aster FAQs Patient Stories</p></body></html>`
+    );
+    expect(preview.specialities).toHaveLength(0);
+  });
+
   it('does not extract doctors', () => {
     const doctorHtml = `<html><body><h1>Our Doctors</h1><a href="/doctors/anil">Dr Anil Kumar</a></body></html>`;
     const preview = extractPage('https://hospital.test/doctors', doctorHtml);

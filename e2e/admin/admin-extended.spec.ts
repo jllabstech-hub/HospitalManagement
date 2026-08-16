@@ -58,4 +58,11 @@ test.describe('Admin portal extended QA', () => {
     await page.goto('/admin/content/hospital');
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   });
+
+  test('Footer CMS page loads', async ({ page }) => {
+    await loginAdmin(page);
+    await page.goto('/admin/content/footer');
+    await expect(page.getByRole('heading', { name: 'Website Footer' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Save Footer' })).toBeVisible();
+  });
 });

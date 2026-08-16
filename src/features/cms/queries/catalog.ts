@@ -4,6 +4,15 @@ import { prisma } from '@/server/db/client';
 import { ACTIVE_PUBLISHED_FILTER, PUBLISHED_FILTER } from '@/features/cms/constants';
 import { publicDoctorListSelect, publicDoctorWhereFor } from '@/features/cms/queries/doctors-public';
 import { requireTenantContext } from '@/server/tenant';
+import { looksLikeForeignHospitalCopy, withoutForeignHospitalCopy } from '@/features/cms/foreign-hospital-copy';
+
+function hideIfForeign<T>(
+  record: T | null,
+  fields: (item: T) => Array<string | null | undefined>
+): T | null {
+  if (!record) return null;
+  return looksLikeForeignHospitalCopy(...fields(record)) ? null : record;
+}
 
 const departmentListSelect = {
   id: true,
@@ -141,7 +150,13 @@ export async function getPublishedDepartments() {
         map.set(key, dept);
       }
     }
-    return Array.from(map.values());
+    return withoutForeignHospitalCopy(Array.from(map.values()), (dept) => [
+      dept.name,
+      dept.shortDescription,
+      dept.description,
+      dept.seoTitle,
+      dept.seoDescription,
+    ]);
   };
 
   try {
@@ -159,10 +174,23 @@ export async function getDepartmentBySlug(slug: string) {
   if (!slug?.trim()) return null;
   const { tenantId } = await requireTenantContext();
 
-  return prisma.department.findFirst({
+  const department = await prisma.department.findFirst({
     where: { slug: slug.trim(), tenantId, ...ACTIVE_PUBLISHED_FILTER },
     select: departmentDetailSelectFor(tenantId),
   });
+  if (
+    department &&
+    looksLikeForeignHospitalCopy(
+      department.name,
+      department.shortDescription,
+      department.description,
+      department.seoTitle,
+      department.seoDescription
+    )
+  ) {
+    return null;
+  }
+  return department;
 }
 
 export async function getPublishedSpecialities() {
@@ -179,14 +207,19 @@ export async function getPublishedSpecialities() {
       map.set(key, spec);
     }
   }
-  return Array.from(map.values());
+  return withoutForeignHospitalCopy(Array.from(map.values()), (spec) => [
+    spec.name,
+    spec.shortDescription,
+    spec.seoTitle,
+    spec.seoDescription,
+  ]);
 }
 
 export async function getSpecialityBySlug(slug: string) {
   if (!slug?.trim()) return null;
   const { tenantId } = await requireTenantContext();
 
-  return prisma.speciality.findFirst({
+  const spec = await prisma.speciality.findFirst({
     where: { slug: slug.trim(), tenantId, ...ACTIVE_PUBLISHED_FILTER },
     select: {
       ...specialityListSelect,
@@ -222,22 +255,35 @@ export async function getSpecialityBySlug(slug: string) {
       },
     },
   });
+  return hideIfForeign(spec, (item) => [
+    item.name,
+    item.shortDescription,
+    item.fullDescription,
+    item.seoTitle,
+    item.seoDescription,
+  ]);
 }
 
 export async function getPublishedCentres() {
   const { tenantId } = await requireTenantContext();
-  return prisma.centreOfExcellence.findMany({
+  const centres = await prisma.centreOfExcellence.findMany({
     where: { ...ACTIVE_PUBLISHED_FILTER, tenantId },
     select: centreListSelect,
     orderBy: [{ isFeatured: 'desc' }, { displayOrder: 'asc' }, { name: 'asc' }],
   });
+  return withoutForeignHospitalCopy(centres, (centre) => [
+    centre.name,
+    centre.shortDescription,
+    centre.seoTitle,
+    centre.seoDescription,
+  ]);
 }
 
 export async function getCentreBySlug(slug: string) {
   if (!slug?.trim()) return null;
   const { tenantId } = await requireTenantContext();
 
-  return prisma.centreOfExcellence.findFirst({
+  const centre = await prisma.centreOfExcellence.findFirst({
     where: { slug: slug.trim(), tenantId, ...ACTIVE_PUBLISHED_FILTER },
     select: {
       ...centreListSelect,
@@ -275,44 +321,86 @@ export async function getCentreBySlug(slug: string) {
       },
     },
   });
+  const visible = hideIfForeign(centre, (item) => [
+    item.name,
+    item.shortDescription,
+    item.fullDescription,
+    item.seoTitle,
+    item.seoDescription,
+  ]);
+  if (!visible) return null;
+  return {
+    ...visible,
+    specialities: visible.specialities.filter(
+      (row) => !looksLikeForeignHospitalCopy(row.speciality.name, row.speciality.shortDescription)
+    ),
+    services: visible.services.filter(
+      (row) =>
+        !looksLikeForeignHospitalCopy(
+          row.service.name,
+          row.service.shortDescription,
+          row.service.seoTitle,
+          row.service.seoDescription
+        )
+    ),
+  };
 }
 
 export async function getPublishedServices() {
   const { tenantId } = await requireTenantContext();
-  return prisma.hospitalService.findMany({
+  const services = await prisma.hospitalService.findMany({
     where: { ...ACTIVE_PUBLISHED_FILTER, tenantId },
     select: serviceListSelect,
     orderBy: [{ displayOrder: 'asc' }, { name: 'asc' }],
   });
+  return withoutForeignHospitalCopy(services, (service) => [
+    service.name,
+    service.shortDescription,
+    service.seoTitle,
+    service.seoDescription,
+  ]);
 }
 
 export async function getServiceBySlug(slug: string) {
   if (!slug?.trim()) return null;
   const { tenantId } = await requireTenantContext();
 
-  return prisma.hospitalService.findFirst({
+  const service = await prisma.hospitalService.findFirst({
     where: { slug: slug.trim(), tenantId, ...ACTIVE_PUBLISHED_FILTER },
     select: {
       ...serviceListSelect,
       fullDescription: true,
     },
   });
+  return hideIfForeign(service, (item) => [
+    item.name,
+    item.shortDescription,
+    item.fullDescription,
+    item.seoTitle,
+    item.seoDescription,
+  ]);
 }
 
 export async function getPublishedPackages() {
   const { tenantId } = await requireTenantContext();
-  return prisma.healthPackage.findMany({
+  const packages = await prisma.healthPackage.findMany({
     where: { ...ACTIVE_PUBLISHED_FILTER, tenantId },
     select: packageListSelect,
     orderBy: [{ displayOrder: 'asc' }, { name: 'asc' }],
   });
+  return withoutForeignHospitalCopy(packages, (item) => [
+    item.name,
+    item.description,
+    item.seoTitle,
+    item.seoDescription,
+  ]);
 }
 
 export async function getPackageBySlug(slug: string) {
   if (!slug?.trim()) return null;
   const { tenantId } = await requireTenantContext();
 
-  return prisma.healthPackage.findFirst({
+  const pkg = await prisma.healthPackage.findFirst({
     where: { slug: slug.trim(), tenantId, ...ACTIVE_PUBLISHED_FILTER },
     select: {
       ...packageListSelect,
@@ -322,38 +410,48 @@ export async function getPackageBySlug(slug: string) {
       preparationInstructions: true,
     },
   });
+  return hideIfForeign(pkg, (item) => [
+    item.name,
+    item.description,
+    item.detailedDescription,
+    item.seoTitle,
+    item.seoDescription,
+  ]);
 }
 
 export async function getPublishedFaqs() {
   const { tenantId } = await requireTenantContext();
-  return prisma.faqItem.findMany({
+  const faqs = await prisma.faqItem.findMany({
     where: { ...PUBLISHED_FILTER, tenantId },
     select: faqSelect,
     orderBy: [{ displayOrder: 'asc' }, { question: 'asc' }],
   });
+  return withoutForeignHospitalCopy(faqs, (item) => [item.question, item.answer]);
 }
 
 export async function getPublishedResources() {
   const { tenantId } = await requireTenantContext();
-  return prisma.patientResource.findMany({
+  const resources = await prisma.patientResource.findMany({
     where: { ...ACTIVE_PUBLISHED_FILTER, tenantId },
     select: resourceSelect,
     orderBy: [{ displayOrder: 'asc' }, { title: 'asc' }],
   });
+  return withoutForeignHospitalCopy(resources, (item) => [item.title, item.description]);
 }
 
 export async function getPublishedInsurancePartners() {
   const { tenantId } = await requireTenantContext();
-  return prisma.insurancePartner.findMany({
+  const partners = await prisma.insurancePartner.findMany({
     where: { ...ACTIVE_PUBLISHED_FILTER, tenantId },
     select: insurancePartnerSelect,
     orderBy: [{ displayOrder: 'asc' }, { name: 'asc' }],
   });
+  return withoutForeignHospitalCopy(partners, (item) => [item.name, item.description]);
 }
 
 export async function getInternationalPageContent() {
   const { tenantId } = await requireTenantContext();
-  return prisma.internationalPageContent.findFirst({
+  const page = await prisma.internationalPageContent.findFirst({
     where: { tenantId },
     select: {
       id: true,
@@ -368,11 +466,20 @@ export async function getInternationalPageContent() {
       updatedAt: true,
     },
   });
+  return hideIfForeign(page, (item) => [
+    item.title,
+    item.introduction,
+    item.howToRequest,
+    item.secondOpinion,
+    item.requiredDocuments,
+    item.travelInformation,
+    item.accommodationInfo,
+  ]);
 }
 
 export async function getEnabledHomepageSections() {
   const { tenantId } = await requireTenantContext();
-  return prisma.homepageSection.findMany({
+  const sections = await prisma.homepageSection.findMany({
     where: { isEnabled: true, tenantId },
     select: {
       id: true,
@@ -385,4 +492,5 @@ export async function getEnabledHomepageSections() {
     },
     orderBy: { displayOrder: 'asc' },
   });
+  return withoutForeignHospitalCopy(sections, (item) => [item.title, item.subtitle, item.content]);
 }

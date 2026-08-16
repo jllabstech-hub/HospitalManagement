@@ -1,4 +1,5 @@
 import { unstable_cache } from 'next/cache';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/server/db/client';
 import { ACTIVE_PUBLISHED_FILTER } from '@/features/cms/constants';
 import { requireTenantContext } from '@/server/tenant';
@@ -39,6 +40,26 @@ const hospitalProfileSelect = {
   instagramUrl: true,
   linkedinUrl: true,
 } as const;
+
+async function loadFooterConfig(tenantId: string): Promise<Prisma.JsonValue | null> {
+  try {
+    const rows = await prisma.$queryRaw<Array<{ footerConfig: Prisma.JsonValue | null }>>(
+      Prisma.sql`SELECT "footerConfig" FROM "HospitalProfile" WHERE id = ${tenantId}::uuid LIMIT 1`
+    );
+    return rows[0]?.footerConfig ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function findActiveHospitalProfile(tenantId: string) {
+  const profile = await prisma.hospitalProfile.findFirst({
+    where: { id: tenantId, isActive: true },
+    select: hospitalProfileSelect,
+  });
+  if (!profile) return null;
+  return { ...profile, footerConfig: await loadFooterConfig(tenantId) };
+}
 
 const locationSelect = {
   id: true,
@@ -86,19 +107,13 @@ export async function getActiveHospitalProfile() {
   try {
     return await unstable_cache(
       async () => {
-        return prisma.hospitalProfile.findFirst({
-          where: { id: tenantId, isActive: true },
-          select: hospitalProfileSelect,
-        });
+        return findActiveHospitalProfile(tenantId);
       },
-      ['active-hospital-profile', tenantId],
+      ['active-hospital-profile-v2', tenantId],
       { revalidate: 600, tags: [`hospital-profile-${tenantId}`] }
     )();
   } catch {
-    return prisma.hospitalProfile.findFirst({
-      where: { id: tenantId, isActive: true },
-      select: hospitalProfileSelect,
-    });
+    return findActiveHospitalProfile(tenantId);
   }
 }
 

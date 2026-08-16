@@ -2,6 +2,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '@/server/db/client';
 import { PUBLISHED_FILTER } from '@/features/cms/constants';
 import { requireTenantContext } from '@/server/tenant';
+import { looksLikeForeignHospitalCopy, withoutForeignHospitalCopy } from '@/features/cms/foreign-hospital-copy';
 
 const articleListSelect = {
   id: true,
@@ -173,18 +174,24 @@ export async function getPublishedArticles(params: {
   ]);
 
   const totalPages = Math.ceil(totalCount / limit) || 1;
+  const visible = withoutForeignHospitalCopy(articles, (item) => [item.title, item.excerpt, item.seoTitle, item.seoDescription]);
 
-  return { articles, totalCount, currentPage: page, totalPages };
+  return { articles: visible, totalCount, currentPage: page, totalPages };
 }
 
 export async function getArticleBySlug(slug: string) {
   if (!slug?.trim()) return null;
   const { tenantId } = await requireTenantContext();
 
-  return prisma.healthArticle.findFirst({
+  const article = await prisma.healthArticle.findFirst({
     where: { slug: slug.trim(), tenantId, ...PUBLISHED_FILTER },
     select: articleDetailSelect,
   });
+  if (!article) return null;
+  if (looksLikeForeignHospitalCopy(article.title, article.excerpt, article.content, article.seoTitle, article.seoDescription)) {
+    return null;
+  }
+  return article;
 }
 
 export async function getPublishedNews(params: {
@@ -219,47 +226,60 @@ export async function getPublishedNews(params: {
   ]);
 
   const totalPages = Math.ceil(totalCount / limit) || 1;
+  const visible = withoutForeignHospitalCopy(news, (item) => [item.title, item.excerpt, item.seoTitle, item.seoDescription]);
 
-  return { news, totalCount, currentPage: page, totalPages };
+  return { news: visible, totalCount, currentPage: page, totalPages };
 }
 
 export async function getNewsBySlug(slug: string) {
   if (!slug?.trim()) return null;
   const { tenantId } = await requireTenantContext();
 
-  return prisma.newsArticle.findFirst({
+  const article = await prisma.newsArticle.findFirst({
     where: { slug: slug.trim(), tenantId, ...PUBLISHED_FILTER },
     select: newsDetailSelect,
   });
+  if (!article) return null;
+  if (looksLikeForeignHospitalCopy(article.title, article.excerpt, article.content, article.seoTitle, article.seoDescription)) {
+    return null;
+  }
+  return article;
 }
 
 export async function getPublishedSuccessStories() {
   const { tenantId } = await requireTenantContext();
-  return prisma.successStory.findMany({
+  const stories = await prisma.successStory.findMany({
     where: { ...PUBLISHED_FILTER, tenantId },
     select: successStoryListSelect,
     orderBy: [{ publishedAt: 'desc' }, { createdAt: 'desc' }],
   });
+  return withoutForeignHospitalCopy(stories, (item) => [item.title, item.summary, item.seoTitle, item.seoDescription]);
 }
 
 export async function getSuccessStoryBySlug(slug: string) {
   if (!slug?.trim()) return null;
   const { tenantId } = await requireTenantContext();
 
-  return prisma.successStory.findFirst({
+  const story = await prisma.successStory.findFirst({
     where: { slug: slug.trim(), tenantId, ...PUBLISHED_FILTER },
     select: {
       ...successStoryListSelect,
       content: true,
     },
   });
+  if (!story) return null;
+  if (looksLikeForeignHospitalCopy(story.title, story.summary, story.content, story.seoTitle, story.seoDescription)) {
+    return null;
+  }
+  return story;
 }
 
 export async function getPublishedTestimonials() {
   const { tenantId } = await requireTenantContext();
-  return prisma.testimonial.findMany({
+  const testimonials = await prisma.testimonial.findMany({
     where: { ...PUBLISHED_FILTER, tenantId },
     select: testimonialSelect,
     orderBy: [{ displayOrder: 'asc' }, { publishedAt: 'desc' }],
   });
+  return withoutForeignHospitalCopy(testimonials, (item) => [item.displayName, item.text]);
 }

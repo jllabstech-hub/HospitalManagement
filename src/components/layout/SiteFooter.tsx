@@ -1,38 +1,7 @@
 import Link from 'next/link';
 import BrandLogo from './BrandLogo';
 import { APP_CONFIG } from '@/config';
-
-function footerColumns(hospitalName?: string | null) {
-  return [
-    {
-      title: 'Hospital',
-      links: [
-        { href: '/about/overview', label: `About ${hospitalName || APP_CONFIG.shortName}` },
-        { href: '/centres-of-excellence', label: 'Centres of Excellence' },
-        { href: '/locations', label: 'Locations' },
-        { href: '/contact', label: 'Contact' },
-      ],
-    },
-    {
-      title: 'Care',
-      links: [
-        { href: '/departments', label: 'Departments' },
-        { href: '/specialities', label: 'Specialities' },
-        { href: '/doctors', label: 'Find a Doctor' },
-        { href: '/services', label: 'Services' },
-      ],
-    },
-    {
-      title: 'Patient Services',
-      links: [
-        { href: '/book-appointment', label: 'Book Appointment' },
-        { href: '/patient-resources', label: 'Patient Resources' },
-        { href: '/health-packages', label: 'Health Packages' },
-        { href: '/login', label: 'Patient Portal' },
-      ],
-    },
-  ];
-}
+import { footerHasLoginLink, parseFooterConfig } from '@/features/cms/footer-config';
 
 interface SiteFooterProps {
   profile?: {
@@ -52,11 +21,13 @@ interface SiteFooterProps {
     twitterUrl?: string | null;
     instagramUrl?: string | null;
     linkedinUrl?: string | null;
+    footerConfig?: unknown;
   } | null;
 }
 
 export default function SiteFooter({ profile }: SiteFooterProps) {
   const year = new Date().getUTCFullYear();
+  const footer = parseFooterConfig(profile?.footerConfig, profile?.hospitalName);
   const phone = profile?.phone ?? APP_CONFIG.contact.phone;
   const email = profile?.email ?? APP_CONFIG.contact.email;
   const emergency = profile?.emergencyPhone ? `Emergency: ${profile.emergencyPhone}` : APP_CONFIG.contact.emergency;
@@ -65,8 +36,8 @@ export default function SiteFooter({ profile }: SiteFooterProps) {
     ? [profile.addressLine1, profile.addressLine2, profile.city, profile.state, profile.postalCode].filter(Boolean).join(', ')
     : APP_CONFIG.contact.address;
   const phoneHref = profile?.phone ? `tel:${profile.phone.replace(/[^0-9+]/g, '')}` : APP_CONFIG.contact.phoneHref;
-
   const copyrightName = profile?.legalName || profile?.hospitalName || APP_CONFIG.appName;
+  const showLogin = footer.showLogin && !footerHasLoginLink(footer.columns);
 
   return (
     <footer className="border-t border-[#dde5e9] bg-brand-950 text-brand-50">
@@ -90,9 +61,17 @@ export default function SiteFooter({ profile }: SiteFooterProps) {
                 </a>
               </p>
               <p className="text-brand-300">{address}</p>
+              <p>{hours}</p>
+              <p>{emergency}</p>
+              {showLogin && (
+                <p>
+                  <Link href="/login" className="font-semibold text-white hover:underline">
+                    {footer.loginLabel}
+                  </Link>
+                </p>
+              )}
             </div>
 
-            {/* Social Links */}
             {(profile?.facebookUrl || profile?.twitterUrl || profile?.instagramUrl || profile?.linkedinUrl) && (
               <div className="mt-5 flex items-center gap-3 text-brand-300">
                 {profile.facebookUrl && (
@@ -119,14 +98,14 @@ export default function SiteFooter({ profile }: SiteFooterProps) {
             )}
           </div>
 
-          {footerColumns(profile?.hospitalName).map((col) => (
-            <div key={col.title} className="lg:col-span-2">
+          {footer.columns.map((col, index) => (
+            <div key={`${col.title}-${index}`} className="lg:col-span-2">
               <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-brand-300">
                 {col.title}
               </h3>
               <ul className="mt-4 space-y-2.5">
                 {col.links.map((link) => (
-                  <li key={link.href + link.label}>
+                  <li key={`${link.href}-${link.label}`}>
                     <Link href={link.href} className="text-sm text-brand-100 transition hover:text-white">
                       {link.label}
                     </Link>
@@ -135,21 +114,6 @@ export default function SiteFooter({ profile }: SiteFooterProps) {
               </ul>
             </div>
           ))}
-
-          <div className="lg:col-span-2">
-            <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-brand-300">
-              Contact
-            </h3>
-            <ul className="mt-4 space-y-2.5 text-sm text-brand-100">
-              <li>{hours}</li>
-              <li>{emergency}</li>
-              <li>
-                <Link href="/login" className="font-semibold text-white hover:underline">
-                  Login
-                </Link>
-              </li>
-            </ul>
-          </div>
         </div>
 
         <div className="mt-12 flex flex-col gap-3 border-t border-white/10 pt-6 text-xs text-brand-300 sm:flex-row sm:items-center sm:justify-between">
@@ -157,15 +121,11 @@ export default function SiteFooter({ profile }: SiteFooterProps) {
             © {year} {copyrightName}. All rights reserved.
           </p>
           <div className="flex flex-wrap gap-4">
-            <Link href="/privacy" className="hover:text-white">
-              Privacy
-            </Link>
-            <Link href="/terms" className="hover:text-white">
-              Terms
-            </Link>
-            <Link href="/patient-resources" className="hover:text-white">
-              Accessibility
-            </Link>
+            {footer.legalLinks.map((link) => (
+              <Link key={`${link.href}-${link.label}`} href={link.href} className="hover:text-white">
+                {link.label}
+              </Link>
+            ))}
           </div>
         </div>
       </div>

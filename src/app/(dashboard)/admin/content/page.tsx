@@ -76,6 +76,28 @@ export default async function AdminContentPage() {
   // Content groups strictly matching Public Site Header Dropdowns & Sub-menu Columns
   const groups: ContentGroup[] = [
     {
+      category: 'Site Chrome',
+      badge: 'Footer',
+      icon: '🔗',
+      frontendUrl: '/',
+      description: 'Public website footer: phone, hours, social links, navigation columns, and legal links.',
+      subMenus: [
+        {
+          subMenuTitle: 'Public footer',
+          items: [
+            {
+              title: 'Website Footer',
+              href: '/admin/content/footer',
+              count: hospitalProfileCount,
+              description: 'Edit footer contact details, social links, columns, and legal links',
+              frontendUrl: '/',
+              subMenuLabel: 'Site footer',
+            },
+          ],
+        },
+      ],
+    },
+    {
       category: 'About Us',
       badge: 'Main Header #1',
       icon: '🏥',
@@ -89,7 +111,7 @@ export default async function AdminContentPage() {
               title: 'Hospital Profile & Branding',
               href: '/admin/content/hospital',
               count: hospitalProfileCount,
-              description: 'Manage legal name, logo, hero banner, tagline, mission & vision',
+              description: 'Manage hospital name, about text, mission, logo, and brand colors',
               frontendUrl: '/about',
               subMenuLabel: 'About CarePulse Hospital',
             },

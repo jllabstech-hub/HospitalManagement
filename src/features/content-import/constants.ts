@@ -15,14 +15,6 @@ export const CRAWL_LIMITS = {
   maxArticleChars: 8_000,
 } as const;
 
-export const SAMPLE_HOSPITAL_SITES = [
-  { label: 'Apollo Hospitals', url: 'https://www.apollohospitals.com' },
-  { label: 'Fortis Healthcare', url: 'https://www.fortishealthcare.com' },
-  { label: 'Narayana Health', url: 'https://www.narayanahealth.org' },
-  { label: 'Max Healthcare', url: 'https://www.maxhealthcare.in' },
-  { label: 'Manipal Hospitals', url: 'https://www.manipalhospitals.com' },
-] as const;
-
 export const CATEGORY_LABELS: Record<ImportCategory, string> = {
   hospitalProfile: 'Hospital profile',
   departments: 'Departments',

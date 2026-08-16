@@ -4,6 +4,7 @@ import { prisma } from '@/server/db/client';
 import { slugify } from '@/lib/slug';
 import { writeAuditLog } from '@/server/security/audit';
 import { itemSlug } from './normalize';
+import { looksLikeForeignHospitalCopy } from '@/features/cms/foreign-hospital-copy';
 import type {
   CrawlPreview,
   ImportCategory,
@@ -54,30 +55,42 @@ export async function importPreviewToCms(input: {
 
   if (selected.has('hospitalProfile') && input.preview.hospitalProfile) {
     try {
-      const existing = await prisma.hospitalProfile.findUnique({ where: { id: input.tenantId } });
-      if (!existing) {
-        bump('hospitalProfile', 'failed');
+      const incoming = input.preview.hospitalProfile;
+      if (
+        looksLikeForeignHospitalCopy(
+          incoming.hospitalName,
+          incoming.shortDescription,
+          incoming.fullDescription,
+          incoming.tagline
+        )
+      ) {
+        bump('hospitalProfile', 'skipped');
       } else {
-        const data = {
-          shortDescription: fillIfEmpty(existing.shortDescription, input.preview.hospitalProfile.shortDescription),
-          fullDescription: fillIfEmpty(existing.fullDescription, input.preview.hospitalProfile.fullDescription),
-          tagline: fillIfEmpty(existing.tagline, input.preview.hospitalProfile.tagline),
-          phone: fillIfEmpty(existing.phone, input.preview.hospitalProfile.phone),
-          emergencyPhone: fillIfEmpty(existing.emergencyPhone, input.preview.hospitalProfile.emergencyPhone),
-          email: fillIfEmpty(existing.email, input.preview.hospitalProfile.email),
-          addressLine1: fillIfEmpty(existing.addressLine1, input.preview.hospitalProfile.addressLine1),
-          city: fillIfEmpty(existing.city, input.preview.hospitalProfile.city),
-          state: fillIfEmpty(existing.state, input.preview.hospitalProfile.state),
-          workingHours: fillIfEmpty(existing.workingHours, input.preview.hospitalProfile.workingHours),
-          mission: fillIfEmpty(existing.mission, input.preview.hospitalProfile.mission),
-          vision: fillIfEmpty(existing.vision, input.preview.hospitalProfile.vision),
-        };
-        const patch = Object.fromEntries(Object.entries(data).filter(([, value]) => value !== undefined));
-        if (Object.keys(patch).length === 0) {
-          bump('hospitalProfile', 'skipped');
+        const existing = await prisma.hospitalProfile.findUnique({ where: { id: input.tenantId } });
+        if (!existing) {
+          bump('hospitalProfile', 'failed');
         } else {
-          await prisma.hospitalProfile.update({ where: { id: input.tenantId }, data: patch });
-          bump('hospitalProfile', 'updated');
+          const data = {
+            shortDescription: fillIfEmpty(existing.shortDescription, incoming.shortDescription),
+            fullDescription: fillIfEmpty(existing.fullDescription, incoming.fullDescription),
+            tagline: fillIfEmpty(existing.tagline, incoming.tagline),
+            phone: fillIfEmpty(existing.phone, incoming.phone),
+            emergencyPhone: fillIfEmpty(existing.emergencyPhone, incoming.emergencyPhone),
+            email: fillIfEmpty(existing.email, incoming.email),
+            addressLine1: fillIfEmpty(existing.addressLine1, incoming.addressLine1),
+            city: fillIfEmpty(existing.city, incoming.city),
+            state: fillIfEmpty(existing.state, incoming.state),
+            workingHours: fillIfEmpty(existing.workingHours, incoming.workingHours),
+            mission: fillIfEmpty(existing.mission, incoming.mission),
+            vision: fillIfEmpty(existing.vision, incoming.vision),
+          };
+          const patch = Object.fromEntries(Object.entries(data).filter(([, value]) => value !== undefined));
+          if (Object.keys(patch).length === 0) {
+            bump('hospitalProfile', 'skipped');
+          } else {
+            await prisma.hospitalProfile.update({ where: { id: input.tenantId }, data: patch });
+            bump('hospitalProfile', 'updated');
+          }
         }
       }
     } catch {
@@ -282,6 +295,10 @@ export async function importPreviewToCms(input: {
           bump('faqs', 'skipped');
           continue;
         }
+        if (looksLikeForeignHospitalCopy(question, answer)) {
+          bump('faqs', 'skipped');
+          continue;
+        }
         const existing = await prisma.faqItem.findFirst({
           where: { tenantId: input.tenantId, question: { equals: question, mode: 'insensitive' } },
         });
@@ -438,6 +455,10 @@ export async function importPreviewToCms(input: {
           bump('testimonials', 'skipped');
           continue;
         }
+        if (looksLikeForeignHospitalCopy(item.name, text)) {
+          bump('testimonials', 'skipped');
+          continue;
+        }
         const existing = await prisma.testimonial.findFirst({
           where: { tenantId: input.tenantId, text: { equals: text, mode: 'insensitive' } },
         });
@@ -506,6 +527,10 @@ async function upsertNamed(
         bump(category, 'skipped');
         continue;
       }
+      if (looksLikeForeignHospitalCopy(item.name, item.description, item.question, item.answer, item.content, item.excerpt)) {
+        bump(category, 'skipped');
+        continue;
+      }
       const slug = item.slug || itemSlug(item.name, category);
       const status = await save(item, slug);
       bump(category, status);
@@ -554,6 +579,10 @@ async function upsertArticles(
     try {
       const content = item.content || item.description || '';
       if (!item.name || content.length < 40) {
+        bump(category, 'skipped');
+        continue;
+      }
+      if (looksLikeForeignHospitalCopy(item.name, item.excerpt, content)) {
         bump(category, 'skipped');
         continue;
       }

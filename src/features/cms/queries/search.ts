@@ -4,6 +4,7 @@ import { ACTIVE_PUBLISHED_FILTER, PUBLISHED_FILTER } from '@/features/cms/consta
 import { publicDoctorListSelect, publicDoctorWhereFor } from '@/features/cms/queries/doctors-public';
 import { buildFuzzyDoctorWhere } from '@/lib/fuzzy-search';
 import { requireTenantContext } from '@/server/tenant';
+import { withoutForeignHospitalCopy } from '@/features/cms/foreign-hospital-copy';
 
 const SEARCH_TAKE = 5;
 
@@ -215,7 +216,14 @@ export async function globalPublicSearch(q: string): Promise<GlobalSearchResult>
           searchNews(trimmed, tenantId),
         ]);
 
-        return { doctors, departments, specialities, services, articles, news };
+        return {
+          doctors,
+          departments: withoutForeignHospitalCopy(departments, (item) => [item.name, item.shortDescription]),
+          specialities: withoutForeignHospitalCopy(specialities, (item) => [item.name, item.shortDescription]),
+          services: withoutForeignHospitalCopy(services, (item) => [item.name, item.shortDescription]),
+          articles: withoutForeignHospitalCopy(articles, (item) => [item.title, item.excerpt]),
+          news: withoutForeignHospitalCopy(news, (item) => [item.title, item.excerpt]),
+        };
       },
       ['global-public-search', tenantId, trimmed],
       { revalidate: 300, tags: [`public-search-${tenantId}`] }
@@ -230,6 +238,13 @@ export async function globalPublicSearch(q: string): Promise<GlobalSearchResult>
       searchNews(trimmed, tenantId),
     ]);
 
-    return { doctors, departments, specialities, services, articles, news };
+    return {
+      doctors,
+      departments: withoutForeignHospitalCopy(departments, (item) => [item.name, item.shortDescription]),
+      specialities: withoutForeignHospitalCopy(specialities, (item) => [item.name, item.shortDescription]),
+      services: withoutForeignHospitalCopy(services, (item) => [item.name, item.shortDescription]),
+      articles: withoutForeignHospitalCopy(articles, (item) => [item.title, item.excerpt]),
+      news: withoutForeignHospitalCopy(news, (item) => [item.title, item.excerpt]),
+    };
   }
 }

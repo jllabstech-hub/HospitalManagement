@@ -4,32 +4,25 @@ import { z } from 'zod';
 import {
   ContactMessageStatus,
   EnquiryStatus,
+  Prisma,
 } from '@prisma/client';
 import { requireAdmin } from '@/server/security/auth-helpers';
 import { prisma } from '@/server/db/client';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
+import { writeAuditLog } from '@/server/security/audit';
+import { parseFooterConfig } from '@/features/cms/footer-config';
 
 export type AdminCmsActionResult = { success: true } | { success: false; error: string };
 
 const HospitalProfileSchema = z.object({
   id: z.string().uuid().optional(),
   hospitalName: z.string().trim().min(2, 'Hospital name is required.'),
-  legalName: z.string().trim().optional(),
   shortDescription: z.string().trim().optional(),
   fullDescription: z.string().trim().optional(),
   tagline: z.string().trim().optional(),
-  phone: z.string().trim().optional(),
-  emergencyPhone: z.string().trim().optional(),
-  email: z.string().trim().email('Invalid email.').optional().or(z.literal('')),
-  addressLine1: z.string().trim().optional(),
-  addressLine2: z.string().trim().optional(),
-  city: z.string().trim().optional(),
-  state: z.string().trim().optional(),
-  postalCode: z.string().trim().optional(),
   country: z.string().trim().optional(),
   timezone: z.string().trim().optional(),
   websiteUrl: z.string().trim().optional(),
-  workingHours: z.string().trim().optional(),
   mission: z.string().trim().optional(),
   vision: z.string().trim().optional(),
   values: z.string().trim().optional(),
@@ -40,10 +33,6 @@ const HospitalProfileSchema = z.object({
   primaryColor: z.string().trim().optional(),
   secondaryColor: z.string().trim().optional(),
   fontFamily: z.string().trim().optional(),
-  facebookUrl: z.string().trim().optional().or(z.literal('')),
-  twitterUrl: z.string().trim().optional().or(z.literal('')),
-  instagramUrl: z.string().trim().optional().or(z.literal('')),
-  linkedinUrl: z.string().trim().optional().or(z.literal('')),
 });
 
 const EnquiryTypeSchema = z.enum([
@@ -76,22 +65,12 @@ export async function upsertHospitalProfileAction(
 
     const data = {
       hospitalName: parsed.data.hospitalName,
-      legalName: parsed.data.legalName || null,
       shortDescription: parsed.data.shortDescription || null,
       fullDescription: parsed.data.fullDescription || null,
       tagline: parsed.data.tagline || null,
-      phone: parsed.data.phone || null,
-      emergencyPhone: parsed.data.emergencyPhone || null,
-      email: parsed.data.email || null,
-      addressLine1: parsed.data.addressLine1 || null,
-      addressLine2: parsed.data.addressLine2 || null,
-      city: parsed.data.city || null,
-      state: parsed.data.state || null,
-      postalCode: parsed.data.postalCode || null,
       country: parsed.data.country || null,
       timezone: parsed.data.timezone || null,
       websiteUrl: parsed.data.websiteUrl || null,
-      workingHours: parsed.data.workingHours || null,
       mission: parsed.data.mission || null,
       vision: parsed.data.vision || null,
       values: parsed.data.values || null,
@@ -102,10 +81,6 @@ export async function upsertHospitalProfileAction(
       primaryColor: parsed.data.primaryColor || null,
       secondaryColor: parsed.data.secondaryColor || null,
       fontFamily: parsed.data.fontFamily || null,
-      facebookUrl: parsed.data.facebookUrl || null,
-      twitterUrl: parsed.data.twitterUrl || null,
-      instagramUrl: parsed.data.instagramUrl || null,
-      linkedinUrl: parsed.data.linkedinUrl || null,
       isActive: true,
     };
 
@@ -125,10 +100,107 @@ export async function upsertHospitalProfileAction(
     }
 
     safeRevalidate('/admin/content/hospital');
+    safeRevalidate('/admin/content/footer');
     safeRevalidate('/');
+    try {
+      revalidateTag(`hospital-profile-${admin.tenantId}`);
+    } catch {
+      // Ignored outside Next.js request context
+    }
     return { success: true };
   } catch {
     return { success: false, error: 'Unable to save hospital profile.' };
+  }
+}
+
+const FooterContactSchema = z.object({
+  legalName: z.string().trim().max(160).optional(),
+  phone: z.string().trim().max(40).optional(),
+  emergencyPhone: z.string().trim().max(40).optional(),
+  email: z.string().trim().email('Invalid email.').max(120).optional().or(z.literal('')),
+  addressLine1: z.string().trim().max(160).optional(),
+  addressLine2: z.string().trim().max(160).optional(),
+  city: z.string().trim().max(80).optional(),
+  state: z.string().trim().max(80).optional(),
+  postalCode: z.string().trim().max(20).optional(),
+  workingHours: z.string().trim().max(200).optional(),
+  facebookUrl: z.string().trim().max(300).optional().or(z.literal('')),
+  twitterUrl: z.string().trim().max(300).optional().or(z.literal('')),
+  instagramUrl: z.string().trim().max(300).optional().or(z.literal('')),
+  linkedinUrl: z.string().trim().max(300).optional().or(z.literal('')),
+  footerConfig: z.unknown(),
+});
+
+export async function updateFooterSettingsAction(
+  rawInput: z.infer<typeof FooterContactSchema>
+): Promise<AdminCmsActionResult> {
+  try {
+    const admin = await requireAdmin();
+    const parsed = FooterContactSchema.safeParse(rawInput);
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid footer data.' };
+    }
+
+    const profile = await prisma.hospitalProfile.findFirst({
+      where: { id: admin.tenantId },
+      select: { hospitalName: true },
+    });
+    if (!profile) {
+      return { success: false, error: 'Hospital profile was not found for this tenant.' };
+    }
+
+    const footerConfig = parseFooterConfig(parsed.data.footerConfig, profile.hospitalName);
+
+    await prisma.hospitalProfile.update({
+      where: { id: admin.tenantId },
+      data: {
+        legalName: parsed.data.legalName || null,
+        phone: parsed.data.phone || null,
+        emergencyPhone: parsed.data.emergencyPhone || null,
+        email: parsed.data.email || null,
+        addressLine1: parsed.data.addressLine1 || null,
+        addressLine2: parsed.data.addressLine2 || null,
+        city: parsed.data.city || null,
+        state: parsed.data.state || null,
+        postalCode: parsed.data.postalCode || null,
+        workingHours: parsed.data.workingHours || null,
+        facebookUrl: parsed.data.facebookUrl || null,
+        twitterUrl: parsed.data.twitterUrl || null,
+        instagramUrl: parsed.data.instagramUrl || null,
+        linkedinUrl: parsed.data.linkedinUrl || null,
+      },
+    });
+
+    try {
+      await prisma.$executeRaw(
+        Prisma.sql`UPDATE "HospitalProfile" SET "footerConfig" = ${JSON.stringify(footerConfig)}::jsonb WHERE id = ${admin.tenantId}::uuid`
+      );
+    } catch {
+      return {
+        success: false,
+        error: 'Footer contact details saved, but the footer links column is not on this database yet. Run prisma migrate deploy, then save again.',
+      };
+    }
+
+    await writeAuditLog({
+      tenantId: admin.tenantId,
+      actorUserId: admin.id,
+      action: 'cms.mutate',
+      entityType: 'HospitalProfile',
+      entityId: admin.tenantId,
+      after: { area: 'footer' },
+    });
+
+    safeRevalidate('/admin/content/footer');
+    safeRevalidate('/');
+    try {
+      revalidateTag(`hospital-profile-${admin.tenantId}`);
+    } catch {
+      // Ignored outside Next.js request context
+    }
+    return { success: true };
+  } catch {
+    return { success: false, error: 'Unable to save footer settings.' };
   }
 }
 

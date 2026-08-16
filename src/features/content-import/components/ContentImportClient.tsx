@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import JobProgressPanel, { type JobStage } from '@/components/shared/JobProgressPanel';
-import { CATEGORY_LABELS, SAMPLE_HOSPITAL_SITES } from '../constants';
+import { CATEGORY_LABELS } from '../constants';
 import { importExtractedContentAction } from '../actions';
 import {
   IMPORT_CATEGORIES,
@@ -221,8 +221,8 @@ export default function ContentImportClient() {
       <section className="card-surface space-y-4 p-6">
         <h2 className="font-display text-lg font-semibold text-ink">Populate Hospital Content</h2>
         <p className="text-sm text-ink-muted">
-          Crawl a public hospital website, preview extracted CMS content, then import it into this hospital. Doctors are
-          never imported.
+          Optionally crawl this hospital&apos;s existing public website, preview extracted CMS content, then import it
+          here. Doctors are never imported.
         </p>
         <label className="flex items-center gap-2 text-sm text-ink-muted">
           <input type="checkbox" disabled checked={false} />
@@ -235,21 +235,9 @@ export default function ContentImportClient() {
           id="hospital-url"
           value={url}
           onChange={(event) => setUrl(event.target.value)}
-          placeholder="https://www.examplehospital.com"
+          placeholder="https://www.your-hospital-website.com"
           className="input-field"
         />
-        <div className="flex flex-wrap gap-2">
-          {SAMPLE_HOSPITAL_SITES.map((site) => (
-            <button
-              key={site.url}
-              type="button"
-              className="rounded-pill border border-[#dde5e9] px-3 py-1 text-xs text-ink-muted hover:border-brand-300 hover:text-brand-800"
-              onClick={() => setUrl(site.url)}
-            >
-              {site.label}
-            </button>
-          ))}
-        </div>
         <button type="button" className="btn-primary" disabled={!url.trim() || busy !== null} onClick={runCrawl}>
           {busy === 'crawl' ? 'Crawling…' : 'Crawl Website'}
         </button>

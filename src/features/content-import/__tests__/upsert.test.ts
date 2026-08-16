@@ -148,4 +148,25 @@ describe('CMS import upsert and tenant isolation', () => {
     const emptyDept = await prisma.department.findFirst({ where: { tenantId: tenantA, name: '   ' } });
     expect(emptyDept).toBeNull();
   });
+
+  it('skips competitor hospital copy instead of publishing it', async () => {
+    const preview = emptyPreview();
+    preview.specialities = [
+      {
+        name: 'Angioedema Clinic | Specialized Swelling Disorder Care – Manipal Hospitals India',
+        description: 'English Angioedema Clinic at Manipal Hospitals India.',
+      },
+    ];
+    const result = await importPreviewToCms({
+      tenantId: tenantA,
+      actorUserId: adminA,
+      preview,
+      categories: ['specialities'],
+    });
+    expect(result.totals.skipped).toBeGreaterThanOrEqual(1);
+    const imported = await prisma.speciality.findFirst({
+      where: { tenantId: tenantA, name: { contains: 'Manipal' } },
+    });
+    expect(imported).toBeNull();
+  });
 });

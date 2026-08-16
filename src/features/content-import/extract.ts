@@ -10,6 +10,7 @@ import {
   looksLikeBoilerplate,
 } from './html';
 import { canonicalName, dedupeFaqs, dedupeItems, parsePrice } from './normalize';
+import { looksLikeForeignHospitalCopy } from '@/features/cms/foreign-hospital-copy';
 import type { CrawlPreview, HospitalProfileDraft, InternationalDraft, PreviewItem } from './types';
 
 export function emptyPreview(): CrawlPreview {
@@ -119,6 +120,7 @@ function extractLeafItem(html: string, kind: PageKind): PreviewItem[] {
   const heading = canonicalName($('h1').first().text() || extractTitle(html));
   if (!isLikelyItemName(heading, kind)) return [];
   const description = clip(extractMainText(html, 1200), 800);
+  if (looksLikeForeignHospitalCopy(heading, description)) return [];
   return [{ name: heading, description: description || undefined, price: parsePrice(description) }];
 }
 
@@ -188,6 +190,7 @@ function extractNamedCards(html: string, pageUrl: string, kind: PageKind): Previ
 function isLikelyItemName(text: string, kind: PageKind): boolean {
   if (text.length < 3 || text.length > 80) return false;
   if (looksLikeBoilerplate(text)) return false;
+  if (looksLikeForeignHospitalCopy(text)) return false;
   if (/^(home|about|contact|login|book appointment|read more)$/i.test(text)) return false;
   if (/^(departments?|specialit(?:y|ies)|specialt(?:y|ies)|services?|centres?|centers?|packages?|faqs?|facilities|patient resources)$/i.test(text)) {
     return false;
@@ -318,6 +321,9 @@ function extractHospitalProfile(html: string, url: string): HospitalProfileDraft
   const address = org?.address as Record<string, unknown> | undefined;
 
   void url;
+  if (looksLikeForeignHospitalCopy(name, description)) {
+    return {};
+  }
   return {
     hospitalName: name?.replace(/\s*\|\s*.*$/, '').trim(),
     shortDescription: clip(description || '', 280) || undefined,
@@ -355,19 +361,32 @@ function longer(a?: string, b?: string): string | undefined {
 
 function capPreview(preview: CrawlPreview): CrawlPreview {
   const limit = CRAWL_LIMITS.maxItemsPerCategory;
+  const keep = (items: PreviewItem[]) =>
+    items
+      .filter((item) => !looksLikeForeignHospitalCopy(item.name, item.description, item.question, item.answer, item.content, item.excerpt))
+      .slice(0, limit);
   return {
     ...preview,
-    departments: preview.departments.slice(0, limit),
-    specialities: preview.specialities.slice(0, limit),
-    centres: preview.centres.slice(0, limit),
-    services: preview.services.slice(0, limit),
-    packages: preview.packages.slice(0, limit),
-    faqs: preview.faqs.slice(0, limit),
-    facilities: preview.facilities.slice(0, limit),
-    patientResources: preview.patientResources.slice(0, limit),
-    insurance: preview.insurance.slice(0, limit),
-    articles: preview.articles.slice(0, 20),
-    news: preview.news.slice(0, 20),
-    testimonials: preview.testimonials.slice(0, 15),
+    departments: keep(preview.departments),
+    specialities: keep(preview.specialities),
+    centres: keep(preview.centres),
+    services: keep(preview.services),
+    packages: keep(preview.packages),
+    faqs: keep(preview.faqs),
+    facilities: keep(preview.facilities),
+    patientResources: keep(preview.patientResources),
+    insurance: keep(preview.insurance),
+    articles: keep(preview.articles).slice(0, 20),
+    news: keep(preview.news).slice(0, 20),
+    testimonials: keep(preview.testimonials).slice(0, 15),
+    hospitalProfile:
+      preview.hospitalProfile &&
+      looksLikeForeignHospitalCopy(
+        preview.hospitalProfile.hospitalName,
+        preview.hospitalProfile.shortDescription,
+        preview.hospitalProfile.fullDescription
+      )
+        ? null
+        : preview.hospitalProfile,
   };
 }

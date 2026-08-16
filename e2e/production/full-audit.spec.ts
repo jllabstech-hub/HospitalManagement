@@ -177,6 +177,8 @@ test.describe('Production audit — portals', () => {
     await expect(page.getByRole('heading', { name: 'Content Management' })).toBeVisible();
     await page.goto('/admin/content/hospital');
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await page.goto('/admin/content/footer');
+    await expect(page.getByRole('heading', { name: 'Website Footer' })).toBeVisible();
     await page.goto('/admin/enquiries');
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   });
