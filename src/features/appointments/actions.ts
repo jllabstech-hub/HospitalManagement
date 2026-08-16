@@ -10,15 +10,14 @@ import { DomainError } from '@/server/errors/domain-error';
 import { logger } from '@/lib/logger';
 
 /**
- * Server Action for patient slot retrieval.
- * SERVER AUTHORIZATION: Requires PATIENT role.
+ * Public server action for viewing availability.
+ * Booking authority remains protected by requirePatient in bookAppointmentAction.
  */
 export async function getAvailableSlotsAction(
   doctorId: string,
   dateStr: string
 ): Promise<GetSlotsResult> {
   try {
-    await requirePatient();
     return await getAvailableSlotsForDoctorDate(doctorId, dateStr);
   } catch (error: unknown) {
     if (error instanceof DomainError) {

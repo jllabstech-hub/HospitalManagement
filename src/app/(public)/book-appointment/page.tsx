@@ -74,7 +74,7 @@ export default async function BookAppointmentPage({ searchParams }: PageProps) {
       <PageHero
         eyebrow="Outpatient booking"
         title="Book an appointment"
-        subtitle="Choose a department and doctor, then sign in to pick a live 30-minute consultation slot."
+        subtitle="Choose a department and doctor, then pick a live 30-minute consultation slot. Sign in when you are ready to book."
       />
       <section className="section-pad">
         <div className="container-page max-w-4xl">
@@ -184,7 +184,7 @@ export default async function BookAppointmentPage({ searchParams }: PageProps) {
 
           {!isPatient && (
             <p className="mt-10 text-sm text-ink-muted">
-              Already a patient?{' '}
+              Ready to book?{' '}
               <Link href="/login?callbackUrl=%2Fbook-appointment" className="font-semibold text-brand-700">
                 Sign in
               </Link>{' '}
