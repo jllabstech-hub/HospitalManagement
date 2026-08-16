@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { submitContactMessageAction } from '@/features/cms/actions/public-forms';
+import { BusyLabel } from '@/components/ui/Spinner';
 
 export default function ContactForm() {
   const [isPending, startTransition] = useTransition();
@@ -99,7 +100,7 @@ export default function ContactForm() {
       </label>
 
       <button type="submit" disabled={isPending} className="btn-primary w-full sm:w-auto">
-        {isPending ? 'Sending…' : 'Send message'}
+        {isPending ? <BusyLabel>Sending…</BusyLabel> : 'Send message'}
       </button>
     </form>
   );

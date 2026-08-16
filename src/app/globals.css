@@ -166,3 +166,20 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+#site-nav-progress {
+  pointer-events: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2147483647;
+  height: 3px;
+}
+
+#site-nav-progress .site-nav-progress-bar {
+  height: 100%;
+  background: #38bdf8;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.95), 0 0 6px #7dd3fc;
+  transform-origin: left center;
+}

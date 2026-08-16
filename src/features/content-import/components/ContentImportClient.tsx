@@ -5,6 +5,7 @@ import Link from 'next/link';
 import JobProgressPanel, { type JobStage } from '@/components/shared/JobProgressPanel';
 import { CATEGORY_LABELS } from '../constants';
 import { importExtractedContentAction } from '../actions';
+import { BusyLabel } from '@/components/ui/Spinner';
 import {
   IMPORT_CATEGORIES,
   type CrawlPreview,
@@ -239,7 +240,7 @@ export default function ContentImportClient() {
           className="input-field"
         />
         <button type="button" className="btn-primary" disabled={!url.trim() || busy !== null} onClick={runCrawl}>
-          {busy === 'crawl' ? 'Crawling…' : 'Crawl Website'}
+          {busy === 'crawl' ? <BusyLabel>Crawling…</BusyLabel> : 'Crawl Website'}
         </button>
       </section>
 
@@ -284,10 +285,10 @@ export default function ContentImportClient() {
               disabled={busy !== null}
               onClick={() => runImport(categoriesWithContent(preview))}
             >
-              Import All
+              {busy === 'import' ? <BusyLabel>Importing…</BusyLabel> : 'Import All'}
             </button>
             <button type="button" className="btn-secondary" disabled={busy !== null || selected.length === 0} onClick={() => runImport(selected)}>
-              Import Selected
+              {busy === 'import' ? <BusyLabel>Importing…</BusyLabel> : 'Import Selected'}
             </button>
           </div>
         </section>

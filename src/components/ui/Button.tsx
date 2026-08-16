@@ -1,5 +1,9 @@
+'use client';
+
 import Link from 'next/link';
+import { useFormStatus } from 'react-dom';
 import { cn } from '@/lib/utils';
+import { BusyLabel } from '@/components/ui/Spinner';
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'outline';
 type Size = 'sm' | 'md' | 'lg';
@@ -9,6 +13,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   size?: Size;
   href?: string;
   className?: string;
+  loading?: boolean;
   children: React.ReactNode;
 }
 
@@ -31,10 +36,15 @@ export default function Button({
   size = 'md',
   href,
   className,
+  loading = false,
   children,
+  disabled,
+  type,
   ...props
 }: ButtonProps) {
+  const formStatus = useFormStatus();
   const classes = cn(variantClass[variant], sizeClass[size], className);
+  const busy = loading || (type === 'submit' && formStatus.pending);
 
   if (href) {
     return (
@@ -45,8 +55,8 @@ export default function Button({
   }
 
   return (
-    <button type="button" className={classes} {...props}>
-      {children}
+    <button type={type ?? 'button'} className={classes} disabled={disabled || busy} aria-busy={busy} {...props}>
+      {busy ? <BusyLabel>{children}</BusyLabel> : children}
     </button>
   );
 }

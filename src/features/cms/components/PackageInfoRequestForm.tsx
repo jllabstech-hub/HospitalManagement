@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { submitPackageInfoRequestAction } from '@/features/cms/actions/public-forms';
+import { BusyLabel } from '@/components/ui/Spinner';
 
 interface PackageInfoRequestFormProps {
   packageSlug?: string;
@@ -105,7 +106,7 @@ export default function PackageInfoRequestForm({
       </label>
 
       <button type="submit" disabled={isPending} className="btn-primary w-full sm:w-auto">
-        {isPending ? 'Submitting…' : 'Request information'}
+        {isPending ? <BusyLabel>Submitting…</BusyLabel> : 'Request information'}
       </button>
     </form>
   );

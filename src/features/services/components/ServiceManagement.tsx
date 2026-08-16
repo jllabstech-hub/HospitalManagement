@@ -11,7 +11,7 @@ export default function ServiceManagement({ initialData }: { initialData: CmsLis
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState('');
   
-  const { register, handleSubmit, reset } = useForm<CreateServiceInput | UpdateServiceInput>({
+  const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<CreateServiceInput | UpdateServiceInput>({
     resolver: zodResolver(editingId ? UpdateServiceSchema : CreateServiceSchema),
     defaultValues: { name: '', shortDescription: '', fullDescription: '' },
   });
@@ -62,7 +62,7 @@ export default function ServiceManagement({ initialData }: { initialData: CmsLis
           <input {...register('fullDescription')} className="border p-2 w-full" />
         </div>
         <div className="flex gap-2">
-          <Button type="submit">{editingId ? 'Update' : 'Create'}</Button>
+          <Button type="submit" loading={isSubmitting}>{editingId ? 'Update' : 'Create'}</Button>
           {editingId && <Button variant="outline" onClick={() => { setEditingId(null); reset(); }}>Cancel</Button>}
         </div>
       </form>

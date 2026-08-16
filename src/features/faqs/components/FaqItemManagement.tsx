@@ -11,7 +11,7 @@ export default function FaqItemManagement({ initialData }: { initialData: CmsLis
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState('');
   
-  const { register, handleSubmit, reset } = useForm<CreateFaqItemInput | UpdateFaqItemInput>({
+  const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<CreateFaqItemInput | UpdateFaqItemInput>({
     resolver: zodResolver(editingId ? UpdateFaqItemSchema : CreateFaqItemSchema),
     defaultValues: { question: '', answer: '', category: '' },
   });
@@ -62,7 +62,7 @@ export default function FaqItemManagement({ initialData }: { initialData: CmsLis
           <input {...register('category')} className="border p-2 w-full" />
         </div>
         <div className="flex gap-2">
-          <Button type="submit">{editingId ? 'Update' : 'Create'}</Button>
+          <Button type="submit" loading={isSubmitting}>{editingId ? 'Update' : 'Create'}</Button>
           {editingId && <Button variant="outline" onClick={() => { setEditingId(null); reset(); }}>Cancel</Button>}
         </div>
       </form>

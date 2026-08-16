@@ -8,6 +8,7 @@ import { registerPatientAction } from '@/features/auth/actions';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { BusyLabel } from '@/components/ui/Spinner';
 
 export default function RegisterForm() {
   const [serverError, setServerError] = useState<string | null>(null);
@@ -147,7 +148,7 @@ export default function RegisterForm() {
         </div>
 
         <button type="submit" disabled={isSubmitting} className="btn-primary mt-2 w-full">
-          {isSubmitting ? 'Creating Account...' : 'Register'}
+          {isSubmitting ? <BusyLabel>Creating Account...</BusyLabel> : 'Register'}
         </button>
       </form>
 

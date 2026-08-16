@@ -11,7 +11,7 @@ export default function SuccessStoryManagement({ initialData }: { initialData: C
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState('');
   
-  const { register, handleSubmit, reset } = useForm<CreateSuccessStoryInput | UpdateSuccessStoryInput>({
+  const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<CreateSuccessStoryInput | UpdateSuccessStoryInput>({
     resolver: zodResolver(editingId ? UpdateSuccessStorySchema : CreateSuccessStorySchema),
     defaultValues: { title: '', patientDisplayName: '', content: '' },
   });
@@ -62,7 +62,7 @@ export default function SuccessStoryManagement({ initialData }: { initialData: C
           <input {...register('content')} className="border p-2 w-full" />
         </div>
         <div className="flex gap-2">
-          <Button type="submit">{editingId ? 'Update' : 'Create'}</Button>
+          <Button type="submit" loading={isSubmitting}>{editingId ? 'Update' : 'Create'}</Button>
           {editingId && <Button variant="outline" onClick={() => { setEditingId(null); reset(); }}>Cancel</Button>}
         </div>
       </form>

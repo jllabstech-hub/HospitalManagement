@@ -17,6 +17,7 @@ import {
 import { useRouter, useSearchParams } from 'next/navigation';
 import InteractiveSearchInput from '@/components/shared/InteractiveSearchInput';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { BusyLabel } from '@/components/ui/Spinner';
 
 import ImageUploadPicker from '@/components/shared/ImageUploadPicker';
 
@@ -552,7 +553,7 @@ export default function DoctorManagement({
                   disabled={createForm.formState.isSubmitting}
                   className="rounded-xl bg-[#0f4c5c] px-6 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-[#0c3d4a] disabled:opacity-50"
                 >
-                  {createForm.formState.isSubmitting ? 'Creating...' : 'Create Doctor Account'}
+                  {createForm.formState.isSubmitting ? <BusyLabel>Creating...</BusyLabel> : 'Create Doctor Account'}
                 </button>
               </div>
             </form>
@@ -676,7 +677,7 @@ export default function DoctorManagement({
                   disabled={editForm.formState.isSubmitting}
                   className="rounded-xl bg-[#0f4c5c] px-6 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-[#0c3d4a] disabled:opacity-50"
                 >
-                  {editForm.formState.isSubmitting ? 'Saving...' : 'Save Changes'}
+                  {editForm.formState.isSubmitting ? <BusyLabel>Saving...</BusyLabel> : 'Save Changes'}
                 </button>
               </div>
             </form>

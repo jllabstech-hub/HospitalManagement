@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { updateFooterSettingsAction } from '@/features/cms/actions/admin-cms';
 import type { FooterConfig, FooterNavColumn, FooterNavLink } from '@/features/cms/footer-config';
+import { BusyLabel } from '@/components/ui/Spinner';
 
 export interface FooterSettingsFormData {
   legalName: string;
@@ -371,14 +372,7 @@ export default function FooterSettingsForm({ initial }: Props) {
 
       <div className="flex justify-end">
         <button type="submit" className="btn-primary !px-8 !py-3 !text-sm" disabled={saving}>
-          {saving ? (
-            <span className="inline-flex items-center gap-2">
-              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-              Saving...
-            </span>
-          ) : (
-            'Save Footer'
-          )}
+          {saving ? <BusyLabel>Saving...</BusyLabel> : 'Save Footer'}
         </button>
       </div>
     </form>

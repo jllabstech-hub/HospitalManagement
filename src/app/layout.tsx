@@ -4,6 +4,7 @@ import { APP_CONFIG } from '@/config';
 import { getSiteUrl } from '@/lib/seo';
 import { getTenantBranding } from '@/lib/tenant/branding';
 import { brandingStyleVars } from '@/server/security/branding';
+import NavigationProgress from '@/components/shared/NavigationProgress';
 import './globals.css';
 
 export const dynamic = 'force-dynamic';
@@ -62,6 +63,7 @@ export default async function RootLayout({
         <style dangerouslySetInnerHTML={{ __html: cssVars }} />
       </head>
       <body className="min-h-screen bg-surface-warm font-sans text-ink antialiased">
+        <NavigationProgress />
         {children}
       </body>
     </html>

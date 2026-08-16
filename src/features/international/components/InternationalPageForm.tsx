@@ -11,7 +11,7 @@ export default function InternationalPageForm({ initialData }: { initialData: In
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
 
-  const { register, handleSubmit } = useForm<InternationalPageInput>({
+  const { register, handleSubmit, formState: { isSubmitting } } = useForm<InternationalPageInput>({
     resolver: zodResolver(InternationalPageSchema),
     defaultValues: initialData,
   });
@@ -64,7 +64,7 @@ export default function InternationalPageForm({ initialData }: { initialData: In
         <label className="block text-sm">Coordinator contact</label>
         <input {...register('coordinatorContact')} className="border p-2 w-full" />
       </div>
-      <Button type="submit">Save page content</Button>
+      <Button type="submit" loading={isSubmitting}>Save page content</Button>
     </form>
   );
 }

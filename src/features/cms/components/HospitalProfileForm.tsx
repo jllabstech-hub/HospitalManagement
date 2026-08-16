@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { upsertHospitalProfileAction } from '@/features/cms/actions/admin-cms';
 import ImageUploadPicker from '@/components/shared/ImageUploadPicker';
+import { BusyLabel } from '@/components/ui/Spinner';
 
 export interface HospitalProfileFormData {
   id?: string;
@@ -194,7 +195,7 @@ export default function HospitalProfileForm({ profile }: Props) {
 
       <div className="flex justify-end">
         <button type="submit" className="btn-primary !px-8 !py-3 !text-sm shadow-soft" disabled={saving}>
-          {saving ? 'Saving Profile...' : 'Save Hospital Profile Changes'}
+          {saving ? <BusyLabel>Saving Profile...</BusyLabel> : 'Save Hospital Profile Changes'}
         </button>
       </div>
     </form>

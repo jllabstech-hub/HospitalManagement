@@ -8,6 +8,7 @@ import { sendOtpAction } from '@/features/auth/actions';
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 import { safeInternalPath } from '@/server/security/dashboard-paths';
+import { BusyLabel } from '@/components/ui/Spinner';
 
 type AuthMode = 'phone' | 'email';
 
@@ -238,7 +239,7 @@ export default function LoginForm() {
                 disabled={sendingOtp}
                 className="btn-primary mt-2 w-full"
               >
-                {sendingOtp ? 'Sending OTP...' : 'Send OTP Verification Code'}
+                {sendingOtp ? <BusyLabel>Sending OTP...</BusyLabel> : 'Send OTP Verification Code'}
               </button>
 
               <div className="mt-3 rounded-card border border-brand-200 bg-brand-50/70 p-3 text-xs text-brand-900">
@@ -281,7 +282,7 @@ export default function LoginForm() {
                 disabled={isOtpSubmitting}
                 className="btn-primary mt-2 w-full"
               >
-                {isOtpSubmitting ? 'Verifying OTP...' : 'Verify OTP & Access Patient Portal'}
+                {isOtpSubmitting ? <BusyLabel>Verifying OTP...</BusyLabel> : 'Verify OTP & Access Patient Portal'}
               </button>
             </form>
           )}
@@ -339,7 +340,7 @@ export default function LoginForm() {
             disabled={isEmailSubmitting}
             className="btn-primary mt-2 w-full"
           >
-            {isEmailSubmitting ? 'Signing in...' : 'Sign In with Password'}
+            {isEmailSubmitting ? <BusyLabel>Signing in...</BusyLabel> : 'Sign In with Password'}
           </button>
         </form>
       )}

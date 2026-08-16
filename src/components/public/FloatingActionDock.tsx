@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { submitAppointmentEnquiryAction } from '@/features/cms/actions/public-forms';
+import { BusyLabel } from '@/components/ui/Spinner';
 
 interface Props {
   emergencyPhone?: string | null;
@@ -191,7 +192,7 @@ export default function FloatingActionDock({ emergencyPhone }: Props) {
                     Cancel
                   </button>
                   <button type="submit" className="btn-primary !px-5 !py-2 !text-xs" disabled={saving}>
-                    {saving ? 'Submitting...' : 'Submit Request →'}
+                    {saving ? <BusyLabel>Submitting...</BusyLabel> : 'Submit Request →'}
                   </button>
                 </div>
               </form>

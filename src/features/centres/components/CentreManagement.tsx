@@ -11,7 +11,7 @@ export default function CentreManagement({ initialData }: { initialData: CmsList
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState('');
   
-  const { register, handleSubmit, reset } = useForm<CreateCentreInput | UpdateCentreInput>({
+  const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<CreateCentreInput | UpdateCentreInput>({
     resolver: zodResolver(editingId ? UpdateCentreSchema : CreateCentreSchema),
     defaultValues: { name: '', shortDescription: '', clinicalFocus: '' },
   });
@@ -62,7 +62,7 @@ export default function CentreManagement({ initialData }: { initialData: CmsList
           <input {...register('clinicalFocus')} className="border p-2 w-full" />
         </div>
         <div className="flex gap-2">
-          <Button type="submit">{editingId ? 'Update' : 'Create'}</Button>
+          <Button type="submit" loading={isSubmitting}>{editingId ? 'Update' : 'Create'}</Button>
           {editingId && <Button variant="outline" onClick={() => { setEditingId(null); reset(); }}>Cancel</Button>}
         </div>
       </form>

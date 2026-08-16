@@ -9,6 +9,7 @@ import {
   UpdateDepartmentSchema,
   UpdateDepartmentInput,
 } from '../schemas';
+import { BusyLabel } from '@/components/ui/Spinner';
 import {
   createDepartmentAction,
   updateDepartmentAction,
@@ -381,7 +382,7 @@ export default function DepartmentManagement({
                   Cancel
                 </button>
                 <button type="submit" disabled={createForm.formState.isSubmitting} className="btn-primary">
-                  {createForm.formState.isSubmitting ? 'Creating...' : 'Create Department'}
+                  {createForm.formState.isSubmitting ? <BusyLabel>Creating...</BusyLabel> : 'Create Department'}
                 </button>
               </div>
             </form>
@@ -447,7 +448,7 @@ export default function DepartmentManagement({
                   Cancel
                 </button>
                 <button type="submit" disabled={editForm.formState.isSubmitting} className="btn-primary">
-                  {editForm.formState.isSubmitting ? 'Saving...' : 'Save Changes'}
+                  {editForm.formState.isSubmitting ? <BusyLabel>Saving...</BusyLabel> : 'Save Changes'}
                 </button>
               </div>
             </form>

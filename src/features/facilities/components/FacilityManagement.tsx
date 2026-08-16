@@ -16,7 +16,7 @@ export default function FacilityManagement({ initialData }: { initialData: CmsLi
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState('');
 
-  const { register, handleSubmit, reset } = useForm<CreateFacilityInput | UpdateFacilityInput>({
+  const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<CreateFacilityInput | UpdateFacilityInput>({
     resolver: zodResolver(editingId ? UpdateFacilitySchema : CreateFacilitySchema),
     defaultValues: { name: '', category: '', description: '' },
   });
@@ -52,7 +52,7 @@ export default function FacilityManagement({ initialData }: { initialData: CmsLi
           <textarea {...register('description')} className="border p-2 w-full" rows={3} />
         </div>
         <div className="flex gap-2">
-          <Button type="submit">{editingId ? 'Update' : 'Create'}</Button>
+          <Button type="submit" loading={isSubmitting}>{editingId ? 'Update' : 'Create'}</Button>
           {editingId && (
             <Button variant="outline" onClick={() => { setEditingId(null); reset(); }}>
               Cancel

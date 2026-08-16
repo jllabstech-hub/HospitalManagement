@@ -16,7 +16,7 @@ export default function LeadershipManagement({ initialData }: { initialData: Cms
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState('');
 
-  const { register, handleSubmit, reset } = useForm<CreateLeadershipInput | UpdateLeadershipInput>({
+  const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<CreateLeadershipInput | UpdateLeadershipInput>({
     resolver: zodResolver(editingId ? UpdateLeadershipSchema : CreateLeadershipSchema),
     defaultValues: { name: '', designation: '', shortBio: '' },
   });
@@ -52,7 +52,7 @@ export default function LeadershipManagement({ initialData }: { initialData: Cms
           <textarea {...register('shortBio')} className="border p-2 w-full" rows={3} />
         </div>
         <div className="flex gap-2">
-          <Button type="submit">{editingId ? 'Update' : 'Create'}</Button>
+          <Button type="submit" loading={isSubmitting}>{editingId ? 'Update' : 'Create'}</Button>
           {editingId && (
             <Button variant="outline" onClick={() => { setEditingId(null); reset(); }}>
               Cancel

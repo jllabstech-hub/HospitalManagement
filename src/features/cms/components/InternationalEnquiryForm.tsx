@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { submitInternationalEnquiryAction } from '@/features/cms/actions/public-forms';
+import { BusyLabel } from '@/components/ui/Spinner';
 
 export default function InternationalEnquiryForm() {
   const [isPending, startTransition] = useTransition();
@@ -116,7 +117,7 @@ export default function InternationalEnquiryForm() {
       </label>
 
       <button type="submit" disabled={isPending} className="btn-primary w-full sm:w-auto">
-        {isPending ? 'Submitting…' : 'Submit enquiry'}
+        {isPending ? <BusyLabel>Submitting…</BusyLabel> : 'Submit enquiry'}
       </button>
     </form>
   );

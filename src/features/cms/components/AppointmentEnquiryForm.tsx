@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { submitAppointmentEnquiryAction } from '@/features/cms/actions/public-forms';
+import { BusyLabel } from '@/components/ui/Spinner';
 
 interface AppointmentEnquiryFormProps {
   departments?: { id: string; name: string }[];
@@ -144,7 +145,7 @@ export default function AppointmentEnquiryForm({
       </label>
 
       <button type="submit" disabled={isPending} className="btn-primary w-full sm:w-auto">
-        {isPending ? 'Submitting…' : 'Submit enquiry'}
+        {isPending ? <BusyLabel>Submitting…</BusyLabel> : 'Submit enquiry'}
       </button>
     </form>
   );
