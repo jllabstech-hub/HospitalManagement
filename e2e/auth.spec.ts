@@ -20,7 +20,7 @@ test.describe('Authentication & Role-Based Authorization E2E Suite', () => {
 
     // 4. Assert Redirection to Patient Dashboard
     await page.waitForURL('**/patient/dashboard');
-    await expect(page.getByRole('heading', { name: 'Patient Dashboard' })).toBeVisible();
+    await expect(page.getByText('Patient Portal')).toBeVisible();
     await expect(page.getByText(testPatientEmail).first()).toBeVisible();
     await expect(page.getByText('PATIENT').first()).toBeVisible();
   });
@@ -33,7 +33,7 @@ test.describe('Authentication & Role-Based Authorization E2E Suite', () => {
     await page.click('button[type="submit"]');
 
     await page.waitForURL('**/doctor/dashboard');
-    await expect(page.getByRole('heading', { name: 'Doctor Dashboard' })).toBeVisible();
+    await expect(page.getByText('Doctor Portal')).toBeVisible();
     await expect(page.getByText('dr.smith@hospital.com').first()).toBeVisible();
     await expect(page.getByText('Role: DOCTOR').first()).toBeVisible();
   });
@@ -69,7 +69,7 @@ test.describe('Authentication & Role-Based Authorization E2E Suite', () => {
     // Attempt direct URL access to Admin Dashboard
     await page.goto('/admin/dashboard');
     await page.waitForURL('**/patient/dashboard');
-    await expect(page.getByRole('heading', { name: 'Patient Dashboard' })).toBeVisible();
+    await expect(page.getByText('Patient Portal')).toBeVisible();
   });
 
   test('TEST 7: Doctor Denied Access to Admin Area', async ({ page }) => {
@@ -84,7 +84,7 @@ test.describe('Authentication & Role-Based Authorization E2E Suite', () => {
     // Attempt direct URL access to Admin Dashboard
     await page.goto('/admin/dashboard');
     await page.waitForURL('**/doctor/dashboard');
-    await expect(page.getByRole('heading', { name: 'Doctor Dashboard' })).toBeVisible();
+    await expect(page.getByText('Doctor Portal')).toBeVisible();
   });
 
   test('TEST 8: Logout Invalidates Session', async ({ page }) => {

@@ -4,6 +4,7 @@ import { getPatientAppointments } from '@/features/appointments/services/manage-
 import AppointmentCard from '@/components/appointments/AppointmentCard';
 import EmptyState from '@/components/ui/EmptyState';
 import Card from '@/components/ui/Card';
+import Image from 'next/image';
 
 export default async function PatientDashboardPage() {
   const user = await requirePatient();
@@ -11,16 +12,23 @@ export default async function PatientDashboardPage() {
 
   return (
     <div className="space-y-8">
-      <section className="relative overflow-hidden rounded-card hero-mesh px-6 py-8 text-white shadow-card sm:px-8">
-        <div className="absolute inset-0 pattern-dots opacity-20" aria-hidden />
+      <section className="portal-hero min-h-[18rem] px-6 py-8 sm:px-8">
+        <Image
+          src="/images/dashboard/care-journey-illustration.png"
+          alt="Doctor and patient discussing a care plan"
+          fill
+          priority
+          className="object-cover object-[66%_center] opacity-80"
+          sizes="(max-width: 768px) 100vw, 1280px"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-brand-950 via-brand-950/90 to-brand-950/20" aria-hidden />
+        <div className="absolute inset-0 portal-grid opacity-25" aria-hidden />
         <div className="relative flex flex-col justify-between gap-6 md:flex-row md:items-center">
           <div>
             <span className="rounded-pill border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-brand-100">
               Patient Portal
             </span>
-            <h1 className="mt-3 font-display text-3xl font-semibold tracking-tight">
-              Patient Dashboard
-            </h1>
+            <h1 className="mt-3 font-display text-3xl font-semibold tracking-tight">Your care, all in one place.</h1>
             <p className="mt-2 max-w-xl text-sm text-brand-100">
               Welcome back. Logged in as{' '}
               <span className="font-semibold text-white">{user.email}</span>. Manage outpatient
@@ -74,8 +82,9 @@ export default async function PatientDashboardPage() {
       </section>
 
       <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <Card className="flex flex-col justify-between gap-4 md:col-span-1">
+        <Card hover className="flex flex-col justify-between gap-4 border-t-4 border-t-brand-500 md:col-span-1">
           <div>
+            <span className="text-xs font-bold tracking-[0.16em] text-brand-600" aria-hidden>01</span>
             <h3 className="font-semibold text-ink">Find a Doctor</h3>
             <p className="mt-1 text-sm text-ink-muted">
               Browse active hospital departments and book 30-min slots.
@@ -85,8 +94,9 @@ export default async function PatientDashboardPage() {
             Browse Doctors
           </Link>
         </Card>
-        <Card className="flex flex-col justify-between gap-4">
+        <Card hover className="flex flex-col justify-between gap-4 border-t-4 border-t-accent-500">
           <div>
+            <span className="text-xs font-bold tracking-[0.16em] text-accent-700" aria-hidden>02</span>
             <h3 className="font-semibold text-ink">Book Appointment</h3>
             <p className="mt-1 text-sm text-ink-muted">
               Choose a specialist and reserve the next available consultation.
@@ -96,8 +106,9 @@ export default async function PatientDashboardPage() {
             Start Booking
           </Link>
         </Card>
-        <Card className="flex flex-col justify-between gap-4">
+        <Card hover className="flex flex-col justify-between gap-4 border-t-4 border-t-sky-500">
           <div>
+            <span className="text-xs font-bold tracking-[0.16em] text-sky-700" aria-hidden>03</span>
             <h3 className="font-semibold text-ink">My Appointments</h3>
             <p className="mt-1 text-sm text-ink-muted">
               View completed, cancelled, and historical records.

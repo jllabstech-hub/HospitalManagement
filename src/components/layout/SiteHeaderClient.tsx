@@ -113,6 +113,7 @@ export default function SiteHeaderClient({
   const [openMobile, setOpenMobile] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [activeHoverIndex, setActiveHoverIndex] = useState<number | null>(null);
+  const [pinnedMenuIndex, setPinnedMenuIndex] = useState<number | null>(null);
   const [mobileExpandedIndex, setMobileExpandedIndex] = useState<number | null>(null);
 
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -127,6 +128,7 @@ export default function SiteHeaderClient({
   useEffect(() => {
     setOpenMobile(false);
     setActiveHoverIndex(null);
+    setPinnedMenuIndex(null);
   }, [pathname]);
 
   useEffect(() => {
@@ -135,6 +137,17 @@ export default function SiteHeaderClient({
       document.body.style.overflow = '';
     };
   }, [openMobile]);
+
+  useEffect(() => {
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setActiveHoverIndex(null);
+        setPinnedMenuIndex(null);
+      }
+    };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, []);
 
   const handleMouseEnter = (index: number) => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -167,7 +180,7 @@ export default function SiteHeaderClient({
             onMouseLeave={handleMouseLeave}
           >
             {navItems.map((item, idx) => {
-              const isActive = activeHoverIndex === idx;
+              const isActive = activeHoverIndex === idx || pinnedMenuIndex === idx;
               const hasDropdown = Boolean(item.columns && item.columns.length > 0);
               const isCurrent = pathname === item.href || pathname.startsWith(`${item.href}/`);
 
@@ -177,17 +190,30 @@ export default function SiteHeaderClient({
                   className="relative"
                   onMouseEnter={() => handleMouseEnter(idx)}
                 >
-                  <Link
-                    href={item.href}
-                    className={cn(
-                      'group inline-flex items-center gap-0.5 whitespace-nowrap py-2 text-[13px] font-medium tracking-tight transition-colors duration-200 2xl:gap-1 2xl:text-[13.5px]',
-                      isActive || isCurrent
-                        ? 'text-brand-800'
-                        : 'text-[#4a5d68] hover:text-brand-800'
-                    )}
-                  >
+                  <div className="inline-flex items-center">
+                    <Link
+                      href={item.href}
+                      className={cn(
+                        'group inline-flex items-center whitespace-nowrap py-2 text-[13px] font-medium tracking-tight transition-colors duration-200 2xl:text-[13.5px]',
+                        isActive || isCurrent
+                          ? 'text-brand-800'
+                          : 'text-[#4a5d68] hover:text-brand-800'
+                      )}
+                    >
                     <span>{item.label}</span>
-                    {hasDropdown && (
+                    </Link>
+                    {hasDropdown ? (
+                      <button
+                        type="button"
+                        className={cn(
+                          'ml-0.5 inline-flex rounded p-1 text-[#4a5d68] transition hover:bg-brand-50 hover:text-brand-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600',
+                          isActive && 'text-brand-800'
+                        )}
+                        aria-label={`Open ${item.label} menu`}
+                        aria-expanded={isActive}
+                        aria-haspopup="menu"
+                        onClick={() => setPinnedMenuIndex(pinnedMenuIndex === idx ? null : idx)}
+                      >
                       <svg
                         viewBox="0 0 20 20"
                         className={cn(
@@ -202,8 +228,9 @@ export default function SiteHeaderClient({
                           clipRule="evenodd"
                         />
                       </svg>
-                    )}
-                  </Link>
+                      </button>
+                    ) : null}
+                  </div>
 
                   {hasDropdown && isActive && (() => {
                     const columns = item.columns ?? [];
@@ -254,7 +281,10 @@ export default function SiteHeaderClient({
                             key={cIdx}
                             title={isMultiGroup ? col.title : undefined}
                             items={col.items}
-                            onNavigate={() => setActiveHoverIndex(null)}
+                            onNavigate={() => {
+                              setActiveHoverIndex(null);
+                              setPinnedMenuIndex(null);
+                            }}
                           />
                         ))}
                       </div>
@@ -263,7 +293,10 @@ export default function SiteHeaderClient({
                         <Link
                           href={item.href}
                           className="flex items-center justify-between rounded-lg px-1 py-2 text-[12px] font-semibold text-brand-700 hover:bg-brand-50 hover:text-brand-900"
-                          onClick={() => setActiveHoverIndex(null)}
+                          onClick={() => {
+                            setActiveHoverIndex(null);
+                            setPinnedMenuIndex(null);
+                          }}
                         >
                           <span>View all {item.label.toLowerCase()}</span>
                           <span aria-hidden>→</span>

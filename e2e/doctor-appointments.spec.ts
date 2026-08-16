@@ -10,7 +10,7 @@ test.describe('Doctor Appointment Management & Status Transitions E2E Suite', ()
     await page.fill('input[id="password"]', 'test123');
     await page.click('button[type="submit"]');
     await page.waitForURL('**/doctor/dashboard');
-    await expect(page.getByRole('heading', { name: 'Doctor Dashboard' })).toBeVisible();
+    await expect(page.getByText('Doctor Portal')).toBeVisible();
 
     // 2. Navigate to Doctor Appointment Directory
     await page.goto('/doctor/appointments');

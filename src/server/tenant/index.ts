@@ -13,6 +13,7 @@ export {
   isLocalDevelopmentHost,
   isTestRuntime,
   allowMockSessionFallback,
+  isSingleTenantMode,
   DEFAULT_TENANT_TIMEZONE,
   type ResolvedTenant,
   type TenantUserContext,

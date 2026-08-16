@@ -23,7 +23,8 @@ async function main() {
     postalCode: '560103',
     country: 'India',
     timezone: 'Asia/Kolkata',
-    websiteUrl: 'http://localhost:5000',
+    websiteUrl:
+      process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'http://localhost:5000',
     workingHours: 'OPD: Mon – Sat: 8:00 AM – 8:00 PM | Emergency & Trauma Care: 24 Hours / 7 Days',
     mission:
       'To deliver patient-centered, compassionate, and affordable healthcare of international standards through clinical excellence, advanced medical technology, and ethical practices.',
@@ -35,8 +36,11 @@ async function main() {
       'https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&q=80&w=1600',
     logoUrl:
       'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&q=80&w=600',
-    customDomain: 'hospital-management-jllabs.vercel.app',
-    subdomain: 'carepulse',
+    customDomain:
+      process.env.DEFAULT_HOSPITAL_CUSTOM_DOMAIN?.trim() ||
+      process.env.VERCEL_PROJECT_PRODUCTION_URL?.replace(/^https?:\/\//, '') ||
+      'hospital-management-jllabs.vercel.app',
+    subdomain: process.env.DEFAULT_TENANT_DOMAIN?.trim() || 'carepulse',
     primaryColor: '#0ea5e9',
     secondaryColor: '#f43f5e',
     fontFamily: 'Inter, sans-serif',

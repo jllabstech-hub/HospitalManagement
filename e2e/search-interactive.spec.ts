@@ -6,7 +6,7 @@ test.describe('Global Interactive Search E2E Suite', () => {
     await page.goto('/');
 
     // 2. Click Header Search Trigger Button
-    await page.click('button:has-text("Search")');
+    await page.getByRole('button', { name: 'Search' }).click();
     await expect(page.locator('input[aria-label="Global interactive hospital search"]')).toBeVisible();
 
     // 3. Type "card" and verify results begin appearing automatically (NO click on Search button)
@@ -31,7 +31,7 @@ test.describe('Global Interactive Search E2E Suite', () => {
     await page.goto('/');
 
     // Open Search overlay
-    await page.click('button:has-text("Search")');
+    await page.getByRole('button', { name: 'Search' }).click();
     await expect(page.locator('input[aria-label="Global interactive hospital search"]')).toBeVisible();
 
     // Type query

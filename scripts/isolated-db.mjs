@@ -185,6 +185,7 @@ if (suite === 'unit') {
         {
           E2E_DATABASE_URL: url,
           E2E_TEST_MODE: 'true',
+          SINGLE_TENANT: 'true',
           ALLOW_DEV_TENANT_FALLBACK: 'true',
           DEFAULT_TENANT_DOMAIN: 'carepulse',
           AUTH_URL: 'http://localhost:5001',
@@ -210,6 +211,7 @@ if (suite === 'unit') {
         DATABASE_URL: url,
         E2E_DATABASE_URL: url,
         E2E_TEST_MODE: 'true',
+        SINGLE_TENANT: 'true',
         ALLOW_DEV_TENANT_FALLBACK: 'true',
         DEFAULT_TENANT_DOMAIN: 'carepulse',
         AUTH_URL: 'http://localhost:5001',

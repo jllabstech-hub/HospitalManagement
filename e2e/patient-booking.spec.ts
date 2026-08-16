@@ -30,7 +30,7 @@ test.describe('Patient Transactional Booking E2E Suite (Phase 5C)', () => {
     // 7. Click Go to Patient Dashboard
     await page.click('a:has-text("Go to Patient Dashboard")');
     await page.waitForURL('**/patient/dashboard');
-    await expect(page.getByRole('heading', { name: 'Patient Dashboard' })).toBeVisible();
+    await expect(page.getByText('Patient Portal')).toBeVisible();
   });
 
   test('TEST 2: Slot Conflict Flow (Duplicate Slot Attempt Returns Friendly Notice & Refreshes Grid)', async ({ page, browser }) => {

@@ -24,7 +24,7 @@ test.describe('Responsive smoke', () => {
   test('Patient dashboard at 375px', async ({ page }) => {
     await page.setViewportSize(devices['iPhone 12'].viewport!);
     await loginPatientA(page);
-    await expect(page.getByRole('heading', { name: 'Patient Dashboard' })).toBeVisible();
+    await expect(page.getByText('Patient Portal')).toBeVisible();
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 2
     );
@@ -34,7 +34,7 @@ test.describe('Responsive smoke', () => {
   test('Doctor dashboard at 375px', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
     await loginDoctorA(page);
-    await expect(page.getByRole('heading', { name: /Doctor Dashboard/i })).toBeVisible();
+    await expect(page.getByText('Doctor Portal')).toBeVisible();
   });
 
   test('Admin dashboard at 768px', async ({ page }) => {

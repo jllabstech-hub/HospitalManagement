@@ -24,16 +24,15 @@ export default async function DoctorDashboardPage() {
 
   return (
     <div className="space-y-8">
-      <section className="relative overflow-hidden rounded-card bg-brand-950 px-6 py-8 text-white shadow-card sm:px-8">
-        <div className="absolute inset-0 pattern-dots opacity-10" aria-hidden />
+      <section className="portal-hero px-6 py-8 sm:px-8">
+        <div className="absolute inset-0 portal-grid opacity-20" aria-hidden />
+        <div className="absolute -right-12 -top-16 h-56 w-56 rounded-full border-[28px] border-brand-400/20" aria-hidden />
         <div className="relative flex flex-col justify-between gap-6 md:flex-row md:items-center">
           <div>
             <span className="rounded-pill border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-brand-100">
               Doctor Portal
             </span>
-            <h1 className="mt-3 font-display text-3xl font-semibold tracking-tight">
-              Doctor Dashboard
-            </h1>
+            <h1 className="mt-3 font-display text-3xl font-semibold tracking-tight">Your clinical day, in focus.</h1>
             <p className="mt-2 max-w-xl text-sm text-brand-100">
               Logged in as <span className="font-semibold text-white">{user.email}</span>. Manage
               today&apos;s outpatient appointments and consultation schedules.
@@ -55,10 +54,7 @@ export default async function DoctorDashboardPage() {
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
         {stats.map((stat) => (
-          <div
-            key={stat.label}
-            className={`rounded-card border border-[#dde5e9] p-5 text-center shadow-soft ${stat.className}`}
-          >
+          <div key={stat.label} className={`metric-card text-center ${stat.className}`}>
             <span className="block text-xs font-bold uppercase tracking-wider text-ink-muted">
               {stat.label}
             </span>
@@ -86,11 +82,12 @@ export default async function DoctorDashboardPage() {
         ) : (
           <div className="space-y-4">
             {appointments.map((appt) => (
-              <div
-                key={appt.id}
-                className="flex flex-col justify-between gap-4 rounded-card border border-[#dde5e9] bg-surface-muted p-5 transition hover:border-brand-200 md:flex-row md:items-center"
-              >
-                <div className="space-y-1">
+              <div key={appt.id} className="flex flex-col justify-between gap-4 rounded-card border border-[#dde5e9] bg-surface-muted p-5 transition hover:border-brand-200 hover:shadow-soft md:flex-row md:items-center">
+                <div className="flex gap-4">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-100 text-sm font-bold text-brand-800">
+                    {appt.patient.fullName.slice(0, 1).toUpperCase()}
+                  </div>
+                  <div className="space-y-1">
                   <div className="flex flex-wrap items-center gap-3">
                     <span className="rounded-button border border-brand-200 bg-brand-50 px-2.5 py-1 text-sm font-bold text-brand-800">
                       {formatTimeTo12Hour(appt.startTime)} – {formatTimeTo12Hour(appt.endTime)}
@@ -101,6 +98,7 @@ export default async function DoctorDashboardPage() {
                   <p className="text-xs text-ink-muted">
                     Contact: {appt.patient.phoneNumber} | Gender: {appt.patient.gender}
                   </p>
+                  </div>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">

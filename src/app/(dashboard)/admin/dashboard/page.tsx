@@ -48,16 +48,15 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
         description="System-wide hospital management, department master data, doctor provisioning, and appointment supervision."
         frontendPath="/"
       />
-      <section className="relative overflow-hidden rounded-card bg-brand-950 px-6 py-8 text-white shadow-card sm:px-8">
-        <div className="absolute inset-0 pattern-dots opacity-10" aria-hidden />
+      <section className="portal-hero px-6 py-8 sm:px-8">
+        <div className="absolute inset-0 portal-grid opacity-20" aria-hidden />
+        <div className="absolute -right-10 -bottom-20 h-64 w-64 rounded-full border-[34px] border-accent-400/20" aria-hidden />
         <div className="relative flex flex-col justify-between gap-6 md:flex-row md:items-center">
           <div>
             <span className="rounded-pill border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-brand-100">
               System Administration
             </span>
-            <p className="mt-3 font-display text-3xl font-semibold tracking-tight">
-              Hospital operations
-            </p>
+            <p className="mt-3 font-display text-3xl font-semibold tracking-tight">Hospital operations, at a glance.</p>
             <p className="mt-2 max-w-xl text-sm text-brand-100">
               System-wide hospital management, department master data, doctor provisioning, and
               appointment supervision.
@@ -87,7 +86,7 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
         ].map((stat) => (
           <div
             key={stat.label}
-            className={`rounded-card border p-5 text-center shadow-soft ${
+            className={`metric-card text-center ${
               stat.tone === 'brand'
                 ? 'border-brand-200 bg-brand-50'
                 : stat.tone === 'accent'

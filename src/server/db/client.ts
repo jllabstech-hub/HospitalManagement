@@ -1,4 +1,7 @@
 import { PrismaClient } from '@prisma/client';
+import { neonConfig } from '@neondatabase/serverless';
+import { PrismaNeon } from '@prisma/adapter-neon';
+import ws from 'ws';
 import { assertDatabaseIsolation } from './database-guard';
 
 assertDatabaseIsolation();
@@ -7,14 +10,35 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-const basePrisma =
-  globalForPrisma.prisma ??
-  new PrismaClient({
-    log:
-      process.env.NODE_ENV === 'development'
-        ? ['query', 'error', 'warn']
-        : ['error'],
+function isNeonDatabaseUrl(url: string): boolean {
+  return /\.neon\.tech|neon\.build/i.test(url);
+}
+
+function createBaseClient(): PrismaClient {
+  const log =
+    process.env.NODE_ENV === 'development'
+      ? (['query', 'error', 'warn'] as const)
+      : (['error'] as const);
+
+  const url = process.env.DATABASE_URL || '';
+
+  // Prisma's native engine talks Postgres on :5432. On Windows that often
+  // fails (IPv6 / idle Neon compute). The Neon adapter uses HTTPS/WebSockets
+  // instead, which works on localhost and Vercel.
+  if (isNeonDatabaseUrl(url)) {
+    neonConfig.webSocketConstructor = ws;
+    return new PrismaClient({
+      adapter: new PrismaNeon({ connectionString: url }),
+      log: [...log],
+    });
+  }
+
+  return new PrismaClient({
+    log: [...log],
   });
+}
+
+const basePrisma = globalForPrisma.prisma ?? createBaseClient();
 
 const EXCLUDED_MODELS = ['HospitalProfile'];
 

@@ -10,6 +10,7 @@ import {
   type ResolvedTenant,
   type TenantUserContext,
 } from './types';
+import { isDatabaseUnreachable } from '@/server/db/unreachable';
 
 export const tenantAls = new AsyncLocalStorage<ResolvedTenant | TenantUserContext>();
 
@@ -73,6 +74,9 @@ export async function getTenantContext(): Promise<ResolvedTenant | null> {
     return await resolveFromRequest();
   } catch (error) {
     if (error instanceof DomainError && error.code === 'TENANT_NOT_FOUND') {
+      return null;
+    }
+    if (isDatabaseUnreachable(error)) {
       return null;
     }
     throw error;

@@ -21,6 +21,16 @@ export interface TenantUserContext extends ResolvedTenant {
 
 export const DEFAULT_TENANT_TIMEZONE = 'Asia/Kolkata';
 
+/**
+ * One-hospital deployments are the default.
+ * Set SINGLE_TENANT=false only when hosting multiple hospitals by domain.
+ */
+export function isSingleTenantMode(): boolean {
+  const raw = process.env.SINGLE_TENANT?.trim().toLowerCase();
+  if (raw === 'false' || raw === '0' || raw === 'no') return false;
+  return true;
+}
+
 export function isProductionRuntime(): boolean {
   return process.env.NODE_ENV === 'production';
 }

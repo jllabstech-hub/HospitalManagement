@@ -9,7 +9,7 @@ test.describe('Patient Doctor Discovery & Slot Selection E2E Suite', () => {
     await page.fill('input[id="password"]', 'test123');
     await page.click('button[type="submit"]');
     await page.waitForURL('**/patient/dashboard');
-    await expect(page.getByRole('heading', { name: 'Patient Dashboard' })).toBeVisible();
+    await expect(page.getByText('Patient Portal')).toBeVisible();
 
     await searchAndOpenDoctor(page, 'Jane Smith');
     await expect(page.getByRole('heading', { name: /Jane Smith/i })).toBeVisible();

@@ -49,6 +49,16 @@ export async function loginAdmin(page: Page) {
   await page.waitForURL('**/admin/dashboard');
 }
 
+export async function expectPatientPortal(page: Page) {
+  await expect(page.getByText('Patient Portal')).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Your care, all in one place/i })).toBeVisible();
+}
+
+export async function expectDoctorPortal(page: Page) {
+  await expect(page.getByText('Doctor Portal')).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Your clinical day, in focus/i })).toBeVisible();
+}
+
 export async function expectNoPasswordHashLeak(page: Page) {
   const html = await page.content();
   expect(html.toLowerCase()).not.toContain('passwordhash');

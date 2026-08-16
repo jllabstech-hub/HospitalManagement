@@ -4,6 +4,7 @@ import {
   DEFAULT_TENANT_TIMEZONE,
   isLocalDevelopmentHost,
   isProductionRuntime,
+  isSingleTenantMode,
   normalizeHostname,
   type ResolvedTenant,
 } from './types';
@@ -67,31 +68,46 @@ export async function resolveTenantByHost(rawHost: string): Promise<ResolvedTena
     return toResolvedTenant(bySubdomain, host);
   }
 
-  // Development convenience only: localhost may use an explicit default domain
-  // or, when ALLOW_DEV_TENANT_FALLBACK=true, the oldest active hospital.
-  // Production never falls back.
-  if (!isProductionRuntime() && isLocalDevelopmentHost(host)) {
-    const defaultDomain = process.env.DEFAULT_TENANT_DOMAIN?.trim();
-    if (defaultDomain) {
-      const mapped = await prisma.hospitalProfile.findFirst({
-        where: {
-          isActive: true,
-          OR: [{ customDomain: defaultDomain }, { subdomain: defaultDomain }],
-        },
-        select: profileSelect,
-        orderBy: { createdAt: 'asc' },
-      });
-      if (mapped) return toResolvedTenant(mapped, host);
-    }
+  const defaultId = process.env.DEFAULT_TENANT_ID?.trim();
+  if (defaultId) {
+    const byId = await prisma.hospitalProfile.findFirst({
+      where: { id: defaultId, isActive: true },
+      select: profileSelect,
+    });
+    if (byId) return toResolvedTenant(byId, host);
+  }
 
-    if (process.env.ALLOW_DEV_TENANT_FALLBACK === 'true') {
-      const firstActive = await prisma.hospitalProfile.findFirst({
-        where: { isActive: true },
-        select: profileSelect,
-        orderBy: { createdAt: 'asc' },
-      });
-      if (firstActive) return toResolvedTenant(firstActive, host);
-    }
+  const defaultDomain = process.env.DEFAULT_TENANT_DOMAIN?.trim();
+  if (defaultDomain) {
+    const mapped = await prisma.hospitalProfile.findFirst({
+      where: {
+        isActive: true,
+        OR: [{ customDomain: defaultDomain }, { subdomain: defaultDomain }],
+      },
+      select: profileSelect,
+      orderBy: { createdAt: 'asc' },
+    });
+    if (mapped) return toResolvedTenant(mapped, host);
+  }
+
+  // Single-hospital mode (default): localhost, Vercel previews, and the
+  // production hostname all use the same active hospital.
+  if (isSingleTenantMode()) {
+    const firstActive = await prisma.hospitalProfile.findFirst({
+      where: { isActive: true },
+      select: profileSelect,
+      orderBy: { createdAt: 'asc' },
+    });
+    if (firstActive) return toResolvedTenant(firstActive, host);
+  }
+
+  if (!isProductionRuntime() && isLocalDevelopmentHost(host) && process.env.ALLOW_DEV_TENANT_FALLBACK === 'true') {
+    const firstActive = await prisma.hospitalProfile.findFirst({
+      where: { isActive: true },
+      select: profileSelect,
+      orderBy: { createdAt: 'asc' },
+    });
+    if (firstActive) return toResolvedTenant(firstActive, host);
   }
 
   return null;

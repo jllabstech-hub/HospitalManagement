@@ -89,6 +89,14 @@
   .prose-hospital p {
     @apply text-base leading-relaxed text-ink-muted;
   }
+
+  .portal-hero {
+    @apply relative overflow-hidden rounded-card border border-brand-900/10 bg-brand-950 text-white shadow-card;
+  }
+
+  .metric-card {
+    @apply relative overflow-hidden rounded-card border border-[#dde5e9] bg-white p-5 shadow-soft transition duration-brand hover:-translate-y-0.5 hover:shadow-card;
+  }
 }
 
 @layer utilities {
@@ -106,6 +114,11 @@
   .pattern-dots {
     background-image: radial-gradient(rgba(20, 33, 43, 0.06) 1px, transparent 1px);
     background-size: 18px 18px;
+  }
+
+  .portal-grid {
+    background-image: linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+    background-size: 26px 26px;
   }
 }
 

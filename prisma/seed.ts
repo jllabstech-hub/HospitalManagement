@@ -535,7 +535,13 @@ async function main() {
   const defaultPasswordHash = await bcrypt.hash('test123', 10);
 
   await seedHospital('Alpha', 'hospital-a.com', defaultPasswordHash);
-  await seedHospital('Beta', 'hospital-b.com', defaultPasswordHash);
+  const multiTenant =
+    process.env.SINGLE_TENANT?.trim().toLowerCase() === 'false' ||
+    process.env.SINGLE_TENANT?.trim() === '0' ||
+    process.env.SINGLE_TENANT?.trim().toLowerCase() === 'no';
+  if (multiTenant) {
+    await seedHospital('Beta', 'hospital-b.com', defaultPasswordHash);
+  }
 
   const alphaAdmin = await prisma.user.findFirst({ where: { email: 'admin@hospital.com' } });
   if (alphaAdmin?.tenantId) {

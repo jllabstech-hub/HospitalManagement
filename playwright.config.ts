@@ -44,6 +44,7 @@ export default defineConfig({
       ...process.env,
       DATABASE_URL: e2eDbUrl,
       E2E_TEST_MODE: 'true',
+      SINGLE_TENANT: 'true',
       ALLOW_DEV_TENANT_FALLBACK: 'true',
       DEFAULT_TENANT_DOMAIN: 'carepulse',
       AUTH_URL: 'http://localhost:5001',

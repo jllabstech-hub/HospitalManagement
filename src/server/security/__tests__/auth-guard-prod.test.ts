@@ -15,6 +15,8 @@ function withProductionEnv(overrides: Record<string, string | undefined>, fn: ()
     'RESEND_API_KEY',
     'ALLOW_DESTRUCTIVE_SEED',
     'ALLOW_DEV_TENANT_FALLBACK',
+    'SINGLE_TENANT',
+    'DEFAULT_TENANT_DOMAIN',
     'E2E_TEST_MODE',
     'ALLOW_MOCK_SESSION',
     'OTP_DEMO_MODE',
@@ -103,6 +105,18 @@ describe('Production Auth & Config Guard Tests', () => {
     withProductionEnv({ SHOW_DEMO_CREDENTIALS: 'true' }, () => {
       expect(() => validateProductionConfig()).toThrow('SHOW_DEMO_CREDENTIALS is strictly forbidden');
     });
+  });
+
+  it('allows single-hospital mode in production', () => {
+    withProductionEnv(
+      {
+        SINGLE_TENANT: 'true',
+        DEFAULT_TENANT_DOMAIN: 'carepulse',
+      },
+      () => {
+        expect(() => validateProductionConfig()).not.toThrow();
+      }
+    );
   });
 
   it('cannot activate mock session fallback in production', () => {

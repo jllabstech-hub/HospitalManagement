@@ -358,27 +358,29 @@ export default async function AdminContentPage() {
         frontendPath="/about"
       />
 
-      <div className="rounded-card border border-brand-200 bg-brand-50 p-4 sm:flex sm:items-center sm:justify-between">
-        <div>
-          <h2 className="font-semibold text-ink">Populate from a hospital website</h2>
-          <p className="mt-1 text-sm text-ink-muted">
+      <div className="relative overflow-hidden rounded-card border border-brand-800 bg-brand-950 p-5 text-white shadow-card sm:flex sm:items-center sm:justify-between">
+        <div className="absolute inset-0 portal-grid opacity-20" aria-hidden />
+        <div className="relative">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-200">Content studio</span>
+          <h2 className="mt-1 font-display text-xl font-semibold">Build a richer hospital story</h2>
+          <p className="mt-1 text-sm text-brand-100">
             Crawl public pages and import departments, services, packages, FAQs and more. Doctors are never imported.
           </p>
         </div>
-        <Link href="/admin/content-import" className="btn-primary mt-3 inline-flex sm:mt-0">
+        <Link href="/admin/content-import" className="relative mt-3 inline-flex rounded-button bg-white px-5 py-2.5 text-sm font-semibold text-brand-900 transition hover:bg-brand-50 sm:mt-0">
           Import Content
         </Link>
       </div>
 
       {/* KPI Notification Cards */}
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="rounded-card border border-brand-200 bg-brand-50 p-4">
+        <div className="metric-card border-brand-200 bg-brand-50">
           <span className="text-xs font-bold uppercase tracking-wider text-brand-700">
             New Patient Contact Messages
           </span>
           <p className="mt-1 text-2xl font-bold text-ink">{newContactMessages}</p>
         </div>
-        <div className="rounded-card border border-accent-200 bg-accent-50 p-4">
+        <div className="metric-card border-accent-200 bg-accent-50">
           <span className="text-xs font-bold uppercase tracking-wider text-accent-800">
             New Appointment Enquiries
           </span>
@@ -389,11 +391,11 @@ export default async function AdminContentPage() {
       {/* Grouped Content Modules matching Header & Sub-Menus */}
       <div className="space-y-12">
         {groups.map((group) => (
-          <section key={group.category} className="rounded-card border border-[#dde5e9] bg-white p-6 shadow-sm space-y-6">
+          <section key={group.category} className="relative overflow-hidden rounded-card border border-[#dde5e9] bg-white p-6 shadow-soft space-y-6">
             {/* Header Level Title */}
             <div className="flex flex-wrap items-center justify-between border-b border-[#dde5e9] pb-4">
               <div className="flex items-center gap-3">
-                <span className="text-3xl">{group.icon}</span>
+                <span className="flex h-11 w-11 items-center justify-center rounded-card bg-brand-50 text-2xl ring-1 ring-brand-100">{group.icon}</span>
                 <div>
                   <div className="flex items-center gap-2">
                     <h2 className="font-display text-xl font-bold text-ink">{group.category}</h2>
@@ -430,7 +432,7 @@ export default async function AdminContentPage() {
                       <Link
                         key={item.title}
                         href={item.href}
-                        className="card-surface flex flex-col justify-between p-4 transition hover:border-brand-400 hover:shadow-card group"
+                        className="card-surface relative flex flex-col justify-between overflow-hidden p-4 transition hover:-translate-y-0.5 hover:border-brand-400 hover:shadow-card group"
                       >
                         <div>
                           <div className="flex items-center justify-between gap-2">
